@@ -1,0 +1,160 @@
+:root {
+    --background-color: #f8fafc;
+    --text-color: #4a5568;
+    --text-selected-color: #434395d2;
+    --background-selected: #e1e3ec;
+    --background-hover: #e4edf765;
+    --border-color: #7d7f82;
+}
+
+.ms-sidebar {
+    margin-top: 4rem;
+    width: 4rem;
+    height: calc(100vh - 4rem);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 1.1rem 0;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+    background-color: var(--background-color);
+    transition: width 0.45s ease;
+}
+
+.ms-sidebar.menu-toggle {
+    width: 14rem;
+}
+
+.ms-sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+    padding: 0.9rem 0.7rem;
+    text-decoration: none;
+    margin: 0 0.5rem;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    color: var(--text-color);
+    font-size: 0.93rem;
+}
+
+.ms-sidebar a.selected {
+    color: var(--text-selected-color);
+    background-color: var(--background-selected);
+    font-weight: 600;
+}
+
+.ms-sidebar .icon {
+    width: 1.6rem;
+    flex-shrink: 0;
+}
+
+.ms-sidebar .icon img {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+.ms-sidebar a:hover {
+    background-color: var(--background-selected);
+    color: var(--text-selected-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+}
+
+.ms-main {
+    margin-top: 4rem;
+    margin-left: 4rem;
+    min-height: calc(100vh - 4rem);
+    transition: margin-left 0.45s ease;
+    background: #f3f4f6;
+}
+
+.ms-main.menu-toggle {
+    margin-left: 14rem;
+}
+
+.ms-content-shell {
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.ms-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fafbfc;
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.ms-topbar h1 {
+    margin: 0;
+    font-size: 1.02rem;
+    color: #334155;
+    font-weight: 700;
+}
+
+.ms-topbar p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.88rem;
+}
+
+.ms-panel-body {
+    padding: 1rem;
+}
+
+.ms-module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+}
+
+.ms-module-card {
+    display: block;
+    text-decoration: none;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 0.65rem;
+    padding: 0.95rem;
+    color: #1f2937;
+}
+
+.ms-module-card:hover {
+    box-shadow: 0 6px 16px rgb(0 0 0 / 8%);
+    border-color: #cfd6df;
+}
+
+.ms-module-card h3 {
+    margin: 0;
+    font-size: 0.97rem;
+    font-weight: 700;
+}
+
+.ms-module-card p {
+    margin: 0.5rem 0 0;
+    font-size: 0.86rem;
+    color: #64748b;
+}
+
+@media (max-width: 768px) {
+    .ms-sidebar {
+        transform: translateX(-100%);
+        width: 14rem;
+    }
+
+    .ms-sidebar.menu-toggle {
+        transform: translateX(0);
+    }
+
+    .ms-main,
+    .ms-main.menu-toggle {
+        margin-left: 0;
+    }
+}
