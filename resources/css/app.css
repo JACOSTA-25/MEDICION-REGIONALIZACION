@@ -1,3 +1,321 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+    background: #f3f4f6;
+}
+
+.ms-dashboard-stack,
+.ms-report-results {
+    display: grid;
+    gap: 1rem;
+}
+
+.ms-report-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+    gap: 1rem;
+}
+
+.ms-report-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 3px 6px rgb(0 0 0 / 12%);
+    padding: 1rem;
+}
+
+.ms-report-card-accent {
+    background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+}
+
+.ms-report-card-header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.ms-report-card-header p {
+    margin: 0.4rem 0 0;
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.ms-report-form {
+    margin-top: 1rem;
+}
+
+.ms-report-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.ms-field label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.ms-field select,
+.ms-field input,
+.ms-link-panel input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background: #fff;
+    color: #111827;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ms-field select:focus,
+.ms-field input:focus,
+.ms-link-panel input:focus {
+    outline: none;
+    border-color: #9c3a3a;
+    box-shadow: 0 0 0 3px rgb(156 58 58 / 14%);
+}
+
+.ms-field select:disabled {
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.ms-form-actions,
+.ms-inline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.ms-form-actions {
+    margin-top: 1rem;
+}
+
+.ms-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.ms-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 8px rgb(0 0 0 / 14%);
+}
+
+.ms-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.ms-btn-primary {
+    background: #9c3a3a;
+    color: #fff;
+}
+
+.ms-btn-primary:hover:not(:disabled) {
+    background: #a3333d;
+    color: #fff;
+}
+
+.ms-btn-secondary {
+    background: #f3f4f6;
+    border: 2px solid #e5e7eb;
+    color: #374151;
+}
+
+.ms-btn-muted {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+.ms-form-note,
+.ms-inline-alert,
+.ms-inline-checklist {
+    margin: 0.9rem 0 0;
+    border-radius: 0.75rem;
+    font-size: 0.88rem;
+}
+
+.ms-form-note,
+.ms-inline-alert {
+    padding: 0.85rem 0.95rem;
+}
+
+.ms-form-note {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.ms-inline-alert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.ms-inline-alert-soft {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.ms-link-panel {
+    margin-top: 1rem;
+}
+
+.ms-link-panel label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.ms-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.ms-stat-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+    padding: 0.9rem;
+}
+
+.ms-stat-label {
+    display: block;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ms-stat-card strong {
+    display: block;
+    margin-top: 0.35rem;
+    color: #111827;
+    font-size: 1.25rem;
+}
+
+.ms-stat-card small {
+    display: block;
+    margin-top: 0.35rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.ms-table-shell {
+    margin-top: 1rem;
+    overflow-x: auto;
+}
+
+.ms-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+}
+
+.ms-data-table th,
+.ms-data-table td {
+    border: 1px solid #e5e7eb;
+    padding: 0.85rem;
+    vertical-align: top;
+    font-size: 0.88rem;
+    color: #1f2937;
+}
+
+.ms-data-table th {
+    background: #f8fafc;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #475569;
+}
+
+.ms-data-table td span {
+    display: block;
+    margin-top: 0.2rem;
+    color: #64748b;
+    font-size: 0.78rem;
+}
+
+.ms-observations-list {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.ms-observations-list p {
+    margin: 0;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    padding: 0.9rem 1rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.ms-inline-checklist {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    padding: 0.9rem 1rem;
+    color: #475569;
+}
+
+.ms-inline-checklist p {
+    margin: 0;
+    font-weight: 700;
+}
+
+.ms-inline-checklist ul {
+    margin: 0.65rem 0 0;
+    padding-left: 1rem;
+}
+
+.ms-inline-checklist li + li {
+    margin-top: 0.35rem;
+}
+
+@media (max-width: 1024px) {
+    .ms-report-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .ms-report-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .ms-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ms-btn {
+        width: 100%;
+    }
+}

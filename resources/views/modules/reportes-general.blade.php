@@ -1,12 +1,21 @@
 <x-app-layout>
-    <div class="ms-content-shell">
-        <x-generals.top-bar
-            title="Reporte general"
-            description="Vista habilitada para ADMIN y ADMIN_2_0"
-        />
-
-        <div class="ms-panel-body">
-            <p class="text-sm text-slate-600">Aqui se ubicaran los filtros y resultados del consolidado general.</p>
-        </div>
-    </div>
+    @include('modules.partials.report-form', [
+        'title' => $title,
+        'description' => $description,
+        'summary' => $summary,
+        'procesos' => $procesos,
+        'dependencias' => $dependencias,
+        'showProcessSelect' => $showProcessSelect,
+        'showDependencySelect' => $showDependencySelect,
+        'selectedProcesoId' => $selectedProcesoId,
+        'selectedProcessLocked' => $selectedProcessLocked,
+        'selectedDependenciaId' => $selectedDependenciaId,
+        'selectedDependencyLocked' => $selectedDependencyLocked,
+        'selectedFrom' => $selectedFrom,
+        'selectedTo' => $selectedTo,
+        'selectionSummary' => $selectionSummary,
+        'filterError' => $filterError,
+        'pdfUrl' => $pdfUrl,
+        'report' => $report,
+    ])
 </x-app-layout>

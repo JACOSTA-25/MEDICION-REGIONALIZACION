@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Programa;
+use App\Support\LegacyReferenceData;
 use Illuminate\Database\Seeder;
 
 class ProgramaSeeder extends Seeder
@@ -12,20 +13,10 @@ class ProgramaSeeder extends Seeder
      */
     public function run(): void
     {
-        $programas = [
-            'Trabajo Social',
-            'Contaduria Publica',
-            'Ingenieria de Sistemas',
-            'Licenciatura en Educacion Infantil',
-            'Administracion de Empresas',
-            'Negocios Internacionales',
-            'Posgrado',
-        ];
-
-        foreach ($programas as $nombre) {
+        foreach (LegacyReferenceData::programas() as $programa) {
             Programa::query()->updateOrCreate(
-                ['nombre' => $nombre],
-                ['nombre' => $nombre]
+                ['nombre' => $programa['nombre']],
+                ['nombre' => $programa['nombre']]
             );
         }
     }
