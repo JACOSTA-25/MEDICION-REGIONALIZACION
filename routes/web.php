@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProcessDependencyManagementController;
 use App\Http\Controllers\ReportModuleController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\UserManagementController;
@@ -41,6 +42,66 @@ Route::middleware('auth')->group(function () {
     Route::put('/usuarios/{user}', [UserManagementController::class, 'update'])
         ->middleware('module.access:users')
         ->name('users.update');
+
+    Route::get('/estructura-organizacional', [ProcessDependencyManagementController::class, 'index'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.index');
+
+    Route::get('/estructura-organizacional/procesos/{proceso}/dependencias', [ProcessDependencyManagementController::class, 'dependencies'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.processes.dependencies');
+
+    Route::get('/estructura-organizacional/dependencias/{dependencia}/servicios', [ProcessDependencyManagementController::class, 'services'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.dependencies.services');
+
+    Route::post('/estructura-organizacional/procesos', [ProcessDependencyManagementController::class, 'storeProcess'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.processes.store');
+
+    Route::put('/estructura-organizacional/procesos/{proceso}', [ProcessDependencyManagementController::class, 'updateProcess'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.processes.update');
+
+    Route::delete('/estructura-organizacional/procesos/{proceso}', [ProcessDependencyManagementController::class, 'deactivateProcess'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.processes.deactivate');
+
+    Route::patch('/estructura-organizacional/procesos/{proceso}/activar', [ProcessDependencyManagementController::class, 'activateProcess'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.processes.activate');
+
+    Route::post('/estructura-organizacional/dependencias', [ProcessDependencyManagementController::class, 'storeDependency'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.dependencies.store');
+
+    Route::put('/estructura-organizacional/dependencias/{dependencia}', [ProcessDependencyManagementController::class, 'updateDependency'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.dependencies.update');
+
+    Route::delete('/estructura-organizacional/dependencias/{dependencia}', [ProcessDependencyManagementController::class, 'deactivateDependency'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.dependencies.deactivate');
+
+    Route::patch('/estructura-organizacional/dependencias/{dependencia}/activar', [ProcessDependencyManagementController::class, 'activateDependency'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.dependencies.activate');
+
+    Route::post('/estructura-organizacional/servicios', [ProcessDependencyManagementController::class, 'storeService'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.services.store');
+
+    Route::put('/estructura-organizacional/servicios/{servicio}', [ProcessDependencyManagementController::class, 'updateService'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.services.update');
+
+    Route::delete('/estructura-organizacional/servicios/{servicio}', [ProcessDependencyManagementController::class, 'deactivateService'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.services.deactivate');
+
+    Route::patch('/estructura-organizacional/servicios/{servicio}/activar', [ProcessDependencyManagementController::class, 'activateService'])
+        ->middleware('module.access:process_dependency')
+        ->name('process-dependency.services.activate');
 });
 
 require __DIR__.'/auth.php';

@@ -27,6 +27,12 @@
             'description' => 'Modulo de administracion de usuarios.',
             'route' => route('users.index'),
         ],
+        [
+            'visible' => $user->canAccessProcessDependencyModule(),
+            'title' => 'Procesos y dependencias',
+            'description' => 'Modulo para administrar el catalogo organizacional.',
+            'route' => route('process-dependency.index'),
+        ],
     ];
 @endphp
 

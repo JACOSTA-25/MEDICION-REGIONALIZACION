@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Dependencia;
 use App\Models\Proceso;
-use App\Services\SurveyReportService;
+use App\Services\PdfChartImageService;
+use App\Services\ReportService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -15,7 +16,8 @@ use Illuminate\Support\Str;
 class ReportModuleController extends Controller
 {
     public function __construct(
-        private readonly SurveyReportService $reportService,
+        private readonly ReportService $reportService,
+        private readonly PdfChartImageService $chartImageService,
     ) {}
 
     public function general(Request $request): View|Response
@@ -189,6 +191,7 @@ class ReportModuleController extends Controller
     private function exportReport(string $title, string $description, array $report, array $contextRows): Response
     {
         $html = view('modules.report-export', [
+            'chartImages' => $this->chartImageService->build($report),
             'contextRows' => $contextRows,
             'description' => $description,
             'printFallback' => ! class_exists(\Dompdf\Dompdf::class),
@@ -196,20 +199,17 @@ class ReportModuleController extends Controller
             'title' => $title,
         ])->render();
 
-        if (! class_exists(\Dompdf\Dompdf::class)) {
-            return response($html);
-        }
-
         $options = new \Dompdf\Options;
         $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
 
         $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html, 'UTF-8');
-        $dompdf->setPaper('letter', 'portrait');
+        $dompdf->setPaper('a4', 'portrait');
         $dompdf->render();
 
         return response($dompdf->output(), 200, [
-            'Content-Disposition' => 'inline; filename="'.Str::slug($title).'-'.$report['from'].'-'.$report['to'].'.pdf"',
+            'Content-Disposition' => 'attachment; filename="'.Str::slug($title).'-'.$report['from'].'-'.$report['to'].'.pdf"',
             'Content-Type' => 'application/pdf',
         ]);
     }

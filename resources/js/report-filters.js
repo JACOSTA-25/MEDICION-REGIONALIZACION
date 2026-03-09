@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const endpoint = form.dataset.dependenciasEndpoint;
                 const response = await fetch(
-                    `${endpoint}?id_proceso=${encodeURIComponent(processSelect.value)}`,
+                    `${endpoint}?id_proceso=${encodeURIComponent(processSelect.value)}&include_inactive=1`,
                     {
                         headers: {
                             Accept: 'application/json',

@@ -256,6 +256,14 @@ body {
     color: #475569;
 }
 
+.ms-process-row {
+    cursor: pointer;
+}
+
+.ms-process-row:hover td {
+    background: #f8fafc;
+}
+
 .ms-data-table td span {
     display: block;
     margin-top: 0.2rem;

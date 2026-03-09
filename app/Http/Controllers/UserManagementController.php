@@ -17,6 +17,7 @@ class UserManagementController extends Controller
     public function index(Request $request): View
     {
         $dependencies = Dependencia::query()
+            ->active()
             ->orderBy('nombre')
             ->get(['id_dependencia', 'id_proceso', 'nombre']);
 
@@ -34,7 +35,7 @@ class UserManagementController extends Controller
 
         return view('modules.usuarios', [
             'dependenciesByProcess' => $dependenciesByProcess,
-            'processes' => Proceso::query()->orderBy('nombre')->get(['id_proceso', 'nombre']),
+            'processes' => Proceso::query()->active()->orderBy('nombre')->get(['id_proceso', 'nombre']),
             'roles' => $this->roles(),
             'users' => User::query()
                 ->with([
@@ -91,8 +92,8 @@ class UserManagementController extends Controller
     private function roles(): array
     {
         return [
-            User::ROLE_ADMIN => 'Administrador',
-            User::ROLE_ADMIN_2_0 => 'Administrador 2.0',
+            User::ROLE_ADMIN => 'Super Administrador',
+            User::ROLE_ADMIN_2_0 => 'Administrador',
             User::ROLE_LIDER_PROCESO => 'Lider de proceso',
             User::ROLE_LIDER_DEPENDENCIA => 'Lider de dependencia',
         ];
@@ -112,8 +113,8 @@ class UserManagementController extends Controller
             'password' => $user
                 ? ['nullable', 'string', 'min:8']
                 : ['required', 'string', 'min:8'],
-            'id_proceso' => ['nullable', 'integer', 'exists:proceso,id_proceso'],
-            'id_dependencia' => ['nullable', 'integer', 'exists:dependencia,id_dependencia'],
+            'id_proceso' => ['nullable', 'integer', Rule::exists('proceso', 'id_proceso')->where(fn ($query) => $query->where('activo', true))],
+            'id_dependencia' => ['nullable', 'integer', Rule::exists('dependencia', 'id_dependencia')->where(fn ($query) => $query->where('activo', true))],
             'activo' => ['nullable', 'boolean'],
         ]);
 

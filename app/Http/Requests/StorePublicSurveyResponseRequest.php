@@ -4,8 +4,10 @@ namespace App\Http\Requests;
 
 use App\Models\Dependencia;
 use App\Models\Estamento;
+use App\Models\Proceso;
 use App\Models\Servicio;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StorePublicSurveyResponseRequest extends FormRequest
@@ -24,11 +26,23 @@ class StorePublicSurveyResponseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_dependencia' => ['required', 'integer', 'exists:dependencia,id_dependencia'],
+            'id_dependencia' => [
+                'required',
+                'integer',
+                Rule::exists('dependencia', 'id_dependencia')->where(fn ($query) => $query->where('activo', true)),
+            ],
             'id_estamento' => ['required', 'integer', 'exists:estamento,id_estamento'],
             'id_programa' => ['nullable', 'integer', 'exists:programa,id_programa'],
-            'id_proceso' => ['required', 'integer', 'exists:proceso,id_proceso'],
-            'id_servicio' => ['required', 'integer', 'exists:servicio,id_servicio'],
+            'id_proceso' => [
+                'required',
+                'integer',
+                Rule::exists('proceso', 'id_proceso')->where(fn ($query) => $query->where('activo', true)),
+            ],
+            'id_servicio' => [
+                'required',
+                'integer',
+                Rule::exists('servicio', 'id_servicio')->where(fn ($query) => $query->where('activo', true)),
+            ],
             'observaciones' => ['nullable', 'string', 'max:1000'],
             'pregunta1' => ['required', 'integer', 'between:1,5'],
             'pregunta2' => ['required', 'integer', 'between:1,5'],
@@ -57,23 +71,28 @@ class StorePublicSurveyResponseRequest extends FormRequest
                     $validator->errors()->add('id_programa', 'El programa es obligatorio para el estamento seleccionado.');
                 }
 
+                $proceso = Proceso::query()->find($this->input('id_proceso'));
+
+                if (! $proceso || ! $proceso->activo) {
+                    $validator->errors()->add('id_proceso', 'El proceso seleccionado esta inactivo o no existe.');
+                    return;
+                }
+
                 $dependencia = Dependencia::query()->find($this->input('id_dependencia'));
 
-                if (
-                    $dependencia &&
-                    $this->filled('id_proceso') &&
-                    $dependencia->id_proceso !== (int) $this->input('id_proceso')
-                ) {
+                if (! $dependencia || ! $dependencia->activo) {
+                    $validator->errors()->add('id_dependencia', 'La dependencia seleccionada esta inactiva o no existe.');
+                    return;
+                }
+
+                if ($dependencia->id_proceso !== (int) $this->input('id_proceso')) {
                     $validator->errors()->add('id_dependencia', 'La dependencia seleccionada no pertenece al proceso indicado.');
+                    return;
                 }
 
                 $servicio = Servicio::query()->find($this->input('id_servicio'));
 
-                if (
-                    $servicio &&
-                    $this->filled('id_dependencia') &&
-                    $servicio->id_dependencia !== (int) $this->input('id_dependencia')
-                ) {
+                if (! $servicio || ! $servicio->activo || $servicio->id_dependencia !== (int) $this->input('id_dependencia')) {
                     $validator->errors()->add('id_servicio', 'El servicio seleccionado no pertenece a la dependencia indicada.');
                 }
             },

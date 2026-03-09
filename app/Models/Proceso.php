@@ -20,7 +20,15 @@ class Proceso extends Model
 
     protected $fillable = [
         'nombre',
+        'activo',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'activo' => 'boolean',
+        ];
+    }
 
     public function dependencias(): HasMany
     {
@@ -35,5 +43,10 @@ class Proceso extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'id_proceso', 'id_proceso');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('activo', true);
     }
 }

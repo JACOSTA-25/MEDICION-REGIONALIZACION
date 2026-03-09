@@ -24,6 +24,7 @@ class EnsureModuleAccess
             'process_reports' => $user->canAccessProcessReports(),
             'individual_reports' => $user->canAccessIndividualReports(),
             'users' => $user->canAccessUsersModule(),
+            'process_dependency' => $user->canAccessProcessDependencyModule(),
             default => false,
         };
 

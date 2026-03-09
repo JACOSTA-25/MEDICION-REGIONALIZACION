@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class SurveyController extends Controller
 {
@@ -61,8 +62,16 @@ class SurveyController extends Controller
 
     public function dependencias(Request $request): JsonResponse
     {
+        $includeInactive = $request->boolean('include_inactive');
+
         $validator = Validator::make($request->query(), [
-            'id_proceso' => ['required', 'integer', 'exists:proceso,id_proceso'],
+            'id_proceso' => [
+                'required',
+                'integer',
+                $includeInactive
+                    ? Rule::exists('proceso', 'id_proceso')
+                    : Rule::exists('proceso', 'id_proceso')->where(fn ($query) => $query->where('activo', true)),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -71,6 +80,7 @@ class SurveyController extends Controller
 
         $dependencias = Dependencia::query()
             ->where('id_proceso', (int) $validator->validated()['id_proceso'])
+            ->when(! $includeInactive, fn ($query) => $query->where('activo', true))
             ->orderBy('nombre')
             ->get(['id_dependencia', 'nombre'])
             ->map(fn (Dependencia $dependencia) => [
@@ -85,7 +95,11 @@ class SurveyController extends Controller
     public function servicios(Request $request): JsonResponse
     {
         $validator = Validator::make($request->query(), [
-            'id_dependencia' => ['required', 'integer', 'exists:dependencia,id_dependencia'],
+            'id_dependencia' => [
+                'required',
+                'integer',
+                Rule::exists('dependencia', 'id_dependencia')->where(fn ($query) => $query->where('activo', true)),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -94,6 +108,10 @@ class SurveyController extends Controller
 
         $servicios = Servicio::query()
             ->where('id_dependencia', (int) $validator->validated()['id_dependencia'])
+            ->where('activo', true)
+            ->whereHas('dependencia', fn ($query) => $query
+                ->where('activo', true)
+                ->whereHas('proceso', fn ($processQuery) => $processQuery->where('activo', true)))
             ->orderBy('nombre')
             ->get(['id_servicio', 'nombre'])
             ->map(fn (Servicio $servicio) => [
@@ -113,6 +131,7 @@ class SurveyController extends Controller
 
         return Dependencia::query()
             ->where('id_proceso', (int) $procesoId)
+            ->where('activo', true)
             ->orderBy('nombre')
             ->get(['id_dependencia', 'nombre']);
     }
@@ -125,6 +144,10 @@ class SurveyController extends Controller
 
         return Servicio::query()
             ->where('id_dependencia', (int) $dependenciaId)
+            ->where('activo', true)
+            ->whereHas('dependencia', fn ($query) => $query
+                ->where('activo', true)
+                ->whereHas('proceso', fn ($processQuery) => $processQuery->where('activo', true)))
             ->orderBy('nombre')
             ->get(['id_servicio', 'nombre']);
     }
@@ -139,7 +162,10 @@ class SurveyController extends Controller
         $selectedProcesoId = $this->normalizeId(old('id_proceso', $request->query('id_proceso')));
         $selectedDependenciaId = $this->normalizeId(old('id_dependencia', $request->query('id_dependencia')));
 
-        $procesos = Proceso::query()->orderBy('nombre')->get(['id_proceso', 'nombre']);
+        $procesos = Proceso::query()
+            ->active()
+            ->orderBy('nombre')
+            ->get(['id_proceso', 'nombre']);
         $dependencias = $this->dependenciasForProceso($selectedProcesoId);
 
         if (

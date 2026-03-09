@@ -84,8 +84,8 @@
                         </button>
 
                         @if ($pdfUrl)
-                            <a href="{{ $pdfUrl }}" target="_blank" rel="noopener noreferrer" class="ms-btn ms-btn-secondary">
-                                Abrir version PDF
+                            <a href="{{ $pdfUrl }}" class="ms-btn ms-btn-secondary">
+                                Descargar PDF
                             </a>
                         @endif
                     </div>
@@ -96,7 +96,7 @@
                         </div>
                     @else
                         <p class="ms-form-note">
-                            Cada respuesta se clasifica asi: 1-2 = satisfaccion mala, 3 = intermedia y 4-5 = buena.
+                            Clasificacion de satisfaccion: Mala (1-2), Intermedia (3) y Buena (4-5).
                         </p>
                     @endif
                 </form>
@@ -112,31 +112,31 @@
                     <div class="ms-stat-grid">
                         <div class="ms-stat-card">
                             <span class="ms-stat-label">Encuestas</span>
-                            <strong>{{ $report['total_responses'] }}</strong>
-                            <small>Total de formularios registrados</small>
+                            <strong>{{ $report['totals']['survey_count'] }}</strong>
+                            <small>Usuarios encuestados en el periodo</small>
                         </div>
 
                         <div class="ms-stat-card">
-                            <span class="ms-stat-label">Satisfaccion buena</span>
-                            <strong>{{ $report['overall']['percentages']['buena'] }}%</strong>
-                            <small>{{ $report['overall']['counts']['buena'] }} respuestas de {{ $report['total_answers'] }}</small>
+                            <span class="ms-stat-label">Respuestas</span>
+                            <strong>{{ $report['totals']['answer_count'] }}</strong>
+                            <small>Total de respuestas (6 preguntas por encuesta)</small>
                         </div>
 
                         <div class="ms-stat-card">
-                            <span class="ms-stat-label">Satisfaccion intermedia</span>
-                            <strong>{{ $report['overall']['percentages']['intermedia'] }}%</strong>
-                            <small>{{ $report['overall']['counts']['intermedia'] }} respuestas de {{ $report['total_answers'] }}</small>
+                            <span class="ms-stat-label">Indicador global</span>
+                            <strong>{{ $report['indicators']['global']['satisfaction_percentage'] }}%</strong>
+                            <small>Promedio de usuarios satisfechos entre las 6 dimensiones</small>
                         </div>
 
                         <div class="ms-stat-card">
-                            <span class="ms-stat-label">Satisfaccion mala</span>
-                            <strong>{{ $report['overall']['percentages']['mala'] }}%</strong>
-                            <small>{{ $report['overall']['counts']['mala'] }} respuestas de {{ $report['total_answers'] }}</small>
+                            <span class="ms-stat-label">Satisfaccion total</span>
+                            <strong>{{ $report['indicators']['global']['satisfaction_answer_percentage'] }}%</strong>
+                            <small>Sobre el total de respuestas registradas</small>
                         </div>
                     </div>
                 @else
                     <div class="ms-inline-alert ms-inline-alert-soft">
-                        Genera el reporte para ver los porcentajes consolidados y la version exportable.
+                        Genera el reporte para ver estadisticas consolidadas y exportar el PDF.
                     </div>
                 @endif
             </aside>
@@ -146,8 +146,97 @@
             <div class="ms-report-results">
                 <section class="ms-report-card">
                     <div class="ms-report-card-header">
-                        <h2>Resultados por pregunta</h2>
-                        <p>Las estadisticas se calculan sobre cada una de las seis preguntas del formulario.</p>
+                        <h2>Distribucion poblacional</h2>
+                        <p>Poblacion atendida por programa y estamento.</p>
+                    </div>
+
+                    <div class="ms-table-shell">
+                        <table class="ms-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Programa</th>
+                                    <th>Encuestas</th>
+                                    <th>Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($report['tables']['by_program'] as $row)
+                                    <tr>
+                                        <td>{{ $row['programa'] }}</td>
+                                        <td>{{ $row['encuestas'] }}</td>
+                                        <td>{{ $row['porcentaje'] }}%</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3">Sin registros en el rango seleccionado.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ms-table-shell">
+                        <table class="ms-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Estamento</th>
+                                    <th>Encuestas</th>
+                                    <th>Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($report['tables']['by_estamento'] as $row)
+                                    <tr>
+                                        <td>{{ $row['estamento'] }}</td>
+                                        <td>{{ $row['encuestas'] }}</td>
+                                        <td>{{ $row['porcentaje'] }}%</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3">Sin registros en el rango seleccionado.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="ms-report-card">
+                    <div class="ms-report-card-header">
+                        <h2>Servicios prestados</h2>
+                        <p>Conteo de encuestas asociadas a cada servicio.</p>
+                    </div>
+
+                    <div class="ms-table-shell">
+                        <table class="ms-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Encuestas</th>
+                                    <th>Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($report['tables']['services'] as $row)
+                                    <tr>
+                                        <td>{{ $row['servicio'] }}</td>
+                                        <td>{{ $row['encuestas'] }}</td>
+                                        <td>{{ $row['porcentaje'] }}%</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3">Sin registros en el rango seleccionado.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="ms-report-card">
+                    <div class="ms-report-card-header">
+                        <h2>Resultado por pregunta</h2>
+                        <p>Frecuencia por valor (1 a 5) y porcentaje de satisfaccion por dimension.</p>
                     </div>
 
                     <div class="ms-table-shell">
@@ -155,9 +244,12 @@
                             <thead>
                                 <tr>
                                     <th>Pregunta</th>
-                                    <th>Mala</th>
-                                    <th>Intermedia</th>
-                                    <th>Buena</th>
+                                    <th>Deficiente</th>
+                                    <th>Malo</th>
+                                    <th>Regular</th>
+                                    <th>Bueno</th>
+                                    <th>Excelente</th>
+                                    <th>% Satisfechos</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -165,20 +257,15 @@
                                     <tr>
                                         <td>
                                             <strong>{{ $question['number'] }}.</strong>
-                                            {{ $question['label'] }}
+                                            {{ $question['dimension'] }}
                                         </td>
-                                        <td>
-                                            {{ $question['counts']['mala'] }}
-                                            <span>{{ $question['percentages']['mala'] }}%</span>
-                                        </td>
-                                        <td>
-                                            {{ $question['counts']['intermedia'] }}
-                                            <span>{{ $question['percentages']['intermedia'] }}%</span>
-                                        </td>
-                                        <td>
-                                            {{ $question['counts']['buena'] }}
-                                            <span>{{ $question['percentages']['buena'] }}%</span>
-                                        </td>
+                                        @foreach ($question['frequencies'] as $frequency)
+                                            <td>
+                                                {{ $frequency['frequency'] }}
+                                                <span>{{ $frequency['percentage'] }}%</span>
+                                            </td>
+                                        @endforeach
+                                        <td>{{ $question['satisfaction']['satisfied_percentage'] }}%</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -188,53 +275,41 @@
 
                 <section class="ms-report-card">
                     <div class="ms-report-card-header">
-                        <h2>{{ $report['breakdown_title'] }}</h2>
-                        <p>
-                            @if ($report['breakdown'] !== [])
-                                Distribucion de resultados segun el alcance del reporte.
-                            @else
-                                No hay registros dentro de ese rango para construir el consolidado secundario.
-                            @endif
-                        </p>
+                        <h2>Consolidado de satisfaccion</h2>
+                        <p>Usuarios satisfechos, neutros e insatisfechos por dimension.</p>
                     </div>
 
-                    @if ($report['breakdown'] !== [])
-                        <div class="ms-table-shell">
-                            <table class="ms-data-table">
-                                <thead>
+                    <div class="ms-table-shell">
+                        <table class="ms-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Dimension</th>
+                                    <th>Satisfechos</th>
+                                    <th>Neutros</th>
+                                    <th>Insatisfechos</th>
+                                    <th>% Satisfechos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($report['tables']['satisfaction_consolidated'] as $row)
                                     <tr>
-                                        <th>Elemento</th>
-                                        <th>Encuestas</th>
-                                        <th>Mala</th>
-                                        <th>Intermedia</th>
-                                        <th>Buena</th>
+                                        <td>{{ $row['dimension'] }}</td>
+                                        <td>{{ $row['satisfechos'] }}</td>
+                                        <td>{{ $row['neutros'] }}</td>
+                                        <td>{{ $row['insatisfechos'] }}</td>
+                                        <td>{{ $row['porcentaje_satisfechos'] }}%</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($report['breakdown'] as $item)
-                                        <tr>
-                                            <td>{{ $item['name'] }}</td>
-                                            <td>{{ $item['responses'] }}</td>
-                                            <td>{{ $item['counts']['mala'] }} <span>{{ $item['percentages']['mala'] }}%</span></td>
-                                            <td>{{ $item['counts']['intermedia'] }} <span>{{ $item['percentages']['intermedia'] }}%</span></td>
-                                            <td>{{ $item['counts']['buena'] }} <span>{{ $item['percentages']['buena'] }}%</span></td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="ms-inline-alert ms-inline-alert-soft">
-                            No se encontraron datos asociados para este filtro.
-                        </div>
-                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
 
                 @if ($report['observations'] !== [])
                     <section class="ms-report-card">
                         <div class="ms-report-card-header">
                             <h2>Observaciones recientes</h2>
-                            <p>Se muestran hasta diez comentarios registrados dentro del periodo consultado.</p>
+                            <p>Se muestran hasta diez comentarios del periodo consultado.</p>
                         </div>
 
                         <div class="ms-observations-list">

@@ -90,6 +90,12 @@
                     {{ __('Usuarios') }}
                 </x-responsive-nav-link>
             @endif
+
+            @if ($user->canAccessProcessDependencyModule())
+                <x-responsive-nav-link :href="route('process-dependency.index')" :active="request()->routeIs('process-dependency.*')">
+                    {{ __('Procesos y dependencias') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200">

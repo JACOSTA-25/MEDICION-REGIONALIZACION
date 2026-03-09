@@ -47,6 +47,15 @@
                     </a>
                 </li>
             @endif
+
+            @if ($user->canAccessProcessDependencyModule())
+                <li>
+                    <a href="{{ route('process-dependency.index') }}" class="{{ request()->routeIs('process-dependency.*') ? 'selected' : '' }}">
+                        <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Procesos y dependencias"></span>
+                        <span>Procesos y dependencias</span>
+                    </a>
+                </li>
+            @endif
         </ul>
     </nav>
 </aside>

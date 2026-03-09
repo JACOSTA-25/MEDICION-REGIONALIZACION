@@ -22,7 +22,15 @@ class Servicio extends Model
     protected $fillable = [
         'id_dependencia',
         'nombre',
+        'activo',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'activo' => 'boolean',
+        ];
+    }
 
     public function dependencia(): BelongsTo
     {
@@ -32,5 +40,10 @@ class Servicio extends Model
     public function respuestas(): HasMany
     {
         return $this->hasMany(Respuesta::class, 'id_servicio', 'id_servicio');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('activo', true);
     }
 }

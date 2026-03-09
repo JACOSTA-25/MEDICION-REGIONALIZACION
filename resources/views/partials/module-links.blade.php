@@ -25,3 +25,9 @@
         {{ __('Usuarios') }}
     </x-nav-link>
 @endif
+
+@if ($user->canAccessProcessDependencyModule())
+    <x-nav-link :href="route('process-dependency.index')" :active="request()->routeIs('process-dependency.*')">
+        {{ __('Procesos y dependencias') }}
+    </x-nav-link>
+@endif

@@ -22,7 +22,15 @@ class Dependencia extends Model
     protected $fillable = [
         'id_proceso',
         'nombre',
+        'activo',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'activo' => 'boolean',
+        ];
+    }
 
     public function proceso(): BelongsTo
     {
@@ -42,5 +50,10 @@ class Dependencia extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'id_dependencia', 'id_dependencia');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('activo', true);
     }
 }

@@ -129,6 +129,11 @@ class User extends Authenticatable
         return $this->isAdmin();
     }
 
+    public function canAccessProcessDependencyModule(): bool
+    {
+        return $this->isAdmin() || $this->isAdmin20();
+    }
+
     public function canAccessGeneralReports(): bool
     {
         return $this->isAdmin() || $this->isAdmin20();
