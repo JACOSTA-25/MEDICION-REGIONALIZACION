@@ -32,6 +32,7 @@
             $sidebarImage = $toDataUri('assets/images/sidebar.png');
             $encabezadoImage = $toDataUri('assets/images/encabezado.png');
             $piePaginaImage = $toDataUri('assets/images/pie-de-pagina.png');
+            $portadaImage = $toDataUri('assets/images/portada.png');
         @endphp
         <style>
             @page {
@@ -57,8 +58,21 @@
                 page-break-after: auto;
             }
 
+            .cover-page {
+                padding: 0;
+                width: 210mm;
+                height: 297mm;
+                overflow: hidden;
+            }
+
+            .cover-image {
+                display: block;
+                width: 210mm;
+                height: 297mm;
+            }
+
             .page-with-decor {
-                padding-top: 78px;
+                padding-top: 90px;
                 padding-right: 12mm;
                 padding-bottom: 58px;
                 padding-left: 58px;
@@ -66,11 +80,12 @@
 
             .decor-header {
                 position: absolute;
-                top: -3px;
+                top: 4px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 82%;
-                max-height: 72px;
+                height: 82px;
+                width: auto;
+                max-width: 88%;
             }
 
             .decor-sidebar {
@@ -83,10 +98,11 @@
 
             .decor-footer {
                 position: absolute;
-                left: 0;
-                bottom: 0;
-                width: 240px;
-                max-height: 52px;
+                left: 40px;
+                bottom: 10px;
+                height: 52px;
+                width: auto;
+                max-width: 100%;
             }
 
             .page-header {
@@ -195,24 +211,10 @@
         </style>
     </head>
     <body>
-        <section class="page">
-            <div class="cover-card">
-                <h1>{{ $title }}</h1>
-                <p>{{ $description }}</p>
-                <p class="muted" style="margin-top: 10px;">
-                    Medicion de la satisfaccion de usuarios de los servicios institucionales.
-                </p>
-            </div>
-
-            <h2 style="margin-bottom: 8px;">Contexto del reporte</h2>
-            <div class="context">
-                @foreach ($contextRows as $row)
-                    <div class="context-item">
-                        <strong>{{ $row['label'] }}</strong>
-                        <span>{{ $row['value'] }}</span>
-                    </div>
-                @endforeach
-            </div>
+        <section class="page cover-page">
+            @if ($portadaImage)
+                <img src="{{ $portadaImage }}" alt="Portada" class="cover-image">
+            @endif
         </section>
 
         <section class="page page-with-decor">
