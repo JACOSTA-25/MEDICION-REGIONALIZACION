@@ -41,7 +41,7 @@
             }
 
             body {
-                font-family: DejaVu Sans, Arial, sans-serif;
+                font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
                 margin: 0;
                 color: #111827;
                 font-size: 12px;
@@ -173,7 +173,7 @@
             }
 
             th {
-                background: #f3f4f6;
+                background:rgb(69, 131, 255);
                 text-align: left;
             }
 
@@ -208,6 +208,49 @@
                 min-height: 240px;
                 background: #f9fafb;
             }
+
+            .report-section-title {
+                font-size: 12px;
+                font-weight: 700;
+                margin: 0 0 8px;
+                text-align: left;
+            }
+
+            .report-section-text {
+                margin: 0 0 14px;
+                font-size: 10.5px;
+                line-height: 1.35;
+                text-align: justify;
+            }
+
+            .table-title {
+                margin: 4px 0 6px;
+                margin-top: 60px;
+                font-size: 10.5px;
+                font-weight: 700;
+                text-align: center;
+            }
+
+            .compact-table th,
+            .compact-table td {
+                font-size: 10px;
+                padding: 4px 5px;
+            }
+
+            .page-intro {
+                padding-top: 150px;
+                padding-right: 40mm;
+                padding-left: 150px;
+            }
+
+            .compact-table th:first-child {
+                text-align: center;
+            }
+
+            .compact-table th:nth-child(2),
+            .compact-table td:nth-child(2) {
+                text-align: center;
+            }
         </style>
     </head>
     <body>
@@ -217,17 +260,32 @@
             @endif
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor page-intro">
             @include('modules.pdf.partials.page-decor')
-            <div class="page-header">
-                <h2>Numero de usuarios encuestados</h2>
-            </div>
-
             @php
                 $scopeTable = $report['tables']['scope_population'];
+                $objectiveText = match ($reportType ?? null) {
+                    'process' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por el proceso durante el periodo.',
+                    'individual' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por el dependencia durante el periodo.',
+                    default => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por todos los procesos durante el periodo.',
+                };
             @endphp
 
-            <table>
+            <h3 class="report-section-title">I. OBJETIVO</h3>
+            <p class="report-section-text">{{ $objectiveText }}</p>
+
+            <h3 class="report-section-title">II. ANALISIS DE LA ENCUESTA</h3>
+            <p class="report-section-text">
+                Respecto a las preguntas contenidas en la encuesta, a continuacion, se presenta el respectivo analisis de la totalidad de resultados dada la percepcion ciudadana. El compromiso institucional es el mejoramiento continuo en la calidad de la atencion prestada a la comunidad universitaria, con el fin de evaluar y mejorar los mecanismos de atencion, y los niveles de satisfaccion de los mismos y de esta manera tomar las acciones necesarias para la mejora continua.
+            </p>
+
+            <h3 class="report-section-title">III. ENCUESTADOS</h3>
+            <p class="report-section-text">
+                Se aplico la encuesta de satisfaccion durante el periodo a usuarios ecuestados, A los cuales se les presto el servicio, como se describe en la tabla 1.
+            </p>
+
+            <p class="table-title">Tabla 1. Numero de usuarios encuestados</p>
+            <table class="compact-table">
                 <thead>
                     <tr>
                         <th>{{ $scopeTable['first_column_title'] }}</th>

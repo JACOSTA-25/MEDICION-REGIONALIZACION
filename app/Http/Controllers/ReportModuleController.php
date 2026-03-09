@@ -150,6 +150,7 @@ class ReportModuleController extends Controller
 
                 if ($request->boolean('export_pdf')) {
                     return $this->exportReport(
+                        $type,
                         $meta['title'],
                         $meta['description'],
                         $report,
@@ -188,7 +189,7 @@ class ReportModuleController extends Controller
     /**
      * @param  array<int, array{label: string, value: string}>  $contextRows
      */
-    private function exportReport(string $title, string $description, array $report, array $contextRows): Response
+    private function exportReport(string $type, string $title, string $description, array $report, array $contextRows): Response
     {
         $html = view('modules.report-export', [
             'chartImages' => $this->chartImageService->build($report),
@@ -196,6 +197,7 @@ class ReportModuleController extends Controller
             'description' => $description,
             'printFallback' => ! class_exists(\Dompdf\Dompdf::class),
             'report' => $report,
+            'reportType' => $type,
             'title' => $title,
         ])->render();
 
