@@ -38,8 +38,20 @@ class PdfChartImageService
         $charts = $report['charts'] ?? [];
 
         return [
-            'population_by_program' => $this->renderPieImage($charts['population_by_program']['items'] ?? [], 700, 330),
-            'population_by_estamento' => $this->renderPieImage($charts['population_by_estamento']['items'] ?? [], 700, 330),
+            'population_by_program' => $this->renderPieImage(
+                $charts['population_by_program']['items'] ?? [],
+                700,
+                330,
+                true,
+                false
+            ),
+            'population_by_estamento' => $this->renderPieImage(
+                $charts['population_by_estamento']['items'] ?? [],
+                700,
+                330,
+                true,
+                false
+            ),
             'question_results' => array_map(
                 fn (array $questionChart): string => $this->renderPieImage($questionChart['items'] ?? [], 760, 360),
                 $charts['question_results'] ?? []
@@ -55,7 +67,13 @@ class PdfChartImageService
     /**
      * @param  array<int, array{label: string, value: int|float, percentage?: float, color: string}>  $items
      */
-    private function renderPieImage(array $items, int $width, int $height): string
+    private function renderPieImage(
+        array $items,
+        int $width,
+        int $height,
+        bool $drawOutsidePercentages = false,
+        bool $showPercentageInLegend = true
+    ): string
     {
         $outputScale = self::OUTPUT_SCALE;
         $drawScale = $outputScale * self::SUPERSAMPLE_SCALE;
@@ -91,6 +109,7 @@ class PdfChartImageService
             $this->drawText($image, (int) round(11 * $scale), $centerX - (int) round(42 * $scale), $centerY, $gray, 'Sin datos');
         } else {
             $start = 270.0;
+            $radius = (float) ($diameter / 2);
 
             foreach ($items as $item) {
                 $value = (float) ($item['value'] ?? 0);
@@ -114,13 +133,30 @@ class PdfChartImageService
                     IMG_ARC_PIE
                 );
 
+                if ($drawOutsidePercentages) {
+                    $percentage = isset($item['percentage']) ? (float) $item['percentage'] : (($value / $total) * 100);
+                    $this->drawPiePercentageCallout(
+                        $image,
+                        $centerX,
+                        $centerY,
+                        $radius,
+                        $start,
+                        $end,
+                        $percentage,
+                        $gray,
+                        $text,
+                        (int) round(7 * $scale),
+                        $scale
+                    );
+                }
+
                 $start = $end;
             }
         }
 
         imageellipse($image, $centerX, $centerY, $diameter, $diameter, $this->allocateHexColor($image, '#D1D5DB'));
 
-        $legendX = (int) round(330 * $scale);
+        $legendX = (int) round(350 * $scale);
         $legendY = (int) round(26 * $scale);
         $lineHeight = (int) round(21 * $scale);
 
@@ -141,13 +177,18 @@ class PdfChartImageService
                 $color
             );
 
-            $percentage = isset($item['percentage']) ? (float) $item['percentage'] : 0.0;
-            $legendText = sprintf(
-                '%s (%s - %s%%)',
-                $this->truncate((string) ($item['label'] ?? ''), 34),
-                (string) ($item['value'] ?? 0),
-                rtrim(rtrim(number_format($percentage, 2, '.', ''), '0'), '.')
-            );
+            $legendText = $showPercentageInLegend
+                ? sprintf(
+                    '%s (%s - %s%%)',
+                    $this->truncate((string) ($item['label'] ?? ''), 34),
+                    (string) ($item['value'] ?? 0),
+                    $this->formatPercentage(isset($item['percentage']) ? (float) $item['percentage'] : 0.0)
+                )
+                : sprintf(
+                    '%s (%s)',
+                    $this->truncate((string) ($item['label'] ?? ''), 34),
+                    (string) ($item['value'] ?? 0)
+                );
 
             $this->drawText(
                 $image,
@@ -160,6 +201,58 @@ class PdfChartImageService
         }
 
         return $this->toPngDataUri($image, $width * $outputScale, $height * $outputScale);
+    }
+
+    private function drawPiePercentageCallout(
+        \GdImage $image,
+        int $centerX,
+        int $centerY,
+        float $radius,
+        float $startAngle,
+        float $endAngle,
+        float $percentage,
+        int $lineColor,
+        int $textColor,
+        int $fontSize,
+        int $scale
+    ): void {
+        if ($percentage <= 0) {
+            return;
+        }
+
+        $midAngle = deg2rad(($startAngle + $endAngle) / 2);
+        $edgeX = (int) round($centerX + (cos($midAngle) * $radius));
+        $edgeY = (int) round($centerY + (sin($midAngle) * $radius));
+
+        $lineOuterRadius = $radius + (16 * $scale);
+        $labelRadius = $radius + (30 * $scale);
+        $lineX = (int) round($centerX + (cos($midAngle) * $lineOuterRadius));
+        $lineY = (int) round($centerY + (sin($midAngle) * $lineOuterRadius));
+        $labelX = (int) round($centerX + (cos($midAngle) * $labelRadius));
+        $labelY = (int) round($centerY + (sin($midAngle) * $labelRadius));
+        $isRightSide = cos($midAngle) >= 0;
+        $lineEndX = $isRightSide ? $labelX + (8 * $scale) : $labelX - (8 * $scale);
+
+        imageline($image, $edgeX, $edgeY, $lineX, $lineY, $lineColor);
+        imageline($image, $lineX, $lineY, $lineEndX, $lineY, $lineColor);
+
+        $direction = atan2($edgeY - $lineY, $edgeX - $lineX);
+        $headLength = (float) (4 * $scale);
+        $leftHeadX = (int) round($edgeX - (cos($direction - 0.45) * $headLength));
+        $leftHeadY = (int) round($edgeY - (sin($direction - 0.45) * $headLength));
+        $rightHeadX = (int) round($edgeX - (cos($direction + 0.45) * $headLength));
+        $rightHeadY = (int) round($edgeY - (sin($direction + 0.45) * $headLength));
+        imageline($image, $edgeX, $edgeY, $leftHeadX, $leftHeadY, $lineColor);
+        imageline($image, $edgeX, $edgeY, $rightHeadX, $rightHeadY, $lineColor);
+
+        $labelText = $this->formatPercentage($percentage).'%';
+        $estimatedTextWidth = (int) round(mb_strlen($labelText) * $fontSize * 0.55);
+        $textX = $isRightSide
+            ? $lineEndX + (2 * $scale)
+            : $lineEndX - $estimatedTextWidth - (2 * $scale);
+        $textY = $lineY + (int) round(3 * $scale);
+
+        $this->drawText($image, $fontSize, $textX, $textY, $textColor, $labelText);
     }
 
     /**
@@ -340,6 +433,11 @@ class PdfChartImageService
         }
 
         return rtrim(mb_substr($value, 0, max($limit - 3, 1))).'...';
+    }
+
+    private function formatPercentage(float $percentage): string
+    {
+        return rtrim(rtrim(number_format($percentage, 2, '.', ''), '0'), '.');
     }
 
     private function toPngDataUri(\GdImage $image, ?int $targetWidth = null, ?int $targetHeight = null): string

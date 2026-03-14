@@ -106,7 +106,6 @@
             }
 
             .page-header {
-                border-bottom: 1px solid #e5e7eb;
                 margin-bottom: 10px;
                 padding-bottom: 6px;
             }
@@ -178,10 +177,10 @@
             }
 
             .chart-shell {
-                border: 1px solid #d1d5db;
+                border: none;
                 border-radius: 10px;
                 padding: 6px;
-                margin-bottom: 10px;
+                margin-bottom: 2px;
             }
 
             .chart-image {
@@ -201,6 +200,13 @@
                 font-size: 11px;
             }
 
+            .chart-caption {
+                margin-bottom: 20px;
+                text-align: center;
+                font-size: 10.5px;
+                color: #374151;
+            }
+
             .conclusion-box {
                 border: 1px dashed #9ca3af;
                 border-radius: 8px;
@@ -214,6 +220,15 @@
                 font-weight: 700;
                 margin: 0 0 8px;
                 text-align: left;
+                margin-top: 40px;
+            }
+
+            .report-section-title--shift-right {
+                margin-left: 100px;
+            }
+
+            .report-section-title--compact {
+                margin-bottom: 2px;
             }
 
             .report-section-text {
@@ -223,12 +238,43 @@
                 text-align: justify;
             }
 
+            .question-title {
+                margin: 6px 0 6px;
+                font-size: 11.5px;
+                font-weight: 700;
+            }
+
+            .question-text {
+                margin: 0 0 8px;
+                font-size: 10.5px;
+                line-height: 1.35;
+                text-align: justify;
+            }
+
+            .question-block {
+                padding-top: 20px;
+                padding-left: 92px;
+                padding-right: 120px;
+            }
+
+            .question-title--aligned {
+                margin-top: 20px;
+            }
+
+            .question-chart {
+                margin-top: 6px;
+            }
+
             .table-title {
                 margin: 4px 0 6px;
                 margin-top: 60px;
                 font-size: 10.5px;
                 font-weight: 700;
                 text-align: center;
+            }
+
+            .table-title--compact {
+                margin-top: 12px;
             }
 
             .compact-table th,
@@ -314,37 +360,119 @@
         <section class="page page-with-decor">
             @include('modules.pdf.partials.page-decor')
             <div class="page-header">
-                <h2>Analisis de poblacion encuestada</h2>
-                <p class="muted">Distribucion de usuarios por programa y por estamento.</p>
+                <h2 class="report-section-title report-section-title--shift-right">IV. ANALISIS DE POBLACI&Oacute;N ENCUESTADA</h2>
             </div>
 
             <div class="split-two">
                 <div>
-                    <h3>Programas atendidos</h3>
+                    <h3 class="table-title table-title--compact">PROGRAMAS ATENDIDOS</h3>
                     <div class="chart-shell">
                         <img src="{{ $chartImages['population_by_program'] }}" alt="Programas atendidos" class="chart-image">
                     </div>
+                    <p class="chart-caption">Gr&aacute;fico 1. Poblaci&oacute;n atendida por programa</p>
                 </div>
                 <div>
-                    <h3>Estamentos atendidos</h3>
+                    <h3 class="table-title table-title--compact">ESTAMENTOS ATENDIDOS</h3>
                     <div class="chart-shell">
                         <img src="{{ $chartImages['population_by_estamento'] }}" alt="Estamentos atendidos" class="chart-image">
                     </div>
+                    <p class="chart-caption">Gr&aacute;fico 2. Poblaci&oacute;n atendida por Estamento</p>
                 </div>
             </div>
         </section>
 
+        @php
+            $processName = null;
+            $dependencyName = null;
+
+            if (! empty($contextRows) && is_array($contextRows)) {
+                foreach ($contextRows as $contextRow) {
+                    if (($contextRow['label'] ?? '') === 'Proceso') {
+                        $processName = $contextRow['value'] ?? null;
+                    }
+
+                    if (($contextRow['label'] ?? '') === 'Dependencia') {
+                        $dependencyName = $contextRow['value'] ?? null;
+                    }
+                }
+            }
+
+            $scopeName = match ($reportType ?? null) {
+                'individual' => $dependencyName ? 'la dependencia '.$dependencyName : 'la dependencia seleccionada',
+                'process' => $processName ? 'el proceso '.$processName : 'el proceso seleccionado',
+                default => 'los procesos de forma general',
+            };
+
+            $questionTitles = [
+                1 => 'PRESTACI&Oacute;N DEL SERVICIO',
+                2 => 'ATENCI&Oacute;N DEL FUNCIONARIO',
+                3 => 'EXPECTATIVAS DEL SERVICIO',
+                4 => 'EFICACIA Y OPORTUNIDAD',
+                5 => 'CONDICIONES LOCATIVAS',
+                6 => 'LENGUAJE CLARO',
+            ];
+        @endphp
+
         @foreach ($report['charts']['question_results'] as $index => $chart)
             <section class="page page-with-decor">
                 @include('modules.pdf.partials.page-decor')
-                <div class="page-header">
-                    <h2>{{ $chart['title'] }}</h2>
-                    <p class="muted">{{ $chart['subtitle'] }}</p>
+                @php
+                    $question = $report['questions'][$index] ?? null;
+                    $questionNumber = $question['number'] ?? ($index + 1);
+                    $questionLabel = $question['label'] ?? ('Pregunta '.$questionNumber);
+                    $surveyCount = $report['totals']['survey_count'] ?? 0;
+                    $frequencies = $question['frequencies'] ?? ($chart['items'] ?? []);
+                    $percentageByValue = [];
+
+                    foreach ($frequencies as $frequency) {
+                        $valueKey = (int) ($frequency['value'] ?? 0);
+                        $percentageByValue[$valueKey] = $frequency['percentage'] ?? 0;
+                    }
+
+                    $percentageExcelente = $percentageByValue[5] ?? 0;
+                    $percentageBueno = $percentageByValue[4] ?? 0;
+                    $percentageRegular = $percentageByValue[3] ?? 0;
+                    $percentageMalo = $percentageByValue[2] ?? 0;
+                    $percentageDeficiente = $percentageByValue[1] ?? 0;
+                    $satisfactionPercentage = $question['satisfaction']['satisfied_percentage'] ?? 0;
+                    $dissatisfactionPercentage = $percentageMalo + $percentageDeficiente;
+                    $neutralPercentage = $percentageRegular;
+                    $chartNumber = 4 + $index;
+                @endphp
+
+                @if ($index === 0)
+                    <div class="page-header">
+                        <h2 class="report-section-title report-section-title--shift-right report-section-title--compact">V. RESULTADOS DE LA ENCUESTA APLICADA</h2>
+                    </div>
+                @endif
+
+                <div class="question-block">
+                    <h3 class="question-title question-title--aligned">
+                        PREGUNTA {{ $questionNumber }}. {!! $questionTitles[$questionNumber] ?? strtoupper((string) ($chart['title'] ?? '')) !!}
+                    </h3>
+                    <p class="question-text">
+                        A los {{ $surveyCount }} usuarios encuestados se les formul&oacute; la pregunta No. {{ $questionNumber }}: {{ $questionLabel }}. Los resultados obtenidos fueron los siguientes:
+                        <br><br>
+                        &bull; El {{ number_format($percentageExcelente, 2, '.', '') }}% de los usuarios calific&oacute; el servicio como excelente.
+                        <br><br>
+                        &bull; El {{ number_format($percentageBueno, 2, '.', '') }}% lo calific&oacute; como bueno.
+                        <br><br>
+                        &bull; El {{ number_format($percentageRegular, 2, '.', '') }}% consider&oacute; que fue regular.
+                        <br><br>
+                        &bull; El {{ number_format($percentageMalo, 2, '.', '') }}% manifest&oacute; que fue malo.
+                        <br><br>
+                        &bull; El {{ number_format($percentageDeficiente, 2, '.', '') }}% lo calific&oacute; como deficiente.
+                        <br><br>
+                        En t&eacute;rminos generales, se observa que el {{ number_format($satisfactionPercentage, 2, '.', '') }}% de los usuarios manifiesta satisfacci&oacute;n con el servicio prestado, considerando las valoraciones positivas (excelente y bueno). Por otra parte, el {{ number_format($dissatisfactionPercentage, 2, '.', '') }}% presenta niveles de insatisfacci&oacute;n, al calificar el servicio como malo o deficiente, mientras que el <strong>{{ number_format($neutralPercentage, 2, '.', '') }}% mantiene una percepci&oacute;n neutral al catalogarlo como regular.</strong>
+                    </p>
                 </div>
 
-                <div class="chart-shell">
+                <div class="chart-shell question-chart">
                     <img src="{{ $chartImages['question_results'][$index] ?? '' }}" alt="{{ $chart['title'] }}" class="chart-image">
                 </div>
+                <p class="chart-caption">
+                    Gr&aacute;fica {{ $chartNumber }}. Resultados de la medici&oacute;n del servicio prestado en {{ $scopeName }}.
+                </p>
             </section>
         @endforeach
 
@@ -417,3 +545,6 @@
         </section>
     </body>
 </html>
+
+
+

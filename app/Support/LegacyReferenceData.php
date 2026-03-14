@@ -337,12 +337,12 @@ DATA;
     public static function questionLabels(): array
     {
         return [
-            1 => 'Como le parecio el servicio de la oficina visitada?',
-            2 => 'Como le parecio la atencion del funcionario?',
-            3 => 'El servicio prestado lleno sus expectativas?',
-            4 => 'El servicio prestado fue oportuno y eficaz?',
-            5 => 'Como le parecen las condiciones locativas del area visitada?',
-            6 => 'Considera que el funcionario utilizo un lenguaje claro permitiendo la apropiacion de los temas abordados?',
+            1 => '¿Como le parecio el servicio de la oficina visitada?',
+            2 => '¿Como le parecio la atencion del funcionario?',
+            3 => '¿El servicio prestado lleno sus expectativas?',
+            4 => '¿El servicio prestado fue oportuno y eficaz?',
+            5 => '¿Como le parecen las condiciones locativas del area visitada?',
+            6 => '¿Considera que el funcionario utilizo un lenguaje claro permitiendo la apropiacion de los temas abordados?',
         ];
     }
 
