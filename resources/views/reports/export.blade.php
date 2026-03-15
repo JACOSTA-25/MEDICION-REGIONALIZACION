@@ -66,9 +66,39 @@
             }
 
             .cover-image {
+                position: absolute;
+                inset: 0;
                 display: block;
                 width: 210mm;
                 height: 297mm;
+                z-index: 0;
+            }
+
+            .cover-copy {
+                position: absolute;
+                left: 7mm;
+                top: 236mm;
+                width: 150mm;
+                color: #1AA6A6;
+                font-family: 'Montserrat', 'DejaVu Sans', sans-serif;
+                z-index: 2;
+            }
+
+            .cover-subtitle {
+                margin: 0;
+                font-size: 4.9mm;
+                font-weight: 700;
+                line-height: 1.12;
+                letter-spacing: 0;
+                text-transform: uppercase;
+            }
+
+            .cover-year {
+                margin: 10.5mm 0 0;
+                font-size: 14.5mm;
+                font-weight: 800;
+                line-height: 1;
+                letter-spacing: 0.02em;
             }
 
             .page-with-decor {
@@ -208,11 +238,36 @@
             }
 
             .conclusion-box {
-                border: 1px dashed #9ca3af;
-                border-radius: 8px;
-                padding: 12px;
+                padding: 0;
                 min-height: 240px;
-                background: #f9fafb;
+                background: transparent;
+            }
+
+            .conclusion-copy {
+                margin-left: 100px;
+                margin-right: 120px;
+            }
+
+            .conclusion-copy p + p {
+                margin-top: 8px;
+            }
+
+            .signature-block {
+                margin-top: 20px;
+                margin-left: 100px;
+                margin-right: 120px;
+            }
+
+            .signature-name,
+            .signature-title,
+            .signature-scope {
+                margin: 0;
+                font-size: 10.5px;
+                line-height: 1.35;
+            }
+
+            .signature-name {
+                font-weight: 700;
             }
 
             .report-section-title {
@@ -236,6 +291,14 @@
                 font-size: 10.5px;
                 line-height: 1.35;
                 text-align: justify;
+            }
+
+            .report-section-text--shift-right {
+                margin-left: 100px;
+            }
+
+            .report-section-block--aligned {
+                margin-right: 120px;
             }
 
             .question-title {
@@ -297,17 +360,74 @@
             .compact-table td:nth-child(2) {
                 text-align: center;
             }
+
+            .consolidated-table {
+                width: 94%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .consolidated-table th,
+            .consolidated-table td {
+                font-size: 10px;
+                padding: 4px 5px;
+            }
+
+            .satisfied-users-chart {
+                width: 70%;
+                margin-top: 18px;
+                margin-left: auto;
+                margin-right: auto;
+            }
         </style>
     </head>
     <body>
+        @php
+            $signature = $signature ?? null;
+            $quarterLabel = null;
+            $processName = null;
+            $dependencyName = null;
+
+            if (! empty($contextRows) && is_array($contextRows)) {
+                foreach ($contextRows as $contextRow) {
+                    if (($contextRow['label'] ?? '') === 'Trimestre') {
+                        $quarterLabel = $contextRow['value'] ?? null;
+                    }
+
+                    if (($contextRow['label'] ?? '') === 'Proceso') {
+                        $processName = $contextRow['value'] ?? null;
+                    }
+
+                    if (($contextRow['label'] ?? '') === 'Dependencia') {
+                        $dependencyName = $contextRow['value'] ?? null;
+                    }
+                }
+            }
+
+            $coverQuarter = mb_strtoupper((string) $quarterLabel, 'UTF-8');
+            $coverSubtitle = match ($reportType ?? null) {
+                'process' => trim('PROCESO DE '.mb_strtoupper((string) ($processName ?? 'PROCESO SELECCIONADO'), 'UTF-8').' '.$coverQuarter),
+                'individual' => trim('DEPENDENCIA '.mb_strtoupper((string) ($dependencyName ?? 'DEPENDENCIA SELECCIONADA'), 'UTF-8').' '.$coverQuarter),
+                default => trim('TODOS LOS PROCESOS '.$coverQuarter),
+            };
+            $coverSubtitle = preg_replace('/\s+/', ' ', $coverSubtitle) ?? $coverSubtitle;
+            $coverYear = \Carbon\CarbonImmutable::parse($report['from'] ?? now()->toDateString(), config('app.timezone'))
+                ->format('Y');
+        @endphp
+
         <section class="page cover-page">
             @if ($portadaImage)
                 <img src="{{ $portadaImage }}" alt="Portada" class="cover-image">
             @endif
+
+            <div class="cover-copy">
+                <p class="cover-subtitle">{{ $coverSubtitle }}</p>
+                <p class="cover-year">{{ $coverYear }}</p>
+            </div>
         </section>
 
         <section class="page page-with-decor page-intro">
-            @include('modules.pdf.partials.page-decor')
+            @include('reports.pdf.partials.page-decor')
             @php
                 $scopeTable = $report['tables']['scope_population'];
                 $objectiveText = match ($reportType ?? null) {
@@ -346,7 +466,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2">Sin datos para el rango de fechas seleccionado.</td>
+                            <td colspan="2">Sin datos para el trimestre seleccionado.</td>
                         </tr>
                     @endforelse
                     <tr>
@@ -358,7 +478,7 @@
         </section>
 
         <section class="page page-with-decor">
-            @include('modules.pdf.partials.page-decor')
+            @include('reports.pdf.partials.page-decor')
             <div class="page-header">
                 <h2 class="report-section-title report-section-title--shift-right">IV. ANALISIS DE POBLACI&Oacute;N ENCUESTADA</h2>
             </div>
@@ -382,21 +502,6 @@
         </section>
 
         @php
-            $processName = null;
-            $dependencyName = null;
-
-            if (! empty($contextRows) && is_array($contextRows)) {
-                foreach ($contextRows as $contextRow) {
-                    if (($contextRow['label'] ?? '') === 'Proceso') {
-                        $processName = $contextRow['value'] ?? null;
-                    }
-
-                    if (($contextRow['label'] ?? '') === 'Dependencia') {
-                        $dependencyName = $contextRow['value'] ?? null;
-                    }
-                }
-            }
-
             $scopeName = match ($reportType ?? null) {
                 'individual' => $dependencyName ? 'la dependencia '.$dependencyName : 'la dependencia seleccionada',
                 'process' => $processName ? 'el proceso '.$processName : 'el proceso seleccionado',
@@ -415,7 +520,7 @@
 
         @foreach ($report['charts']['question_results'] as $index => $chart)
             <section class="page page-with-decor">
-                @include('modules.pdf.partials.page-decor')
+                @include('reports.pdf.partials.page-decor')
                 @php
                     $question = $report['questions'][$index] ?? null;
                     $questionNumber = $question['number'] ?? ($index + 1);
@@ -452,17 +557,17 @@
                     </h3>
                     <p class="question-text">
                         A los {{ $surveyCount }} usuarios encuestados se les formul&oacute; la pregunta No. {{ $questionNumber }}: {{ $questionLabel }}. Los resultados obtenidos fueron los siguientes:
-                        <br><br>
+                        <br>
                         &bull; El {{ number_format($percentageExcelente, 2, '.', '') }}% de los usuarios calific&oacute; el servicio como excelente.
-                        <br><br>
+                        <br>
                         &bull; El {{ number_format($percentageBueno, 2, '.', '') }}% lo calific&oacute; como bueno.
-                        <br><br>
+                        <br>
                         &bull; El {{ number_format($percentageRegular, 2, '.', '') }}% consider&oacute; que fue regular.
-                        <br><br>
+                        <br>
                         &bull; El {{ number_format($percentageMalo, 2, '.', '') }}% manifest&oacute; que fue malo.
-                        <br><br>
+                        <br>
                         &bull; El {{ number_format($percentageDeficiente, 2, '.', '') }}% lo calific&oacute; como deficiente.
-                        <br><br>
+                        <br>
                         En t&eacute;rminos generales, se observa que el {{ number_format($satisfactionPercentage, 2, '.', '') }}% de los usuarios manifiesta satisfacci&oacute;n con el servicio prestado, considerando las valoraciones positivas (excelente y bueno). Por otra parte, el {{ number_format($dissatisfactionPercentage, 2, '.', '') }}% presenta niveles de insatisfacci&oacute;n, al calificar el servicio como malo o deficiente, mientras que el <strong>{{ number_format($neutralPercentage, 2, '.', '') }}% mantiene una percepci&oacute;n neutral al catalogarlo como regular.</strong>
                     </p>
                 </div>
@@ -477,17 +582,38 @@
         @endforeach
 
         <section class="page page-with-decor">
-            @include('modules.pdf.partials.page-decor')
-            <div class="page-header">
-                <h2>Consolidado de la medicion de la satisfaccion de los usuarios</h2>
-            </div>
-
+            @include('reports.pdf.partials.page-decor')
             @php
                 $consolidated = $report['tables']['measurement_consolidated'];
                 $averages = $consolidated['averages'];
+                $globalIndicator = $report['indicators']['global'] ?? [];
+                $scopeIndicatorName = mb_strtoupper((string) ($dependencyName ?? $processName ?? 'GESTION DOCUMENTAL'), 'UTF-8');
+                $formatReportValue = static function (float|int $value): string {
+                    $formatted = number_format((float) $value, 2, '.', '');
+
+                    return rtrim(rtrim($formatted, '0'), '.');
+                };
+                $questionPercentages = [];
+
+                foreach (($report['questions'] ?? []) as $questionData) {
+                    $questionPercentages[(int) ($questionData['number'] ?? 0)] = $questionData['satisfaction']['satisfied_percentage'] ?? 0;
+                }
             @endphp
 
-            <table>
+            <div class="page-header">
+                <h2 class="report-section-title report-section-title--shift-right report-section-title--compact report-section-block--aligned">
+                    VI. INDICADOR DE MEDICI&Oacute;N DE LA SATISFACCI&Oacute;N GLOBAL DE LOS USUARIOS DE {{ $scopeIndicatorName }}
+                </h2>
+            </div>
+
+            <p class="report-section-text report-section-text--shift-right report-section-block--aligned">
+                Seg&uacute;n los resultados obtenidos en las gr&aacute;ficas, podemos decir que, en promedio de los {{ $report['totals']['survey_count'] ?? 0 }} usuarios encuestados, {{ $formatReportValue($globalIndicator['satisfied_users'] ?? 0) }} se sintieron satisfechos, lo que da un porcentaje de satisfacci&oacute;n global del {{ $formatReportValue($globalIndicator['satisfaction_percentage'] ?? 0) }}%.
+                Respecto a los aspectos evaluados el porcentaje de satisfacci&oacute;n para el Servicio fue de {{ $formatReportValue($questionPercentages[1] ?? 0) }}%, para la Atencion fue de {{ $formatReportValue($questionPercentages[2] ?? 0) }}%, para la expectativa del servicio fue de {{ $formatReportValue($questionPercentages[3] ?? 0) }}%, para el Servicio oportuno y eficaz fue de {{ $formatReportValue($questionPercentages[4] ?? 0) }}%, para el aspecto de Condiciones locativas fue de {{ $formatReportValue($questionPercentages[5] ?? 0) }}% y para el aspecto del lenguaje usado por el funcionario fue de {{ $formatReportValue($questionPercentages[6] ?? 0) }}%.
+            </p>
+
+            <p style="margin-top: 30px;" class="table-title table-title--compact">Tabla 2. CONSOLIDADO GLOBAL MEDICI&Oacute;N DE LA SATISFACCI&Oacute;N DE LOS USUARIOS</p>
+
+            <table class="consolidated-table">
                 <thead>
                     <tr>
                         <th>Pregunta</th>
@@ -525,26 +651,101 @@
                 </tbody>
             </table>
 
-            <h3 style="margin-top: 10px;">% Usuarios satisfechos</h3>
-            <div class="chart-shell">
+            <h3 style="margin-top: 30px; margin-left: 100px">Porcentaje de usuarios satisfechos</h3>
+            <div class="chart-shell satisfied-users-chart">
                 <img src="{{ $chartImages['satisfied_users_percentage'] }}" alt="% Usuarios satisfechos" class="chart-image">
             </div>
+            <p class="chart-caption">Gr&aacute;fico 10. Porcentaje de Usuarios Satisfechos</p>
         </section>
 
         <section class="page page-with-decor">
-            @include('modules.pdf.partials.page-decor')
+            @include('reports.pdf.partials.page-decor')
+            @php
+                $questionPercentages = [];
+
+                foreach (($report['questions'] ?? []) as $questionData) {
+                    $questionPercentages[(int) ($questionData['number'] ?? 0)] = $questionData['satisfaction']['satisfied_percentage'] ?? 0;
+                }
+
+                $formatConclusionPercentage = static function (float|int $value): string {
+                    $formatted = number_format((float) $value, 2, '.', '');
+
+                    return rtrim(rtrim($formatted, '0'), '.');
+                };
+
+                $scopeEntityName = match ($reportType ?? null) {
+                    'individual' => mb_strtoupper((string) ($dependencyName ?? 'DEPENDENCIA SELECCIONADA'), 'UTF-8'),
+                    'process' => mb_strtoupper((string) ($processName ?? 'PROCESO SELECCIONADO'), 'UTF-8'),
+                    default => 'FORMA GENERAL',
+                };
+
+                $conclusionTitle = match ($reportType ?? null) {
+                    'individual' => 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.$scopeEntityName.' ('.$coverYear.')',
+                    'process' => 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.$scopeEntityName.' ('.$coverYear.')',
+                    default => 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE FORMA GENERAL ('.$coverYear.')',
+                };
+
+                $conclusionProvider = match ($reportType ?? null) {
+                    'individual' => 'por parte de la dependencia '.$scopeEntityName,
+                    'process' => 'por parte de la oficina '.$scopeEntityName,
+                    default => 'en todos los procesos',
+                };
+
+                $conclusionLocation = match ($reportType ?? null) {
+                    'individual' => 'en la dependencia '.$scopeEntityName,
+                    'process' => 'en la oficina '.$scopeEntityName,
+                    default => 'en todos los procesos',
+                };
+
+                $surveyCount = (int) ($report['totals']['survey_count'] ?? 0);
+                $surveyLabel = $surveyCount === 1 ? 'usuario' : 'usuarios';
+                $neutralAnswersPercentage = $formatConclusionPercentage(
+                    $report['indicators']['global']['neutral_answer_percentage'] ?? 0
+                );
+            @endphp
+
             <div class="page-header">
-                <h2>Conclusion de la satisfaccion</h2>
+                <h2 class="report-section-title report-section-title--shift-right report-section-title--compact report-section-block--aligned">
+                    {{ $conclusionTitle }}
+                </h2>
             </div>
 
             <div class="conclusion-box">
-                <p class="muted">
-                    Seccion reservada para la construccion de conclusiones en la siguiente iteracion.
-                </p>
+                <div class="conclusion-copy">
+                    <p class="report-section-text">
+                        El numero de usuarios encuestados durante el {{ $quarterLabel }} de {{ $coverYear }} fue de {{ $surveyCount }} {{ $surveyLabel }} a los cuales se les presto el servicio {{ $conclusionProvider }}.
+                    </p>
+                    <p class="report-section-text">
+                        El {{ $formatConclusionPercentage($questionPercentages[2] ?? 0) }}% se siente satisfecho con la atencion del funcionario {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
+                    </p>
+                    <p class="report-section-text">
+                        El {{ $formatConclusionPercentage($questionPercentages[1] ?? 0) }}% se siente satisfecho con el servicio prestado {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
+                    </p>
+                    <p class="report-section-text">
+                        El {{ $formatConclusionPercentage($questionPercentages[3] ?? 0) }}% sintio que el servicio lleno sus expectativas {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
+                    </p>
+                    <p class="report-section-text">
+                        El {{ $formatConclusionPercentage($questionPercentages[4] ?? 0) }}% se siente satisfecho con la eficacia y la oportunidad del servicio prestado {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
+                    </p>
+                    <p class="report-section-text">
+                        El {{ $formatConclusionPercentage($questionPercentages[5] ?? 0) }}% se siente satisfecho con las condiciones locativas {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
+                    </p>
+                    <p class="report-section-text">
+                        El {{ $formatConclusionPercentage($questionPercentages[6] ?? 0) }}% se siente satisfecho con el lenguaje usado por los funcionarios {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
+                    </p>
+                    <p class="report-section-text">
+                        En torno a los resultados obtenidos se presento un {{ $neutralAnswersPercentage }}% donde los usuarios perciben un servicio ni satisfactorio ni insatisfactorio, teniendo en cuenta esta informacion se adelantaran acciones para mejorar el nivel de satisfaccion de estos usuarios.
+                    </p>
+                </div>
+
+                @if ($signature)
+                    <div class="signature-block">
+                        <p class="signature-name">{{ $signature['name'] }}</p>
+                        <p class="signature-title">{{ $signature['title'] }}</p>
+                        <p class="signature-scope">{{ $signature['scope'] }}</p>
+                    </div>
+                @endif
             </div>
         </section>
     </body>
 </html>
-
-
-

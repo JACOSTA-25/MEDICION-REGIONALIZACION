@@ -1,5 +1,5 @@
 <x-app-layout>
-    @include('modules.partials.report-form', [
+    @include('reports.partials.form', [
         'title' => $title,
         'description' => $description,
         'summary' => $summary,
@@ -11,8 +11,10 @@
         'selectedProcessLocked' => $selectedProcessLocked,
         'selectedDependenciaId' => $selectedDependenciaId,
         'selectedDependencyLocked' => $selectedDependencyLocked,
-        'selectedFrom' => $selectedFrom,
-        'selectedTo' => $selectedTo,
+        'quarters' => $quarters,
+        'quarterYear' => $quarterYear,
+        'selectedQuarterNumber' => $selectedQuarterNumber,
+        'selectedQuarterPeriod' => $selectedQuarterPeriod,
         'selectionSummary' => $selectionSummary,
         'filterError' => $filterError,
         'pdfUrl' => $pdfUrl,

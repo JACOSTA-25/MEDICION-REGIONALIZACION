@@ -73,8 +73,7 @@ class PdfChartImageService
         int $height,
         bool $drawOutsidePercentages = false,
         bool $showPercentageInLegend = true
-    ): string
-    {
+    ): string {
         $outputScale = self::OUTPUT_SCALE;
         $drawScale = $outputScale * self::SUPERSAMPLE_SCALE;
         $scale = $drawScale;
@@ -295,13 +294,13 @@ class PdfChartImageService
             $value = 100 - ($tick * 20);
 
             imageline($image, $left, $y, $right, $y, $grid);
-            $this->drawText($image, (int) round(7 * $scale), (int) round(4 * $scale), $y + (int) round(3 * $scale), $text, $value.'%');
+            $this->drawText($image, (int) round(12 * $scale), (int) round(4 * $scale), $y + (int) round(5 * $scale), $text, $value.'%');
         }
 
         if ($items !== []) {
             $count = max(count($items), 1);
             $step = ($right - $left) / $count;
-            $barWidth = max(min((int) floor($step * 0.52), 52), 18);
+            $barWidth = max(min((int) floor($step * 1.10), 152), 60);
 
             foreach ($items as $index => $item) {
                 $value = max(min((float) ($item['value'] ?? 0), 100), 0);
@@ -316,9 +315,9 @@ class PdfChartImageService
                 $valueText = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.').'%';
                 $this->drawText(
                     $image,
-                    (int) round(7 * $scale),
+                    (int) round(12 * $scale),
                     $x,
-                    max($y - (int) round(6 * $scale), (int) round(2 * $scale)),
+                    max($y - (int) round(12 * $scale), (int) round(6 * $scale)),
                     $text,
                     $valueText
                 );
@@ -326,9 +325,9 @@ class PdfChartImageService
                 $label = $this->truncate((string) ($item['label'] ?? ''), 18);
                 $this->drawText(
                     $image,
-                    (int) round(7 * $scale),
+                    (int) round(10 * $scale),
                     $x,
-                    $baseY + (int) round(18 * $scale),
+                    $baseY + (int) round(20 * $scale),
                     $text,
                     $label
                 );

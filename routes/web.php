@@ -1,9 +1,14 @@
 <?php
 
-use App\Http\Controllers\ProcessDependencyManagementController;
-use App\Http\Controllers\ReportModuleController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Organization\DependencyController;
+use App\Http\Controllers\Organization\ProcessController;
+use App\Http\Controllers\Organization\ServiceController;
+use App\Http\Controllers\Reports\GeneralReportController;
+use App\Http\Controllers\Reports\IndividualReportController;
+use App\Http\Controllers\Reports\ProcessReportController;
 use App\Http\Controllers\SurveyController;
-use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\Users\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -17,91 +22,77 @@ Route::get('/encuesta/catalogos/dependencias', [SurveyController::class, 'depend
 Route::get('/encuesta/catalogos/servicios', [SurveyController::class, 'servicios'])->name('survey.catalogs.servicios');
 
 Route::middleware('auth')->group(function () {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::put('/dashboard/trimestres', [DashboardController::class, 'updateQuarters'])->name('dashboard.quarters.update');
 
-    Route::get('/reportes/general', [ReportModuleController::class, 'general'])
-        ->middleware('module.access:general_reports')
-        ->name('reports.general');
+    Route::prefix('reportes')->name('reports.')->group(function () {
+        Route::get('general', [GeneralReportController::class, 'index'])
+            ->middleware('module.access:general_reports')
+            ->name('general');
 
-    Route::get('/reportes/proceso', [ReportModuleController::class, 'process'])
-        ->middleware('module.access:process_reports')
-        ->name('reports.process');
+        Route::get('proceso', [ProcessReportController::class, 'index'])
+            ->middleware('module.access:process_reports')
+            ->name('process');
 
-    Route::get('/reportes/individual', [ReportModuleController::class, 'individual'])
-        ->middleware('module.access:individual_reports')
-        ->name('reports.individual');
+        Route::get('individual', [IndividualReportController::class, 'index'])
+            ->middleware('module.access:individual_reports')
+            ->name('individual');
+    });
 
-    Route::get('/usuarios', [UserManagementController::class, 'index'])
-        ->middleware('module.access:users')
-        ->name('users.index');
+    Route::prefix('usuarios')->name('users.')->middleware('module.access:users')->group(function () {
+        Route::get('', [UserController::class, 'index'])->name('index');
+        Route::post('', [UserController::class, 'store'])->name('store');
+        Route::put('{user}', [UserController::class, 'update'])->name('update');
+    });
 
-    Route::post('/usuarios', [UserManagementController::class, 'store'])
-        ->middleware('module.access:users')
-        ->name('users.store');
-
-    Route::put('/usuarios/{user}', [UserManagementController::class, 'update'])
-        ->middleware('module.access:users')
-        ->name('users.update');
-
-    Route::get('/estructura-organizacional', [ProcessDependencyManagementController::class, 'index'])
+    Route::prefix('estructura-organizacional')
+        ->name('process-dependency.')
         ->middleware('module.access:process_dependency')
-        ->name('process-dependency.index');
+        ->group(function () {
+            Route::get('', [ProcessController::class, 'index'])->name('index');
 
-    Route::get('/estructura-organizacional/procesos/{proceso}/dependencias', [ProcessDependencyManagementController::class, 'dependencies'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.processes.dependencies');
+            Route::get('procesos/{proceso}/dependencias', [DependencyController::class, 'index'])
+                ->name('processes.dependencies');
 
-    Route::get('/estructura-organizacional/dependencias/{dependencia}/servicios', [ProcessDependencyManagementController::class, 'services'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.dependencies.services');
+            Route::post('procesos', [ProcessController::class, 'store'])
+                ->name('processes.store');
 
-    Route::post('/estructura-organizacional/procesos', [ProcessDependencyManagementController::class, 'storeProcess'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.processes.store');
+            Route::put('procesos/{proceso}', [ProcessController::class, 'update'])
+                ->name('processes.update');
 
-    Route::put('/estructura-organizacional/procesos/{proceso}', [ProcessDependencyManagementController::class, 'updateProcess'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.processes.update');
+            Route::delete('procesos/{proceso}', [ProcessController::class, 'deactivate'])
+                ->name('processes.deactivate');
 
-    Route::delete('/estructura-organizacional/procesos/{proceso}', [ProcessDependencyManagementController::class, 'deactivateProcess'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.processes.deactivate');
+            Route::patch('procesos/{proceso}/activar', [ProcessController::class, 'activate'])
+                ->name('processes.activate');
 
-    Route::patch('/estructura-organizacional/procesos/{proceso}/activar', [ProcessDependencyManagementController::class, 'activateProcess'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.processes.activate');
+            Route::get('dependencias/{dependencia}/servicios', [ServiceController::class, 'index'])
+                ->name('dependencies.services');
 
-    Route::post('/estructura-organizacional/dependencias', [ProcessDependencyManagementController::class, 'storeDependency'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.dependencies.store');
+            Route::post('dependencias', [DependencyController::class, 'store'])
+                ->name('dependencies.store');
 
-    Route::put('/estructura-organizacional/dependencias/{dependencia}', [ProcessDependencyManagementController::class, 'updateDependency'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.dependencies.update');
+            Route::put('dependencias/{dependencia}', [DependencyController::class, 'update'])
+                ->name('dependencies.update');
 
-    Route::delete('/estructura-organizacional/dependencias/{dependencia}', [ProcessDependencyManagementController::class, 'deactivateDependency'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.dependencies.deactivate');
+            Route::delete('dependencias/{dependencia}', [DependencyController::class, 'deactivate'])
+                ->name('dependencies.deactivate');
 
-    Route::patch('/estructura-organizacional/dependencias/{dependencia}/activar', [ProcessDependencyManagementController::class, 'activateDependency'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.dependencies.activate');
+            Route::patch('dependencias/{dependencia}/activar', [DependencyController::class, 'activate'])
+                ->name('dependencies.activate');
 
-    Route::post('/estructura-organizacional/servicios', [ProcessDependencyManagementController::class, 'storeService'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.services.store');
+            Route::post('servicios', [ServiceController::class, 'store'])
+                ->name('services.store');
 
-    Route::put('/estructura-organizacional/servicios/{servicio}', [ProcessDependencyManagementController::class, 'updateService'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.services.update');
+            Route::put('servicios/{servicio}', [ServiceController::class, 'update'])
+                ->name('services.update');
 
-    Route::delete('/estructura-organizacional/servicios/{servicio}', [ProcessDependencyManagementController::class, 'deactivateService'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.services.deactivate');
+            Route::delete('servicios/{servicio}', [ServiceController::class, 'deactivate'])
+                ->name('services.deactivate');
 
-    Route::patch('/estructura-organizacional/servicios/{servicio}/activar', [ProcessDependencyManagementController::class, 'activateService'])
-        ->middleware('module.access:process_dependency')
-        ->name('process-dependency.services.activate');
+            Route::patch('servicios/{servicio}/activar', [ServiceController::class, 'activate'])
+                ->name('services.activate');
+        });
 });
 
 require __DIR__.'/auth.php';

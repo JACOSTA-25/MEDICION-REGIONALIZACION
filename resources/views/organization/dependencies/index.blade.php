@@ -48,8 +48,8 @@
                     </button>
                 </div>
 
-                <div class="ms-table-shell">
-                    <table class="ms-data-table">
+                <div class="ms-table-shell ms-table-shell-compact">
+                    <table class="ms-data-table ms-data-table-compact">
                         <thead>
                             <tr>
                                 <th>Nombre</th>
@@ -76,10 +76,15 @@
                                         <div class="ms-inline-actions">
                                             <button
                                                 type="button"
-                                                class="ms-btn ms-btn-secondary"
+                                                class="ms-btn ms-btn-secondary ms-btn-icon"
+                                                aria-label="Editar dependencia"
+                                                title="Editar dependencia"
                                                 x-on:click="editDependencyId = {{ $dependency->id_dependencia }}"
                                             >
-                                                Editar
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                    <path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25Z" fill="currentColor"/>
+                                                    <path d="M19.71 7.04a1.003 1.003 0 0 0 0-1.42l-1.34-1.34a1.003 1.003 0 0 0-1.42 0l-1.05 1.05 2.75 2.75 1.06-1.04Z" fill="currentColor"/>
+                                                </svg>
                                             </button>
 
                                             @if ($dependency->activo)
@@ -87,8 +92,11 @@
                                                     @csrf
                                                     @method('DELETE')
                                                     <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
-                                                    <button type="submit" class="ms-btn ms-btn-muted">
-                                                        Inactivar
+                                                    <button type="submit" class="ms-btn ms-btn-muted ms-btn-icon" aria-label="Inactivar dependencia" title="Inactivar dependencia">
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                            <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
+                                                            <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
+                                                        </svg>
                                                     </button>
                                                 </form>
                                             @else
@@ -96,8 +104,11 @@
                                                     @csrf
                                                     @method('PATCH')
                                                     <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
-                                                    <button type="submit" class="ms-btn ms-btn-primary">
-                                                        Activar
+                                                    <button type="submit" class="ms-btn ms-btn-primary ms-btn-icon" aria-label="Activar dependencia" title="Activar dependencia">
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                            <path d="M12 2 3 6v6c0 5 3.84 9.74 9 11 5.16-1.26 9-6 9-11V6l-9-4Z" fill="currentColor"/>
+                                                            <path d="m10.5 14.5-2.5-2.5-1.5 1.5 4 4 7-7-1.5-1.5-5.5 5.5Z" fill="#fff"/>
+                                                        </svg>
                                                     </button>
                                                 </form>
                                             @endif

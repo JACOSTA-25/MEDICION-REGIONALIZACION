@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Users;
 
+use App\Http\Controllers\Controller;
 use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\User;
@@ -12,9 +13,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator as ValidationValidator;
 
-class UserManagementController extends Controller
+class UserController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
         $dependencies = Dependencia::query()
             ->active()
@@ -33,7 +34,7 @@ class UserManagementController extends Controller
             )
             ->all();
 
-        return view('modules.usuarios', [
+        return view('users.index', [
             'dependenciesByProcess' => $dependenciesByProcess,
             'processes' => Proceso::query()->active()->orderBy('nombre')->get(['id_proceso', 'nombre']),
             'roles' => $this->roles(),
@@ -59,7 +60,7 @@ class UserManagementController extends Controller
                 ->with('open_create_user', true);
         }
 
-        User::query()->create($this->payload($request, null));
+        User::query()->create($this->payload($request));
 
         return redirect()
             ->route('users.index')
@@ -78,7 +79,7 @@ class UserManagementController extends Controller
                 ->with('open_edit_user', $user->id);
         }
 
-        $user->fill($this->payload($request, $user));
+        $user->fill($this->payload($request));
         $user->save();
 
         return redirect()
@@ -146,7 +147,7 @@ class UserManagementController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function payload(Request $request, ?User $user): array
+    private function payload(Request $request): array
     {
         $role = (string) $request->input('rol');
         $processId = in_array($role, [User::ROLE_LIDER_PROCESO, User::ROLE_LIDER_DEPENDENCIA], true)

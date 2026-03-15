@@ -16,8 +16,11 @@ class User extends Authenticatable
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     public const ROLE_ADMIN = 'ADMIN';
+
     public const ROLE_LIDER_PROCESO = 'LIDER_PROCESO';
+
     public const ROLE_LIDER_DEPENDENCIA = 'LIDER_DEPENDENCIA';
+
     public const ROLE_ADMIN_2_0 = 'ADMIN_2_0';
 
     /**
@@ -125,6 +128,11 @@ class User extends Authenticatable
     }
 
     public function canAccessUsersModule(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    public function canManageReportingQuarters(): bool
     {
         return $this->isAdmin();
     }

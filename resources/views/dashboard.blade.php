@@ -1,6 +1,7 @@
 @php
     $user = auth()->user();
     $surveyLink = route('survey.create');
+    $quarterErrors = $errors->getBag('updateQuarters');
 
     $modules = [
         [
@@ -94,6 +95,102 @@
                         <div class="ms-inline-alert">
                             Tu usuario no tiene modulos habilitados. Contacta al administrador.
                         </div>
+                    @endif
+                </section>
+
+                <section class="ms-report-card">
+                    <div class="ms-report-card-header">
+                        <h2>Trimestres {{ $quarterYear }}</h2>
+                        <p>
+                            El sistema genera los reportes usando el trimestre seleccionado. Aqui se definen las fechas que usara cada uno.
+                        </p>
+                    </div>
+
+                    @if (session('quarter_status'))
+                        <div class="ms-inline-alert ms-inline-alert-soft">
+                            {{ session('quarter_status') }}
+                        </div>
+                    @endif
+
+                    @if ($quarterErrors->any())
+                        <div class="ms-inline-alert">
+                            {{ $quarterErrors->first() }}
+                        </div>
+                    @endif
+
+                    @if ($canManageQuarters)
+                        <form method="POST" action="{{ route('dashboard.quarters.update') }}" class="ms-report-form">
+                            @csrf
+                            @method('PUT')
+
+                            <div class="ms-table-shell">
+                                <table class="ms-data-table ms-data-table-compact">
+                                    <thead>
+                                        <tr>
+                                            <th>Trimestre</th>
+                                            <th>Fecha inicial</th>
+                                            <th>Fecha final</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($quarters as $quarter)
+                                            <tr>
+                                                <td class="ms-cell-name">{{ $quarter->label() }}</td>
+                                                <td>
+                                                    <input
+                                                        class="ms-quarter-input"
+                                                        type="date"
+                                                        name="quarters[{{ $quarter->quarter_number }}][start_date]"
+                                                        value="{{ old('quarters.'.$quarter->quarter_number.'.start_date', $quarter->start_date?->format('Y-m-d')) }}"
+                                                    >
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="ms-quarter-input"
+                                                        type="date"
+                                                        name="quarters[{{ $quarter->quarter_number }}][end_date]"
+                                                        value="{{ old('quarters.'.$quarter->quarter_number.'.end_date', $quarter->end_date?->format('Y-m-d')) }}"
+                                                    >
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="ms-form-actions">
+                                <button type="submit" class="ms-btn ms-btn-primary">
+                                    Guardar trimestres
+                                </button>
+                            </div>
+
+                            <p class="ms-form-note">
+                                Solo el Super Administrador puede actualizar estos periodos. Los reportes tomaran estas fechas de forma automatica.
+                            </p>
+                        </form>
+                    @else
+                        <div class="ms-table-shell">
+                            <table class="ms-data-table ms-data-table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>Trimestre</th>
+                                        <th>Periodo configurado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($quarters as $quarter)
+                                        <tr>
+                                            <td class="ms-cell-name">{{ $quarter->label() }}</td>
+                                            <td>{{ $quarter->periodLabel() }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="ms-form-note">
+                            Esta configuracion es administrada por el Super Administrador desde esta misma pantalla.
+                        </p>
                     @endif
                 </section>
             </div>

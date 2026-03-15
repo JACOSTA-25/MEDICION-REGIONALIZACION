@@ -1,10 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Reports;
 
+use App\Http\Controllers\Controller;
 use App\Models\Dependencia;
 use App\Models\Proceso;
+use App\Models\ReportingQuarter;
+use App\Models\User;
 use App\Services\PdfChartImageService;
+use App\Services\ReportingQuarterService;
 use App\Services\ReportService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -13,51 +17,41 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-class ReportModuleController extends Controller
+abstract class AbstractReportController extends Controller
 {
     public function __construct(
-        private readonly ReportService $reportService,
-        private readonly PdfChartImageService $chartImageService,
+        protected readonly ReportService $reportService,
+        protected readonly PdfChartImageService $chartImageService,
+        protected readonly ReportingQuarterService $reportingQuarterService,
     ) {}
 
-    public function general(Request $request): View|Response
-    {
-        return $this->renderModuleView($request, 'general', 'modules.reportes-general', [
-            'title' => 'Reporte general',
-            'description' => 'Consolidado de todos los procesos dentro del rango de fechas seleccionado.',
-            'summary' => 'Filtra por fechas y calcula el comportamiento global de satisfaccion de todas las encuestas.',
-        ]);
-    }
-
-    public function process(Request $request): View|Response
-    {
-        return $this->renderModuleView($request, 'process', 'modules.reportes-proceso', [
-            'title' => 'Reporte por proceso',
-            'description' => 'Consolidado de todas las dependencias que pertenecen al proceso seleccionado.',
-            'summary' => 'Selecciona un proceso y el rango de fechas para agrupar todas sus dependencias.',
-        ]);
-    }
-
-    public function individual(Request $request): View|Response
-    {
-        return $this->renderModuleView($request, 'individual', 'modules.reportes-individual', [
-            'title' => 'Reporte individual',
-            'description' => 'Analisis puntual de la dependencia seleccionada dentro de su proceso.',
-            'summary' => 'Selecciona proceso, dependencia y rango de fechas para calcular el detalle individual.',
-        ]);
-    }
-
     /**
-     * @param  array{title: string, description: string, summary: string}  $meta
+     * @return array{
+     *     type: string,
+     *     view: string,
+     *     title: string,
+     *     description: string,
+     *     summary: string
+     * }
      */
-    private function renderModuleView(Request $request, string $type, string $view, array $meta): View|Response
+    abstract protected function definition(): array;
+
+    final protected function renderReportModule(Request $request): View|Response
     {
+        $definition = $this->definition();
+        $type = $definition['type'];
         $user = $request->user();
         $showProcessSelect = $type !== 'general';
         $showDependencySelect = $type === 'individual';
+        $quarterYear = $this->reportingQuarterService->currentYear();
+        $quarters = $this->reportingQuarterService->forYear($quarterYear);
 
-        $selectedFrom = (string) $request->query('desde', '');
-        $selectedTo = (string) $request->query('hasta', '');
+        $selectedQuarterNumber = $this->normalizeQuarter($request->query('trimestre'));
+        $selectedQuarter = $selectedQuarterNumber !== null
+            ? $quarters->firstWhere('quarter_number', $selectedQuarterNumber)
+            : null;
+        $selectedFrom = $selectedQuarter?->start_date?->toDateString() ?? '';
+        $selectedTo = $selectedQuarter?->end_date?->toDateString() ?? '';
         $selectedProcesoId = $this->normalizeId($request->query('id_proceso'));
         $selectedDependenciaId = $this->normalizeId($request->query('id_dependencia'));
 
@@ -116,18 +110,22 @@ class ReportModuleController extends Controller
 
         if ($attempted) {
             $validator = Validator::make($request->query(), [
-                'desde' => ['required', 'date'],
-                'hasta' => ['required', 'date', 'after_or_equal:desde'],
+                'trimestre' => ['required', 'integer', 'between:1,4'],
                 'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
                 'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
             ]);
 
             $validator->after(function ($validator) use (
+                $selectedQuarter,
                 $showProcessSelect,
                 $showDependencySelect,
                 $selectedProceso,
                 $selectedDependencia
             ): void {
+                if (! $selectedQuarter) {
+                    $validator->errors()->add('trimestre', 'Selecciona un trimestre valido para generar el reporte.');
+                }
+
                 if ($showProcessSelect && ! $selectedProceso) {
                     $validator->errors()->add('id_proceso', 'Selecciona un proceso valido para generar el reporte.');
                 }
@@ -151,53 +149,86 @@ class ReportModuleController extends Controller
                 if ($request->boolean('export_pdf')) {
                     return $this->exportReport(
                         $type,
-                        $meta['title'],
-                        $meta['description'],
+                        $definition['title'],
+                        $definition['description'],
                         $report,
-                        $this->buildContextRows($selectedFrom, $selectedTo, $selectedProceso?->nombre, $selectedDependencia?->nombre)
+                        $this->resolveSignature(
+                            $type,
+                            $selectedProcesoId,
+                            $selectedDependenciaId,
+                            $selectedProceso?->nombre,
+                            $selectedDependencia?->nombre
+                        ),
+                        $this->buildContextRows(
+                            $selectedQuarter,
+                            $selectedProceso?->nombre,
+                            $selectedDependencia?->nombre
+                        )
                     );
                 }
             }
         }
 
-        return view($view, array_merge($meta, [
+        $routeName = $request->route()?->getName();
+        $pdfUrl = null;
+
+        if ($report && $routeName !== null) {
+            $pdfUrl = route($routeName, array_filter([
+                'trimestre' => $selectedQuarterNumber,
+                'id_proceso' => $selectedProcesoId,
+                'id_dependencia' => $selectedDependenciaId,
+                'export_pdf' => 1,
+            ], static fn ($value): bool => $value !== null && $value !== ''));
+        }
+
+        return view($definition['view'], [
             'dependencias' => $dependencias,
+            'description' => $definition['description'],
             'filterError' => $filterError,
-            'pdfUrl' => $report
-                ? route(request()->route()->getName(), array_filter([
-                    'desde' => $selectedFrom,
-                    'hasta' => $selectedTo,
-                    'id_proceso' => $selectedProcesoId,
-                    'id_dependencia' => $selectedDependenciaId,
-                    'export_pdf' => 1,
-                ], static fn ($value): bool => $value !== null && $value !== ''))
-                : null,
+            'pdfUrl' => $pdfUrl,
+            'quarterYear' => $quarterYear,
+            'quarters' => $quarters,
             'procesos' => $procesos,
             'report' => $report,
-            'selectionSummary' => $this->selectionSummary($selectedFrom, $selectedTo, $selectedProceso?->nombre, $selectedDependencia?->nombre),
-            'showDependencySelect' => $showDependencySelect,
-            'showProcessSelect' => $showProcessSelect,
             'selectedDependenciaId' => $selectedDependenciaId,
             'selectedDependencyLocked' => $forcedDependenciaId !== null,
-            'selectedFrom' => $selectedFrom,
-            'selectedProcesoId' => $selectedProcesoId,
             'selectedProcessLocked' => $forcedProcesoId !== null,
-            'selectedTo' => $selectedTo,
-        ]));
+            'selectedProcesoId' => $selectedProcesoId,
+            'selectedQuarterNumber' => $selectedQuarterNumber,
+            'selectedQuarterPeriod' => $selectedQuarter?->periodLabel() ?? '',
+            'selectionSummary' => $this->selectionSummary(
+                $selectedQuarter,
+                $selectedProceso?->nombre,
+                $selectedDependencia?->nombre
+            ),
+            'showDependencySelect' => $showDependencySelect,
+            'showProcessSelect' => $showProcessSelect,
+            'summary' => $definition['summary'],
+            'title' => $definition['title'],
+        ]);
     }
 
     /**
+     * @param  array{name: string, title: string, scope: string}|null  $signature
      * @param  array<int, array{label: string, value: string}>  $contextRows
      */
-    private function exportReport(string $type, string $title, string $description, array $report, array $contextRows): Response
+    private function exportReport(
+        string $type,
+        string $title,
+        string $description,
+        array $report,
+        ?array $signature,
+        array $contextRows
+    ): Response
     {
-        $html = view('modules.report-export', [
+        $html = view('reports.export', [
             'chartImages' => $this->chartImageService->build($report),
             'contextRows' => $contextRows,
             'description' => $description,
             'printFallback' => ! class_exists(\Dompdf\Dompdf::class),
             'report' => $report,
             'reportType' => $type,
+            'signature' => $signature,
             'title' => $title,
         ])->render();
 
@@ -219,13 +250,17 @@ class ReportModuleController extends Controller
     /**
      * @return array<int, array{label: string, value: string}>
      */
-    private function buildContextRows(string $from, string $to, ?string $processName, ?string $dependencyName): array
+    private function buildContextRows(?ReportingQuarter $quarter, ?string $processName, ?string $dependencyName): array
     {
         return array_values(array_filter([
-            [
+            $quarter ? [
+                'label' => 'Trimestre',
+                'value' => $quarter->label(),
+            ] : null,
+            $quarter ? [
                 'label' => 'Periodo',
-                'value' => $from.' a '.$to,
-            ],
+                'value' => $quarter->periodLabel(),
+            ] : null,
             $processName ? [
                 'label' => 'Proceso',
                 'value' => $processName,
@@ -239,8 +274,7 @@ class ReportModuleController extends Controller
 
     private function filtersWereSubmitted(Request $request, bool $showProcessSelect, bool $showDependencySelect): bool
     {
-        return $request->filled('desde')
-            || $request->filled('hasta')
+        return $request->filled('trimestre')
             || ($showProcessSelect && $request->filled('id_proceso'))
             || ($showDependencySelect && $request->filled('id_dependencia'))
             || $request->boolean('export_pdf');
@@ -273,12 +307,13 @@ class ReportModuleController extends Controller
             ->get(['id_dependencia', 'nombre']);
     }
 
-    private function selectionSummary(string $from, string $to, ?string $processName, ?string $dependencyName): string
+    private function selectionSummary(?ReportingQuarter $quarter, ?string $processName, ?string $dependencyName): string
     {
         $parts = [];
 
-        if ($from !== '' && $to !== '') {
-            $parts[] = 'Periodo: '.$from.' a '.$to;
+        if ($quarter) {
+            $parts[] = 'Trimestre: '.$quarter->label();
+            $parts[] = 'Periodo: '.$quarter->periodLabel();
         }
 
         if ($processName) {
@@ -291,7 +326,78 @@ class ReportModuleController extends Controller
 
         return $parts !== []
             ? implode(' | ', $parts)
-            : 'Define los filtros y genera el consolidado de satisfaccion.';
+            : 'Selecciona un trimestre y genera el consolidado de satisfaccion.';
+    }
+
+    /**
+     * @return array{name: string, title: string, scope: string}|null
+     */
+    private function resolveSignature(
+        string $type,
+        ?int $processId,
+        ?int $dependencyId,
+        ?string $processName,
+        ?string $dependencyName
+    ): ?array {
+        return match ($type) {
+            'process' => $this->signatureForProcess($processId, $processName),
+            'individual' => $this->signatureForDependency($dependencyId, $dependencyName),
+            default => null,
+        };
+    }
+
+    /**
+     * @return array{name: string, title: string, scope: string}|null
+     */
+    private function signatureForProcess(?int $processId, ?string $processName): ?array
+    {
+        if ($processId === null || blank($processName)) {
+            return null;
+        }
+
+        $leader = User::query()
+            ->where('rol', User::ROLE_LIDER_PROCESO)
+            ->where('id_proceso', $processId)
+            ->orderByDesc('activo')
+            ->orderBy('nombre')
+            ->first();
+
+        if (! $leader) {
+            return null;
+        }
+
+        return [
+            'name' => (string) $leader->nombre,
+            'title' => 'Lider del proceso de',
+            'scope' => mb_strtoupper($processName, 'UTF-8'),
+        ];
+    }
+
+    /**
+     * @return array{name: string, title: string, scope: string}|null
+     */
+    private function signatureForDependency(?int $dependencyId, ?string $dependencyName): ?array
+    {
+        if ($dependencyId === null || blank($dependencyName)) {
+            return null;
+        }
+
+        $leader = User::query()
+            ->where('rol', User::ROLE_LIDER_DEPENDENCIA)
+            ->where('id_dependencia', $dependencyId)
+            ->orderByDesc('activo')
+            ->orderBy('nombre')
+            ->first();
+
+        if (! $leader) {
+            return null;
+        }
+
+        return [
+            'name' => (string) $leader->nombre,
+            'title' => 'Lider de la dependencia',
+            'scope' => mb_strtoupper($dependencyName, 'UTF-8'),
+        ];
     }
 
     private function normalizeId(mixed $value): ?int
@@ -303,5 +409,16 @@ class ReportModuleController extends Controller
         $normalized = (int) $value;
 
         return $normalized > 0 ? $normalized : null;
+    }
+
+    private function normalizeQuarter(mixed $value): ?int
+    {
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        $normalized = (int) $value;
+
+        return in_array($normalized, [1, 2, 3, 4], true) ? $normalized : null;
     }
 }

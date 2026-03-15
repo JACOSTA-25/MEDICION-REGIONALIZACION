@@ -12,6 +12,10 @@ body {
     gap: 1rem;
 }
 
+.ms-report-results {
+    margin-top: 1rem;
+}
+
 .ms-report-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
@@ -89,6 +93,14 @@ body {
     cursor: not-allowed;
 }
 
+.ms-field-help {
+    display: block;
+    margin-top: 0.45rem;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
 .ms-form-actions,
 .ms-inline-actions {
     display: flex;
@@ -124,6 +136,24 @@ body {
 .ms-btn:disabled {
     cursor: not-allowed;
     opacity: 0.65;
+}
+
+.ms-btn-sm {
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.65rem;
+    font-size: 0.82rem;
+}
+
+.ms-btn-icon {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 0.65rem;
+}
+
+.ms-btn-icon-svg {
+    width: 0.95rem;
+    height: 0.95rem;
 }
 
 .ms-btn-primary {
@@ -203,6 +233,10 @@ body {
     padding: 0.9rem;
 }
 
+.ms-stat-card-compact {
+    padding: 0.75rem 0.8rem;
+}
+
 .ms-stat-label {
     display: block;
     color: #6b7280;
@@ -232,10 +266,24 @@ body {
     overflow-x: auto;
 }
 
+.ms-table-shell-compact {
+    width: 100%;
+    max-width: 100%;
+}
+
 .ms-data-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 640px;
+}
+
+.ms-data-table-compact {
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 0.85rem;
 }
 
 .ms-data-table th,
@@ -269,6 +317,55 @@ body {
     margin-top: 0.2rem;
     color: #64748b;
     font-size: 0.78rem;
+}
+
+.ms-data-table-compact th,
+.ms-data-table-compact td {
+    padding: 0.6rem 0.75rem;
+}
+
+.ms-cell-name {
+    font-weight: 700;
+}
+
+.ms-data-table-compact th:first-child {
+    border-top-left-radius: 0.85rem;
+}
+
+.ms-data-table-compact th:last-child {
+    border-top-right-radius: 0.85rem;
+}
+
+.ms-data-table-compact tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 0.85rem;
+}
+
+.ms-data-table-compact tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 0.85rem;
+}
+
+.ms-quarter-input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background: #fff;
+    color: #111827;
+    font-size: 0.88rem;
+    padding: 0.65rem 0.75rem;
+}
+
+.ms-quarter-input:focus {
+    outline: none;
+    border-color: #9c3a3a;
+    box-shadow: 0 0 0 3px rgb(156 58 58 / 14%);
+}
+
+.ms-interactive-row {
+    cursor: pointer;
+}
+
+.ms-interactive-row:hover td {
+    background: #f8fafc;
 }
 
 .ms-observations-list {
@@ -306,6 +403,84 @@ body {
 
 .ms-inline-checklist li + li {
     margin-top: 0.35rem;
+}
+
+.ms-report-accordion {
+    gap: 0.75rem;
+}
+
+.ms-report-card-collapsible {
+    padding: 0;
+    overflow: hidden;
+}
+
+.ms-report-card-summary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    box-sizing: border-box;
+    cursor: pointer;
+    list-style: none;
+}
+
+.ms-report-card-summary::-webkit-details-marker {
+    display: none;
+}
+
+.ms-report-card-summary-copy {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.ms-report-card-summary-title {
+    color: #1f2937;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.ms-report-card-summary-description {
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.ms-report-card-summary-indicator {
+    flex-shrink: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    margin-top: 0.25rem;
+    border-right: 2px solid #64748b;
+    border-bottom: 2px solid #64748b;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+}
+
+.ms-report-card-collapsible[open] .ms-report-card-summary-indicator {
+    transform: rotate(-135deg);
+}
+
+.ms-report-card-body {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem 0.8rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.ms-report-card-body > .ms-table-shell,
+.ms-report-card-body > .ms-observations-list {
+    margin-top: 0;
+}
+
+.ms-report-card-body .ms-observations-list {
+    gap: 0.6rem;
+}
+
+.ms-report-card-body .ms-observations-list p {
+    padding: 0.75rem 0.85rem;
 }
 
 @media (max-width: 1024px) {

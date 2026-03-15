@@ -36,8 +36,8 @@
                     </div>
                 @endif
 
-                <div class="ms-table-shell">
-                    <table class="ms-data-table">
+                <div class="ms-table-shell ms-table-shell-compact">
+                    <table class="ms-data-table ms-data-table-compact">
                         <thead>
                             <tr>
                                 <th>Nombre</th>
@@ -46,27 +46,21 @@
                                 <th>Proceso</th>
                                 <th>Dependencia</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($users as $managedUser)
-                                <tr>
-                                    <td>{{ $managedUser->nombre }}</td>
+                                <tr class="ms-interactive-row" x-on:click="editUserId = {{ $managedUser->id }}">
+                                    <td class="ms-cell-name">{{ $managedUser->nombre }}</td>
                                     <td>{{ $managedUser->username }}</td>
                                     <td>{{ $roles[$managedUser->rol] ?? $managedUser->rol }}</td>
                                     <td>{{ $managedUser->proceso?->nombre ?? 'No aplica' }}</td>
                                     <td>{{ $managedUser->dependencia?->nombre ?? 'No aplica' }}</td>
                                     <td>{{ $managedUser->activo ? 'Activo' : 'Inactivo' }}</td>
-                                    <td>
-                                        <button type="button" class="ms-btn ms-btn-secondary" x-on:click="editUserId = {{ $managedUser->id }}">
-                                            Editar
-                                        </button>
-                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7">No hay usuarios registrados.</td>
+                                    <td colspan="6">No hay usuarios registrados.</td>
                                 </tr>
                             @endforelse
                         </tbody>
