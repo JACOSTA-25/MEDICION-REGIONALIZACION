@@ -238,7 +238,7 @@ abstract class AbstractReportController extends Controller
 
         $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html, 'UTF-8');
-        $dompdf->setPaper('a4', 'portrait');
+        $dompdf->setPaper('letter', 'portrait');
         $dompdf->render();
 
         return response($dompdf->output(), 200, [

@@ -35,8 +35,27 @@
             $portadaImage = $toDataUri('assets/images/portada.png');
         @endphp
         <style>
+            :root {
+                --paper-width: 215.9mm;
+                --paper-height: 279.4mm;
+                --design-width: 210mm;
+                --design-height: 297mm;
+                --header-horizontal-shift: -6mm;
+                --page-content-center-offset: -7px;
+                --consolidated-title-offset: -40px; 
+                --satisfied-chart-offset: -35px;
+                --compact-table-offset: -34px;
+                --compact-table-title-offset: -28px;
+                --content-shift-left: 88px;
+                --content-trim-right: 180px;
+                --question-offset-left: 80px;
+                --question-offset-right: 176px;
+                --intro-offset-left: 126px;
+                --intro-offset-right: 46.8mm;
+            }
+
             @page {
-                size: A4 portrait;
+                size: letter portrait;
                 margin: 0;
             }
 
@@ -48,29 +67,33 @@
             }
 
             .page {
-                page-break-after: always;
                 position: relative;
                 box-sizing: border-box;
+                width: var(--paper-width);
+                min-height: var(--paper-height);
                 padding: 16mm 12mm 12mm;
+                overflow: hidden;
             }
 
-            .page:last-child {
-                page-break-after: auto;
+            .page + .page {
+                page-break-before: always;
             }
 
             .cover-page {
                 padding: 0;
-                width: 210mm;
-                height: 297mm;
+                width: var(--paper-width);
+                height: var(--paper-height);
                 overflow: hidden;
             }
 
             .cover-image {
                 position: absolute;
-                inset: 0;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
                 display: block;
-                width: 210mm;
-                height: 297mm;
+                width: var(--design-width);
+                height: var(--design-height);
                 z-index: 0;
             }
 
@@ -102,20 +125,21 @@
             }
 
             .page-with-decor {
-                padding-top: 90px;
-                padding-right: 12mm;
-                padding-bottom: 58px;
-                padding-left: 58px;
+                padding-top: 84px;
+                padding-right: 10mm;
+                padding-bottom: 46px;
+                padding-left: 52px;
             }
 
             .decor-header {
                 position: absolute;
-                top: 4px;
-                left: 50%;
+                top: 5px;
+                left: calc(50% + var(--header-horizontal-shift));
                 transform: translateX(-50%);
-                height: 82px;
-                width: auto;
-                max-width: 88%;
+                width: 160mm;
+                height: auto;
+                max-width: none;
+                z-index: 1;
             }
 
             .decor-sidebar {
@@ -123,7 +147,7 @@
                 top: 0;
                 left: 0;
                 width: 36px;
-                height: 297mm;
+                height: var(--design-height);
             }
 
             .decor-footer {
@@ -136,8 +160,8 @@
             }
 
             .page-header {
-                margin-bottom: 10px;
-                padding-bottom: 6px;
+                margin-bottom: 6px;
+                padding-bottom: 4px;
             }
 
             h1,
@@ -209,8 +233,8 @@
             .chart-shell {
                 border: none;
                 border-radius: 10px;
-                padding: 6px;
-                margin-bottom: 2px;
+                padding: 2px 2px 0;
+                margin-bottom: 0;
             }
 
             .chart-image {
@@ -221,7 +245,7 @@
 
             .split-two {
                 display: grid;
-                gap: 10px;
+                gap: 6px;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
@@ -231,7 +255,7 @@
             }
 
             .chart-caption {
-                margin-bottom: 20px;
+                margin-bottom: 10px;
                 text-align: center;
                 font-size: 10.5px;
                 color: #374151;
@@ -244,8 +268,8 @@
             }
 
             .conclusion-copy {
-                margin-left: 100px;
-                margin-right: 120px;
+                margin-left: var(--content-shift-left);
+                margin-right: var(--content-trim-right);
             }
 
             .conclusion-copy p + p {
@@ -254,8 +278,8 @@
 
             .signature-block {
                 margin-top: 20px;
-                margin-left: 100px;
-                margin-right: 120px;
+                margin-left: var(--content-shift-left);
+                margin-right: var(--content-trim-right);
             }
 
             .signature-name,
@@ -275,11 +299,11 @@
                 font-weight: 700;
                 margin: 0 0 8px;
                 text-align: left;
-                margin-top: 40px;
+                margin-top: 28px;
             }
 
             .report-section-title--shift-right {
-                margin-left: 100px;
+                margin-left: var(--content-shift-left);
             }
 
             .report-section-title--compact {
@@ -294,11 +318,11 @@
             }
 
             .report-section-text--shift-right {
-                margin-left: 100px;
+                margin-left: var(--content-shift-left);
             }
 
             .report-section-block--aligned {
-                margin-right: 120px;
+                margin-right: var(--content-trim-right);
             }
 
             .question-title {
@@ -315,22 +339,25 @@
             }
 
             .question-block {
-                padding-top: 20px;
-                padding-left: 92px;
-                padding-right: 120px;
+                padding-top: 14px;
+                padding-left: var(--question-offset-left);
+                padding-right: var(--question-offset-right);
             }
 
             .question-title--aligned {
-                margin-top: 20px;
+                margin-top: 12px;
             }
 
             .question-chart {
-                margin-top: 6px;
+                width: 92%;
+                margin-top: 8px;
+                margin-left: auto;
+                margin-right: auto;
             }
 
             .table-title {
                 margin: 4px 0 6px;
-                margin-top: 60px;
+                margin-top: 34px;
                 font-size: 10.5px;
                 font-weight: 700;
                 text-align: center;
@@ -340,6 +367,10 @@
                 margin-top: 12px;
             }
 
+            .table-title--spacious {
+                margin-top: 24px;
+            }
+
             .compact-table th,
             .compact-table td {
                 font-size: 10px;
@@ -347,13 +378,50 @@
             }
 
             .page-intro {
-                padding-top: 150px;
-                padding-right: 40mm;
-                padding-left: 150px;
+                padding-top: 126px;
+                padding-right: 10mm;
+                padding-left: 52px;
+            }
+
+            .page-intro .report-section-title,
+            .page-intro .report-section-text {
+                margin-left: var(--content-shift-left);
+                margin-right: var(--content-trim-right);
+            }
+
+            .page-chart-overview .page-header {
+                margin-bottom: 2px;
+            }
+
+            .page-chart-overview .table-title {
+                margin-top: 8px;
+            }
+
+            .page-chart-overview .chart-shell {
+                padding: 0;
+            }
+
+            .page-chart-overview .chart-image {
+                width: 92%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .page-chart-overview .chart-caption {
+                margin-bottom: 0;
+                font-size: 10px;
             }
 
             .compact-table th:first-child {
                 text-align: center;
+            }
+
+            .compact-table {
+                width: 72%;
+                margin-left: auto;
+                margin-right: auto;
+                position: relative;
+                left: var(--compact-table-offset);
             }
 
             .compact-table th:nth-child(2),
@@ -362,22 +430,97 @@
             }
 
             .consolidated-table {
-                width: 94%;
-                margin-left: auto;
-                margin-right: auto;
+                width: 76%;
+                margin-left: 8%;
+                /* margin-right: 20%; */
+                position: relative;
+                left: var(--page-content-center-offset);
+                table-layout: fixed;
             }
 
             .consolidated-table th,
             .consolidated-table td {
-                font-size: 10px;
-                padding: 4px 5px;
+                font-size: 9.2px;
+                padding: 4px 4px;
+                word-wrap: break-word;
+            }
+
+            .consolidated-table th:nth-child(1),
+            .consolidated-table td:nth-child(1) {
+                width: 10%;
+                text-align: center;
+                white-space: nowrap;
+            }
+
+            .consolidated-table th:nth-child(2),
+            .consolidated-table td:nth-child(2) {
+                text-align: center;
+                width: 21%;
+            }
+
+            .consolidated-table th:nth-child(3),
+            .consolidated-table td:nth-child(3),
+            .consolidated-table th:nth-child(4),
+            .consolidated-table td:nth-child(4) {
+                text-align: center;
+                width: 12%;
+            }
+
+            .consolidated-table th:nth-child(5),
+            .consolidated-table td:nth-child(5),
+            .consolidated-table th:nth-child(6),
+            .consolidated-table td:nth-child(6) {
+                width: 8%;
+                text-align: center;
+            }
+
+            .consolidated-table th:nth-child(7),
+            .consolidated-table td:nth-child(7),
+            .consolidated-table th:nth-child(8),
+            .consolidated-table td:nth-child(8) {
+                width: 11%;
+                text-align: center;
             }
 
             .satisfied-users-chart {
-                width: 70%;
+                width: 53%;
                 margin-top: 18px;
                 margin-left: auto;
                 margin-right: auto;
+                position: relative;
+                left: var(--satisfied-chart-offset);
+                text-align: center;
+            }
+
+            .satisfied-users-chart + .chart-caption {
+                position: relative;
+                left: var(--satisfied-chart-offset);
+            }
+
+            .report-subheading {
+                margin-top: 24px;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .report-subheading--shift-right {
+                margin-left: var(--content-shift-left);
+            }
+
+            .table-title--consolidated {
+                width: 76%;
+                margin-left: auto;
+                margin-right: auto;
+                position: relative;
+                left: var(--consolidated-title-offset);
+            }
+
+            .table-title--compact-table {
+                width: 72%;
+                margin-left: auto;
+                margin-right: auto;
+                position: relative;
+                left: var(--compact-table-title-offset);
             }
         </style>
     </head>
@@ -450,7 +593,7 @@
                 Se aplico la encuesta de satisfaccion durante el periodo a usuarios ecuestados, A los cuales se les presto el servicio, como se describe en la tabla 1.
             </p>
 
-            <p class="table-title">Tabla 1. Numero de usuarios encuestados</p>
+            <p class="table-title table-title--compact-table">Tabla 1. Numero de usuarios encuestados</p>
             <table class="compact-table">
                 <thead>
                     <tr>
@@ -477,7 +620,7 @@
             </table>
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor page-chart-overview">
             @include('reports.pdf.partials.page-decor')
             <div class="page-header">
                 <h2 class="report-section-title report-section-title--shift-right">IV. ANALISIS DE POBLACI&Oacute;N ENCUESTADA</h2>
@@ -611,15 +754,15 @@
                 Respecto a los aspectos evaluados el porcentaje de satisfacci&oacute;n para el Servicio fue de {{ $formatReportValue($questionPercentages[1] ?? 0) }}%, para la Atencion fue de {{ $formatReportValue($questionPercentages[2] ?? 0) }}%, para la expectativa del servicio fue de {{ $formatReportValue($questionPercentages[3] ?? 0) }}%, para el Servicio oportuno y eficaz fue de {{ $formatReportValue($questionPercentages[4] ?? 0) }}%, para el aspecto de Condiciones locativas fue de {{ $formatReportValue($questionPercentages[5] ?? 0) }}% y para el aspecto del lenguaje usado por el funcionario fue de {{ $formatReportValue($questionPercentages[6] ?? 0) }}%.
             </p>
 
-            <p style="margin-top: 30px;" class="table-title table-title--compact">Tabla 2. CONSOLIDADO GLOBAL MEDICI&Oacute;N DE LA SATISFACCI&Oacute;N DE LOS USUARIOS</p>
+            <p class="table-title table-title--compact table-title--spacious table-title--consolidated">Tabla 2. CONSOLIDADO GLOBAL MEDICI&Oacute;N DE LA SATISFACCI&Oacute;N DE LOS USUARIOS</p>
 
             <table class="consolidated-table">
                 <thead>
                     <tr>
                         <th>Pregunta</th>
                         <th>Categoria</th>
-                        <th>Numero de usuarios satisfecho</th>
-                        <th>Numero de usuarios insatisfechos</th>
+                        <th>Numero de<br>usuarios<br>satisfechos</th>
+                        <th>Numero de<br>usuarios insatisfechos</th>
                         <th>Neutro</th>
                         <th>Total</th>
                         <th>Mejora</th>
@@ -635,23 +778,23 @@
                             <td>{{ $row['usuarios_insatisfechos'] }}</td>
                             <td>{{ $row['usuarios_neutros'] }}</td>
                             <td>{{ $row['total'] }}</td>
-                            <td>{{ number_format($row['mejora'], 5, '.', '') }}</td>
-                            <td>{{ number_format($row['indicador'], 5, '.', '') }}</td>
+                            <td>{{ number_format($row['mejora'], 2, '.', '') }}</td>
+                            <td>{{ number_format($row['indicador'], 2, '.', '') }}</td>
                         </tr>
                     @endforeach
                     <tr>
                         <td colspan="2"><strong>Total</strong></td>
-                        <td><strong>{{ number_format($averages['usuarios_satisfechos'], 5, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['usuarios_insatisfechos'], 5, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['usuarios_neutros'], 5, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['total'], 5, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['mejora'], 5, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['indicador'], 5, '.', '') }}</strong></td>
+                        <td><strong>{{ number_format($averages['usuarios_satisfechos'], 2, '.', '') }}</strong></td>
+                        <td><strong>{{ number_format($averages['usuarios_insatisfechos'], 2, '.', '') }}</strong></td>
+                        <td><strong>{{ number_format($averages['usuarios_neutros'], 2, '.', '') }}</strong></td>
+                        <td><strong>{{ number_format($averages['total'], 2, '.', '') }}</strong></td>
+                        <td><strong>{{ number_format($averages['mejora'], 2, '.', '') }}</strong></td>
+                        <td><strong>{{ number_format($averages['indicador'], 2, '.', '') }}</strong></td>
                     </tr>
                 </tbody>
             </table>
 
-            <h3 style="margin-top: 30px; margin-left: 100px">Porcentaje de usuarios satisfechos</h3>
+            <h3 class="report-subheading report-subheading--shift-right">Porcentaje de usuarios satisfechos</h3>
             <div class="chart-shell satisfied-users-chart">
                 <img src="{{ $chartImages['satisfied_users_percentage'] }}" alt="% Usuarios satisfechos" class="chart-image">
             </div>
