@@ -33,6 +33,7 @@
             $encabezadoImage = $toDataUri('assets/images/encabezado.png');
             $piePaginaImage = $toDataUri('assets/images/pie-de-pagina.png');
             $portadaImage = $toDataUri('assets/images/portada.png');
+            $coverLogoImage = $toDataUri('assets/images/logo-portada.png');
         @endphp
         <style>
             :root {
@@ -40,12 +41,16 @@
                 --paper-height: 279.4mm;
                 --design-width: 210mm;
                 --design-height: 297mm;
+                --cover-image-bleed: 2mm;
+                --cover-copy-top: 217mm;
+                --cover-year-margin-top: 7.35mm;
                 --header-horizontal-shift: -6mm;
                 --page-content-center-offset: -7px;
                 --consolidated-title-offset: -40px; 
                 --satisfied-chart-offset: -35px;
                 --compact-table-offset: -34px;
                 --compact-table-title-offset: -28px;
+                --question-chart-caption-offset: -40px;
                 --content-shift-left: 88px;
                 --content-trim-right: 180px;
                 --question-offset-left: 80px;
@@ -92,19 +97,29 @@
                 left: 50%;
                 transform: translateX(-50%);
                 display: block;
-                width: var(--design-width);
-                height: var(--design-height);
+                width: calc(var(--paper-width) + var(--cover-image-bleed));
+                height: auto;
                 z-index: 0;
             }
 
             .cover-copy {
                 position: absolute;
                 left: 7mm;
-                top: 236mm;
+                top: var(--cover-copy-top);
                 width: 150mm;
                 color: #1AA6A6;
                 font-family: 'Montserrat', 'DejaVu Sans', sans-serif;
                 z-index: 2;
+            }
+
+            .cover-logo {
+                position: absolute;
+                right: 7mm;
+                bottom: 5mm;
+                display: block;
+                width: 58mm;
+                height: auto;
+                z-index: 1;
             }
 
             .cover-subtitle {
@@ -117,9 +132,9 @@
             }
 
             .cover-year {
-                margin: 10.5mm 0 0;
+                margin: var(--cover-year-margin-top) 0 0;
                 font-size: 14.5mm;
-                font-weight: 800;
+                font-weight: 700;
                 line-height: 1;
                 letter-spacing: 0.02em;
             }
@@ -259,6 +274,11 @@
                 text-align: center;
                 font-size: 10.5px;
                 color: #374151;
+            }
+
+            .chart-caption--question {
+                position: relative;
+                left: var(--question-chart-caption-offset);
             }
 
             .conclusion-box {
@@ -551,7 +571,7 @@
             $coverSubtitle = match ($reportType ?? null) {
                 'process' => trim('PROCESO DE '.mb_strtoupper((string) ($processName ?? 'PROCESO SELECCIONADO'), 'UTF-8').' '.$coverQuarter),
                 'individual' => trim('DEPENDENCIA '.mb_strtoupper((string) ($dependencyName ?? 'DEPENDENCIA SELECCIONADA'), 'UTF-8').' '.$coverQuarter),
-                default => trim('TODOS LOS PROCESOS '.$coverQuarter),
+                default => trim('SEDE MAICAO '.$coverQuarter),
             };
             $coverSubtitle = preg_replace('/\s+/', ' ', $coverSubtitle) ?? $coverSubtitle;
             $coverYear = \Carbon\CarbonImmutable::parse($report['from'] ?? now()->toDateString(), config('app.timezone'))
@@ -561,6 +581,10 @@
         <section class="page cover-page">
             @if ($portadaImage)
                 <img src="{{ $portadaImage }}" alt="Portada" class="cover-image">
+            @endif
+
+            @if ($coverLogoImage)
+                <img src="{{ $coverLogoImage }}" alt="Logo de portada" class="cover-logo">
             @endif
 
             <div class="cover-copy">
@@ -575,7 +599,7 @@
                 $scopeTable = $report['tables']['scope_population'];
                 $objectiveText = match ($reportType ?? null) {
                     'process' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por el proceso durante el periodo.',
-                    'individual' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por el dependencia durante el periodo.',
+                    'individual' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por la dependencia durante el periodo.',
                     default => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por todos los procesos durante el periodo.',
                 };
             @endphp
@@ -718,7 +742,7 @@
                 <div class="chart-shell question-chart">
                     <img src="{{ $chartImages['question_results'][$index] ?? '' }}" alt="{{ $chart['title'] }}" class="chart-image">
                 </div>
-                <p class="chart-caption">
+                <p class="chart-caption chart-caption--question">
                     Gr&aacute;fica {{ $chartNumber }}. Resultados de la medici&oacute;n del servicio prestado en {{ $scopeName }}.
                 </p>
             </section>

@@ -274,10 +274,12 @@ class ReportStatisticsTest extends TestCase
                 'title' => 'Reporte individual',
             ])->render();
 
-            $this->assertStringContainsString('TODOS LOS PROCESOS IV TRIMESTRE', $generalHtml);
+            $this->assertStringContainsString('SEDE MAICAO IV TRIMESTRE', $generalHtml);
             $this->assertStringContainsString('PROCESO DE '.mb_strtoupper($processName, 'UTF-8').' IV TRIMESTRE', $processHtml);
             $this->assertStringContainsString('DEPENDENCIA '.mb_strtoupper($dependencyName, 'UTF-8').' IV TRIMESTRE', $dependencyHtml);
             $this->assertStringContainsString('2026', $generalHtml);
+            $this->assertStringContainsString('class="cover-logo"', $generalHtml);
+            $this->assertStringContainsString('alt="Logo de portada"', $generalHtml);
             $this->assertStringContainsString(
                 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE FORMA GENERAL (2026)',
                 $generalHtml
@@ -290,6 +292,11 @@ class ReportStatisticsTest extends TestCase
                 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.mb_strtoupper($dependencyName, 'UTF-8').' (2026)',
                 $dependencyHtml
             );
+            $this->assertStringContainsString(
+                'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por la dependencia durante el periodo.',
+                $dependencyHtml
+            );
+            $this->assertStringNotContainsString('servicios brindados por el dependencia', $dependencyHtml);
             $this->assertStringContainsString(
                 'El numero de usuarios encuestados durante el IV Trimestre de 2026 fue de 1 usuario a los cuales se les presto el servicio en todos los procesos.',
                 $generalHtml

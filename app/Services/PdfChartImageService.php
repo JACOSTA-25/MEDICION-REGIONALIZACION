@@ -53,7 +53,13 @@ class PdfChartImageService
                 false
             ),
             'question_results' => array_map(
-                fn (array $questionChart): string => $this->renderPieImage($questionChart['items'] ?? [], 760, 360),
+                fn (array $questionChart): string => $this->renderPieImage(
+                    $questionChart['items'] ?? [],
+                    760,
+                    360,
+                    true,
+                    false
+                ),
                 $charts['question_results'] ?? []
             ),
             'satisfied_users_percentage' => $this->renderVerticalBarImage(

@@ -240,11 +240,69 @@ abstract class AbstractReportController extends Controller
         $dompdf->loadHtml($html, 'UTF-8');
         $dompdf->setPaper('letter', 'portrait');
         $dompdf->render();
+        $this->applyPdfFooter($dompdf);
 
         return response($dompdf->output(), 200, [
             'Content-Disposition' => 'attachment; filename="'.Str::slug($title).'-'.$report['from'].'-'.$report['to'].'.pdf"',
             'Content-Type' => 'application/pdf',
         ]);
+    }
+
+    private function applyPdfFooter(\Dompdf\Dompdf $dompdf): void
+    {
+        $canvas = $dompdf->getCanvas();
+        $fontMetrics = $dompdf->getFontMetrics();
+        $font = $fontMetrics->getFont('DejaVu Sans', 'normal')
+            ?? $fontMetrics->getFont(null, 'normal');
+
+        if ($font === null) {
+            return;
+        }
+
+        $pageWidth = $canvas->get_width();
+        $pageHeight = $canvas->get_height();
+        $fontSize = 7.5;
+        $lineHeight = 9;
+        $rightMargin = 24;
+        $bottomMargin = 28;
+        $revisionLabel = 'REV.01/JUN/23';
+
+        $canvas->page_script(
+            static function (
+                int $pageNumber,
+                int $pageCount,
+                \Dompdf\Canvas $canvas,
+                \Dompdf\FontMetrics $fontMetrics
+            ) use (
+                $bottomMargin,
+                $font,
+                $fontSize,
+                $lineHeight,
+                $pageHeight,
+                $pageWidth,
+                $revisionLabel,
+                $rightMargin
+            ): void {
+                if ($pageNumber === 1) {
+                    return;
+                }
+
+                $pageLabel = sprintf("P\u{00E1}gina %d de %d", $pageNumber, $pageCount);
+                $footerLines = [
+                    $pageLabel,
+                    $revisionLabel,
+                ];
+                $baseY = $pageHeight - $bottomMargin;
+
+                foreach ($footerLines as $index => $line) {
+                    $textWidth = $fontMetrics->getTextWidth($line, $font, $fontSize);
+                    $x = $pageWidth - $rightMargin - $textWidth;
+                    $y = $baseY - ($lineHeight * (count($footerLines) - $index - 1));
+
+                    $canvas->text($x, $y, $line, $font, $fontSize, [0.2, 0.2, 0.2]);
+                }
+            }
+        );
     }
 
     /**
