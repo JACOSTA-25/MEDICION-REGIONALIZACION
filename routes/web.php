@@ -31,14 +31,23 @@ Route::middleware('auth')->group(function () {
         Route::get('general', [ReporteGeneralController::class, 'index'])
             ->middleware('module.access:general_reports')
             ->name('general');
+        Route::post('general/conclusion', [ReporteGeneralController::class, 'generateConclusion'])
+            ->middleware('module.access:general_reports')
+            ->name('general.conclusion');
 
         Route::get('proceso', [ReporteProcesoController::class, 'index'])
             ->middleware('module.access:process_reports')
             ->name('process');
+        Route::post('proceso/conclusion', [ReporteProcesoController::class, 'generateConclusion'])
+            ->middleware('module.access:process_reports')
+            ->name('process.conclusion');
 
         Route::get('individual', [ReporteIndividualController::class, 'index'])
             ->middleware('module.access:individual_reports')
             ->name('individual');
+        Route::post('individual/conclusion', [ReporteIndividualController::class, 'generateConclusion'])
+            ->middleware('module.access:individual_reports')
+            ->name('individual.conclusion');
     });
 
     Route::prefix('estadisticas')->name('statistics.')->middleware('module.access:statistics')->group(function () {

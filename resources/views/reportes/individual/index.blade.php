@@ -16,6 +16,7 @@
         'selectedQuarterNumber' => $selectedQuarterNumber,
         'selectedQuarterPeriod' => $selectedQuarterPeriod,
         'selectionSummary' => $selectionSummary,
+        'conclusionUrl' => $conclusionUrl,
         'filterError' => $filterError,
         'pdfUrl' => $pdfUrl,
         'report' => $report,

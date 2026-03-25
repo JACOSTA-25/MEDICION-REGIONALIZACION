@@ -16,6 +16,7 @@ use Database\Seeders\EstamentoSeeder;
 use Database\Seeders\EstructuraOrganizacionalSeeder;
 use Database\Seeders\ProgramaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class ReportesEstadisticosTest extends TestCase
@@ -325,6 +326,151 @@ class ReportesEstadisticosTest extends TestCase
         }
     }
 
+    public function test_general_report_view_requires_ai_confirmation_before_enabling_pdf_download(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00',
+                'El servicio fue agil, pero la informacion inicial no fue tan clara.'
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.general', ['trimestre' => 1]));
+
+            $response->assertOk();
+            $response->assertSee('data-report-conclusion-shell', false);
+            $response->assertSee('data-report-pdf-button', false);
+            $response->assertSee('disabled', false);
+            $response->assertSee('Genera y confirma la conclusion para habilitar la descarga del PDF.', false);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_general_report_conclusion_endpoint_returns_ai_generated_text(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 3, 4, 4, 5],
+                '2026-01-10 08:00:00',
+                'La atencion fue amable, aunque el tiempo de espera pudo ser menor.'
+            );
+
+            config([
+                'services.openai.key' => 'test-key',
+                'services.openai.model' => 'gpt-5-mini',
+            ]);
+
+            Http::fake([
+                'https://api.openai.com/v1/responses' => Http::response([
+                    'output_text' => json_encode([
+                        'conclusion' => 'La percepcion general del servicio fue favorable, aunque se identifican oportunidades de mejora en la agilidad de atencion y en la claridad de la informacion inicial.',
+                    ], JSON_UNESCAPED_UNICODE),
+                ]),
+            ]);
+
+            $response = $this->actingAs($admin)->postJson(route('reports.general.conclusion'), [
+                'trimestre' => 1,
+            ]);
+
+            $response->assertOk();
+            $response->assertJson([
+                'conclusion' => 'La percepcion general del servicio fue favorable, aunque se identifican oportunidades de mejora en la agilidad de atencion y en la claridad de la informacion inicial.',
+            ]);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_export_view_uses_the_ai_generated_conclusion_when_available(): void
+    {
+        [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+        $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+        $programa = Programa::query()->firstOrFail();
+
+        $this->storeResponse(
+            $estudiante->id_estamento,
+            $programa->id_programa,
+            $serviceA->id_proceso,
+            $serviceA->id_dependencia,
+            $serviceA->id_servicio,
+            [4, 4, 4, 4, 4, 4],
+            '2026-10-15 08:00:00',
+            'El proceso fue claro y el personal atendio con respeto.'
+        );
+
+        $report = app(ServicioReportes::class)->generate('general', '2026-10-01', '2026-12-31');
+        $chartImages = app(ServicioImagenesGraficosPdf::class)->build($report);
+
+        $html = view('reportes.exportar', [
+            'chartImages' => $chartImages,
+            'contextRows' => [
+                ['label' => 'Trimestre', 'value' => 'IV Trimestre'],
+                ['label' => 'Periodo', 'value' => '01/10/2026 a 31/12/2026'],
+            ],
+            'description' => 'Reporte general',
+            'generatedConclusion' => 'La conclusion generada por IA destaca una experiencia global favorable y plantea seguimiento a los tiempos de respuesta para fortalecer la satisfaccion del usuario.',
+            'printFallback' => false,
+            'report' => $report,
+            'reportType' => 'general',
+            'signature' => null,
+            'title' => 'Reporte general',
+        ])->render();
+
+        $this->assertStringContainsString(
+            'La conclusion generada por IA destaca una experiencia global favorable y plantea seguimiento a los tiempos de respuesta para fortalecer la satisfaccion del usuario.',
+            $html
+        );
+        $this->assertStringNotContainsString(
+            'En torno a los resultados obtenidos se presento un 0% donde los usuarios perciben un servicio ni satisfactorio ni insatisfactorio',
+            $html
+        );
+    }
+
     public function test_general_report_pdf_can_be_downloaded_for_a_quarter(): void
     {
         CarbonImmutable::setTestNow('2026-03-14 09:00:00');
@@ -468,7 +614,8 @@ class ReportesEstadisticosTest extends TestCase
         int $dependenciaId,
         int $servicioId,
         array $answers,
-        string $fechaRespuesta
+        string $fechaRespuesta,
+        ?string $observaciones = null
     ): void {
         Respuesta::query()->create([
             'id_estamento' => $estamentoId,
@@ -482,7 +629,7 @@ class ReportesEstadisticosTest extends TestCase
             'pregunta4' => $answers[3],
             'pregunta5' => $answers[4],
             'pregunta6' => $answers[5],
-            'observaciones' => null,
+            'observaciones' => $observaciones,
             'fecha_respuesta' => $fechaRespuesta,
         ]);
     }

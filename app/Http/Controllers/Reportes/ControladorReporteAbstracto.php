@@ -7,10 +7,12 @@ use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\ReportingQuarter;
 use App\Models\User;
+use App\Services\Reportes\ServicioConclusionesIa;
 use App\Services\Reportes\ServicioImagenesGraficosPdf;
 use App\Services\Reportes\ServicioTrimestresReporte;
 use App\Services\Reportes\ServicioReportes;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -21,6 +23,7 @@ abstract class ControladorReporteAbstracto extends Controller
 {
     public function __construct(
         protected readonly ServicioReportes $reportService,
+        protected readonly ServicioConclusionesIa $aiConclusionService,
         protected readonly ServicioImagenesGraficosPdf $chartImageService,
         protected readonly ServicioTrimestresReporte $reportingQuarterService,
     ) {}
@@ -35,6 +38,139 @@ abstract class ControladorReporteAbstracto extends Controller
      * }
      */
     abstract protected function definition(): array;
+
+    public function generateConclusion(Request $request): JsonResponse
+    {
+        $definition = $this->definition();
+        $type = $definition['type'];
+        $user = $request->user();
+        $showProcessSelect = $type !== 'general';
+        $showDependencySelect = $type === 'individual';
+        $quarterYear = $this->reportingQuarterService->currentYear();
+        $quarters = $this->reportingQuarterService->forYear($quarterYear);
+
+        $selectedQuarterNumber = $this->normalizeQuarter($request->input('trimestre'));
+        $selectedQuarter = $selectedQuarterNumber !== null
+            ? $quarters->firstWhere('quarter_number', $selectedQuarterNumber)
+            : null;
+        $selectedFrom = $selectedQuarter?->start_date?->toDateString() ?? '';
+        $selectedTo = $selectedQuarter?->end_date?->toDateString() ?? '';
+        $selectedProcesoId = $this->normalizeId($request->input('id_proceso'));
+        $selectedDependenciaId = $this->normalizeId($request->input('id_dependencia'));
+
+        $forcedProcesoId = match (true) {
+            $showProcessSelect && $user?->isLiderProceso() && $user->id_proceso => (int) $user->id_proceso,
+            $showProcessSelect && $user?->isLiderDependencia() && $user->id_proceso => (int) $user->id_proceso,
+            default => null,
+        };
+
+        $forcedDependenciaId = $showDependencySelect && $user?->isLiderDependencia() && $user->id_dependencia
+            ? (int) $user->id_dependencia
+            : null;
+
+        if ($forcedProcesoId !== null) {
+            $selectedProcesoId = $forcedProcesoId;
+        }
+
+        if ($forcedDependenciaId !== null) {
+            $selectedDependenciaId = $forcedDependenciaId;
+        }
+
+        $procesos = $showProcessSelect
+            ? $this->availableProcesos($forcedProcesoId)
+            : collect();
+
+        if (
+            $showProcessSelect &&
+            $selectedProcesoId !== null &&
+            ! $procesos->contains(fn (Proceso $proceso) => (int) $proceso->id_proceso === $selectedProcesoId)
+        ) {
+            $selectedProcesoId = $forcedProcesoId;
+        }
+
+        $dependencias = $showDependencySelect
+            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId)
+            : collect();
+
+        if (
+            $showDependencySelect &&
+            $selectedDependenciaId !== null &&
+            ! $dependencias->contains(fn (Dependencia $dependencia) => (int) $dependencia->id_dependencia === $selectedDependenciaId)
+        ) {
+            $selectedDependenciaId = $forcedDependenciaId;
+        }
+
+        $selectedProceso = $showProcessSelect
+            ? $procesos->firstWhere('id_proceso', $selectedProcesoId)
+            : null;
+        $selectedDependencia = $showDependencySelect
+            ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
+            : null;
+
+        $validator = Validator::make($request->all(), [
+            'trimestre' => ['required', 'integer', 'between:1,4'],
+            'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
+            'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
+        ]);
+
+        $validator->after(function ($validator) use (
+            $selectedQuarter,
+            $showProcessSelect,
+            $showDependencySelect,
+            $selectedProceso,
+            $selectedDependencia
+        ): void {
+            if (! $selectedQuarter) {
+                $validator->errors()->add('trimestre', 'Selecciona un trimestre valido para generar el reporte.');
+            }
+
+            if ($showProcessSelect && ! $selectedProceso) {
+                $validator->errors()->add('id_proceso', 'Selecciona un proceso valido para generar el reporte.');
+            }
+
+            if ($showDependencySelect && ! $selectedDependencia) {
+                $validator->errors()->add('id_dependencia', 'Selecciona una dependencia valida para generar el reporte.');
+            }
+        });
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $report = $this->reportService->generate(
+            $type,
+            $selectedFrom,
+            $selectedTo,
+            $selectedProcesoId,
+            $selectedDependenciaId
+        );
+
+        if (($report['observations'] ?? []) === []) {
+            return response()->json([
+                'message' => 'No hay observaciones recientes para generar la conclusion.',
+            ], 422);
+        }
+
+        try {
+            $conclusion = $this->aiConclusionService->generate($type, $report, [
+                'dependency' => $selectedDependencia?->nombre,
+                'period' => $selectedQuarter?->periodLabel(),
+                'process' => $selectedProceso?->nombre,
+                'quarter' => $selectedQuarter?->label(),
+                'title' => $definition['title'],
+            ]);
+        } catch (\RuntimeException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 503);
+        }
+
+        return response()->json([
+            'conclusion' => $conclusion,
+        ]);
+    }
 
     final protected function renderReportModule(Request $request): View|Response
     {
@@ -163,13 +299,17 @@ abstract class ControladorReporteAbstracto extends Controller
                             $selectedQuarter,
                             $selectedProceso?->nombre,
                             $selectedDependencia?->nombre
-                        )
+                        ),
+                        $this->sanitizeConclusion($request->query('generated_conclusion'))
                     );
                 }
             }
         }
 
         $routeName = $request->route()?->getName();
+        $conclusionUrl = $routeName !== null
+            ? route($routeName.'.conclusion')
+            : null;
         $pdfUrl = null;
 
         if ($report && $routeName !== null) {
@@ -185,6 +325,7 @@ abstract class ControladorReporteAbstracto extends Controller
             'dependencias' => $dependencias,
             'description' => $definition['description'],
             'filterError' => $filterError,
+            'conclusionUrl' => $conclusionUrl,
             'pdfUrl' => $pdfUrl,
             'quarterYear' => $quarterYear,
             'quarters' => $quarters,
@@ -218,13 +359,15 @@ abstract class ControladorReporteAbstracto extends Controller
         string $description,
         array $report,
         ?array $signature,
-        array $contextRows
+        array $contextRows,
+        ?string $generatedConclusion = null
     ): Response
     {
         $html = view('reportes.exportar', [
             'chartImages' => $this->chartImageService->build($report),
             'contextRows' => $contextRows,
             'description' => $description,
+            'generatedConclusion' => $generatedConclusion,
             'printFallback' => ! class_exists(\Dompdf\Dompdf::class),
             'report' => $report,
             'reportType' => $type,
@@ -478,5 +621,16 @@ abstract class ControladorReporteAbstracto extends Controller
         $normalized = (int) $value;
 
         return in_array($normalized, [1, 2, 3, 4], true) ? $normalized : null;
+    }
+
+    private function sanitizeConclusion(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $normalized = trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
+
+        return $normalized !== '' ? $normalized : null;
     }
 }

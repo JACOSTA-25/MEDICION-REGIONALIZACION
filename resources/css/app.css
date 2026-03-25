@@ -483,6 +483,82 @@ body {
     padding: 0.75rem 0.85rem;
 }
 
+.ms-form-note-highlight {
+    color: #9a3412;
+    font-weight: 600;
+}
+
+.ms-report-conclusion-shell {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 0.35rem;
+    padding: 1rem;
+    border: 1px solid #f3d4b3;
+    border-radius: 0.95rem;
+    background: linear-gradient(180deg, #fffaf5 0%, #fff 100%);
+}
+
+.ms-report-conclusion-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.ms-report-conclusion-head h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.ms-report-conclusion-head p {
+    margin: 0.3rem 0 0;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.ms-report-conclusion-textarea {
+    width: 100%;
+    min-height: 10rem;
+    resize: vertical;
+    padding: 0.95rem 1rem;
+    border: 1px solid #d7dce2;
+    border-radius: 0.9rem;
+    background: #fff;
+    color: #334155;
+    line-height: 1.55;
+    box-sizing: border-box;
+}
+
+.ms-report-conclusion-textarea:focus {
+    outline: none;
+    border-color: #ea580c;
+    box-shadow: 0 0 0 3px rgb(234 88 12 / 14%);
+}
+
+.ms-report-conclusion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.85rem;
+}
+
+.ms-report-conclusion-status {
+    margin: 0;
+    color: #6b7280;
+    line-height: 1.45;
+    flex: 1 1 16rem;
+}
+
+.ms-report-conclusion-status[data-state="error"] {
+    color: #b91c1c;
+}
+
+.ms-report-conclusion-status[data-state="success"] {
+    color: #166534;
+}
+
 .ms-statistics-shell .ms-topbar {
     display: flex;
     flex-wrap: wrap;

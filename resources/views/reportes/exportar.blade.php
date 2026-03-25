@@ -869,6 +869,9 @@
                 $neutralAnswersPercentage = $formatConclusionPercentage(
                     $report['indicators']['global']['neutral_answer_percentage'] ?? 0
                 );
+                $resolvedGeneratedConclusion = filled($generatedConclusion ?? null)
+                    ? trim((string) $generatedConclusion)
+                    : null;
             @endphp
 
             <div class="page-header">
@@ -901,7 +904,7 @@
                         El {{ $formatConclusionPercentage($questionPercentages[6] ?? 0) }}% se siente satisfecho con el lenguaje usado por los funcionarios {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
                     </p>
                     <p class="report-section-text">
-                        En torno a los resultados obtenidos se presento un {{ $neutralAnswersPercentage }}% donde los usuarios perciben un servicio ni satisfactorio ni insatisfactorio, teniendo en cuenta esta informacion se adelantaran acciones para mejorar el nivel de satisfaccion de estos usuarios.
+                        {{ $resolvedGeneratedConclusion ?? 'En torno a los resultados obtenidos se presento un '.$neutralAnswersPercentage.'% donde los usuarios perciben un servicio ni satisfactorio ni insatisfactorio, teniendo en cuenta esta informacion se adelantaran acciones para mejorar el nivel de satisfaccion de estos usuarios.' }}
                     </p>
                 </div>
 

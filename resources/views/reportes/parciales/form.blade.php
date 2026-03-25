@@ -1,4 +1,8 @@
 <div class="ms-content-shell">
+    @php
+        $requiresAiConclusion = ! empty($report) && ($report['observations'] ?? []) !== [] && filled($pdfUrl ?? null);
+    @endphp
+
     <x-generals.top-bar
         :title="$title"
         :description="$description"
@@ -92,9 +96,22 @@
                         </button>
 
                         @if ($pdfUrl)
-                            <a href="{{ $pdfUrl }}" class="ms-btn ms-btn-secondary">
-                                Descargar PDF
-                            </a>
+                            @if ($requiresAiConclusion)
+                                <button
+                                    type="button"
+                                    class="ms-btn ms-btn-secondary"
+                                    data-report-pdf-button
+                                    data-pdf-url="{{ $pdfUrl }}"
+                                    disabled
+                                    aria-disabled="true"
+                                >
+                                    Descargar PDF
+                                </button>
+                            @else
+                                <a href="{{ $pdfUrl }}" class="ms-btn ms-btn-secondary">
+                                    Descargar PDF
+                                </a>
+                            @endif
                         @endif
                     </div>
 
@@ -102,6 +119,10 @@
                         <div class="ms-inline-alert">
                             {{ $filterError }}
                         </div>
+                    @elseif ($requiresAiConclusion)
+                        <p class="ms-form-note ms-form-note-highlight">
+                            Genera y confirma la conclusion para habilitar la descarga del PDF.
+                        </p>
                     @else
                         <p class="ms-form-note">
                             Clasificacion de satisfaccion: Mala (1-2), Intermedia (3) y Buena (4-5).
@@ -348,6 +369,37 @@
                                 @foreach ($report['observations'] as $observation)
                                     <p>{{ $observation }}</p>
                                 @endforeach
+                            </div>
+
+                            <div
+                                class="ms-report-conclusion-shell"
+                                data-report-conclusion-shell
+                                data-conclusion-url="{{ $conclusionUrl }}"
+                            >
+                                <div class="ms-report-conclusion-head">
+                                    <div>
+                                        <h3>Conclusion editable para el PDF</h3>
+                                        <p>La IA analizara estas observaciones y podras editar el resultado antes de descargar el reporte.</p>
+                                    </div>
+                                </div>
+
+                                <textarea
+                                    class="ms-report-conclusion-textarea"
+                                    rows="6"
+                                    maxlength="1200"
+                                    placeholder="La conclusion generada por IA aparecera aqui. Si la editas, vuelve a oprimir Concluir para habilitar el PDF con la version final."
+                                    data-report-conclusion-textarea
+                                ></textarea>
+
+                                <div class="ms-report-conclusion-actions">
+                                    <p class="ms-report-conclusion-status" data-report-conclusion-status>
+                                        Genera la conclusion y confirmala para habilitar el PDF.
+                                    </p>
+
+                                    <button type="button" class="ms-btn ms-btn-primary" data-report-conclude-button>
+                                        Concluir
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </details>
