@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\Servicio;
-use App\Support\LegacyReferenceData;
+use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Seeder;
 
 class EstructuraOrganizacionalSeeder extends Seeder
@@ -15,7 +15,7 @@ class EstructuraOrganizacionalSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (LegacyReferenceData::organizationalStructure() as $estructura) {
+        foreach (DatosReferenciaLegado::organizationalStructure() as $estructura) {
             $proceso = Proceso::query()->updateOrCreate(
                 ['id_proceso' => $estructura['id_proceso']],
                 ['nombre' => $estructura['nombre']]

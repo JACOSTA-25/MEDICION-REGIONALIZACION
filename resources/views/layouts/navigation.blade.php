@@ -10,7 +10,7 @@
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        {{ __('Inicio') }}
                     </x-nav-link>
 
                     @include('partials.module-links')
@@ -62,36 +62,42 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                {{ __('Inicio') }}
             </x-responsive-nav-link>
 
             @php $user = auth()->user(); @endphp
 
-            @if ($user->canAccessGeneralReports())
+            @if ($user->puedeAccederReportesGenerales())
                 <x-responsive-nav-link :href="route('reports.general')" :active="request()->routeIs('reports.general')">
                     {{ __('Reporte general') }}
                 </x-responsive-nav-link>
             @endif
 
-            @if ($user->canAccessProcessReports())
+            @if ($user->puedeAccederReportesProceso())
                 <x-responsive-nav-link :href="route('reports.process')" :active="request()->routeIs('reports.process')">
                     {{ __('Reporte por proceso') }}
                 </x-responsive-nav-link>
             @endif
 
-            @if ($user->canAccessIndividualReports())
+            @if ($user->puedeAccederReportesIndividuales())
                 <x-responsive-nav-link :href="route('reports.individual')" :active="request()->routeIs('reports.individual')">
                     {{ __('Reporte individual') }}
                 </x-responsive-nav-link>
             @endif
 
-            @if ($user->canAccessUsersModule())
+            @if ($user->puedeAccederModuloEstadisticas())
+                <x-responsive-nav-link :href="route('statistics.index')" :active="request()->routeIs('statistics.*')">
+                    {{ __('Estadisticas') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if ($user->puedeAccederModuloUsuarios())
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
                     {{ __('Usuarios') }}
                 </x-responsive-nav-link>
             @endif
 
-            @if ($user->canAccessProcessDependencyModule())
+            @if ($user->puedeAccederModuloEstructuraOrganizacional())
                 <x-responsive-nav-link :href="route('process-dependency.index')" :active="request()->routeIs('process-dependency.*')">
                     {{ __('Procesos y dependencias') }}
                 </x-responsive-nav-link>

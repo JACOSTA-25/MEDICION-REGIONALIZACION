@@ -1,6 +1,6 @@
 <?php
 
-use App\Support\LegacyReferenceData;
+use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +18,7 @@ return new class extends Migration
                 'nombre' => $item['nombre'],
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
-            ], LegacyReferenceData::estamentos()),
+            ], DatosReferenciaLegado::estamentos()),
             ['nombre'],
             ['updated_at']
         );
@@ -28,7 +28,7 @@ return new class extends Migration
                 'nombre' => $item['nombre'],
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
-            ], LegacyReferenceData::programas()),
+            ], DatosReferenciaLegado::programas()),
             ['nombre'],
             ['updated_at']
         );
@@ -37,7 +37,7 @@ return new class extends Migration
         $dependencies = [];
         $services = [];
 
-        foreach (LegacyReferenceData::organizationalStructure() as $process) {
+        foreach (DatosReferenciaLegado::organizationalStructure() as $process) {
             $processes[] = [
                 'id_proceso' => $process['id_proceso'],
                 'nombre' => $process['nombre'],

@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Estamento;
-use App\Support\LegacyReferenceData;
+use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Seeder;
 
 class EstamentoSeeder extends Seeder
@@ -13,7 +13,7 @@ class EstamentoSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (LegacyReferenceData::estamentos() as $estamento) {
+        foreach (DatosReferenciaLegado::estamentos() as $estamento) {
             Estamento::query()->updateOrCreate(
                 ['nombre' => $estamento['nombre']],
                 ['nombre' => $estamento['nombre']]

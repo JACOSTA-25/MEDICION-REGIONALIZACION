@@ -483,8 +483,206 @@ body {
     padding: 0.75rem 0.85rem;
 }
 
+.ms-statistics-shell .ms-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.ms-statistics-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.ms-statistics-entry-card {
+    display: grid;
+    gap: 0.55rem;
+    border: 2px solid #eadfdf;
+    border-radius: 0.9rem;
+    background: linear-gradient(180deg, #ffffff 0%, #fcf7f7 100%);
+    padding: 1rem;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ms-statistics-entry-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(156 58 58 / 10%);
+    border-color: #d8b4b4;
+}
+
+.ms-statistics-entry-card strong {
+    color: #1f2937;
+    font-size: 1.1rem;
+}
+
+.ms-statistics-entry-card p {
+    margin: 0;
+    color: #555;
+    line-height: 1.5;
+}
+
+.ms-statistics-entry-kicker {
+    color: #9c3a3a;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ms-statistics-entry-link {
+    color: #7f1d1d;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.ms-statistics-level-nav {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ms-statistics-level-nav a {
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    padding: 0.55rem 0.9rem;
+    background: #fff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.ms-statistics-level-nav a:hover,
+.ms-statistics-level-nav a.is-active {
+    background: #9c3a3a;
+    border-color: #9c3a3a;
+    color: #fff;
+}
+
+.ms-statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.ms-statistics-chart-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 3px 6px rgb(0 0 0 / 12%);
+    padding: 1rem;
+}
+
+.ms-statistics-chart-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.ms-statistics-chart-header h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.ms-statistics-chart-header p {
+    margin: 0.3rem 0 0;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.ms-statistics-chart-actions {
+    display: inline-flex;
+    gap: 0.45rem;
+}
+
+.ms-statistics-toolbar-btn {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.7rem;
+    background: #fff;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.45rem 0.7rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.ms-statistics-toolbar-btn:hover {
+    background: #f8fafc;
+    color: #1f2937;
+    border-color: #cbd5e1;
+}
+
+.ms-statistics-chart-surface {
+    height: 320px;
+}
+
+.ms-statistics-surface-compact {
+    height: 280px;
+}
+
+.ms-statistics-empty {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.ms-statistics-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.8rem;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    color: #475569;
+    font-size: 0.82rem;
+}
+
+.ms-statistics-table-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.ms-statistics-table-header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.05rem;
+}
+
+.ms-statistics-table-header p {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
 @media (max-width: 1024px) {
     .ms-report-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ms-statistics-entry-grid,
+    .ms-statistics-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -500,5 +698,14 @@ body {
 
     .ms-btn {
         width: 100%;
+    }
+
+    .ms-statistics-level-nav {
+        width: 100%;
+    }
+
+    .ms-statistics-level-nav a {
+        flex: 1 1 auto;
+        text-align: center;
     }
 }

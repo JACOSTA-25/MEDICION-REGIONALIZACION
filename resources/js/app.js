@@ -1,6 +1,6 @@
 import './bootstrap';
-import './copy-link';
-import './report-filters';
+import './compartido/copiar-enlace';
+import './reportes/filtros';
 
 import Alpine from 'alpinejs';
 

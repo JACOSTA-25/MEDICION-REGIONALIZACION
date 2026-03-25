@@ -127,32 +127,61 @@ class User extends Authenticatable
         ], true);
     }
 
-    public function canAccessUsersModule(): bool
+    public function puedeAccederModuloUsuarios(): bool
     {
         return $this->isAdmin();
     }
 
-    public function canManageReportingQuarters(): bool
+    public function puedeGestionarTrimestresReporte(): bool
     {
         return $this->isAdmin();
     }
 
-    public function canAccessProcessDependencyModule(): bool
+    public function puedeAccederModuloEstructuraOrganizacional(): bool
     {
         return $this->isAdmin() || $this->isAdmin20();
     }
 
-    public function canAccessGeneralReports(): bool
+    public function puedeAccederModuloEstadisticas(): bool
+    {
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || $this->isLiderProceso()
+            || $this->isLiderDependencia();
+    }
+
+    public function puedeAccederEstadisticasProcesos(): bool
+    {
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || $this->isLiderProceso();
+    }
+
+    public function puedeAccederEstadisticasDependencias(): bool
+    {
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || $this->isLiderProceso();
+    }
+
+    public function puedeAccederEstadisticasServicios(): bool
+    {
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || $this->isLiderDependencia();
+    }
+
+    public function puedeAccederReportesGenerales(): bool
     {
         return $this->isAdmin() || $this->isAdmin20();
     }
 
-    public function canAccessProcessReports(): bool
+    public function puedeAccederReportesProceso(): bool
     {
         return $this->isAdmin() || $this->isLiderProceso();
     }
 
-    public function canAccessIndividualReports(): bool
+    public function puedeAccederReportesIndividuales(): bool
     {
         return $this->isAdmin() || $this->isLiderDependencia();
     }

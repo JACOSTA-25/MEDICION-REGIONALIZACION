@@ -12,7 +12,7 @@
                 </a>
             </li>
 
-            @if ($user->canAccessGeneralReports())
+            @if ($user->puedeAccederReportesGenerales())
                 <li>
                     <a href="{{ route('reports.general') }}" class="{{ request()->routeIs('reports.general') ? 'selected' : '' }}">
                         <span class="icon"><img src="{{ asset('assets/icons/reportes.svg') }}" alt="Reporte general"></span>
@@ -21,7 +21,7 @@
                 </li>
             @endif
 
-            @if ($user->canAccessProcessReports())
+            @if ($user->puedeAccederReportesProceso())
                 <li>
                     <a href="{{ route('reports.process') }}" class="{{ request()->routeIs('reports.process') ? 'selected' : '' }}">
                         <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Reporte por proceso"></span>
@@ -30,7 +30,7 @@
                 </li>
             @endif
 
-            @if ($user->canAccessIndividualReports())
+            @if ($user->puedeAccederReportesIndividuales())
                 <li>
                     <a href="{{ route('reports.individual') }}" class="{{ request()->routeIs('reports.individual') ? 'selected' : '' }}">
                         <span class="icon"><img src="{{ asset('assets/icons/file.svg') }}" alt="Reporte individual"></span>
@@ -39,7 +39,16 @@
                 </li>
             @endif
 
-            @if ($user->canAccessUsersModule())
+            @if ($user->puedeAccederModuloEstadisticas())
+                <li>
+                    <a href="{{ route('statistics.index') }}" class="{{ request()->routeIs('statistics.*') ? 'selected' : '' }}">
+                        <span class="icon"><img src="{{ asset('assets/icons/estadisticas.svg') }}" alt="Estadisticas"></span>
+                        <span>Estadisticas</span>
+                    </a>
+                </li>
+            @endif
+
+            @if ($user->puedeAccederModuloUsuarios())
                 <li>
                     <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index') ? 'selected' : '' }}">
                         <span class="icon"><img src="{{ asset('assets/icons/usuarios.svg') }}" alt="Usuarios"></span>
@@ -48,7 +57,7 @@
                 </li>
             @endif
 
-            @if ($user->canAccessProcessDependencyModule())
+            @if ($user->puedeAccederModuloEstructuraOrganizacional())
                 <li>
                     <a href="{{ route('process-dependency.index') }}" class="{{ request()->routeIs('process-dependency.*') ? 'selected' : '' }}">
                         <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Procesos y dependencias"></span>

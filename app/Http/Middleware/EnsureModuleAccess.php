@@ -20,11 +20,15 @@ class EnsureModuleAccess
         }
 
         $allowed = match ($module) {
-            'general_reports' => $user->canAccessGeneralReports(),
-            'process_reports' => $user->canAccessProcessReports(),
-            'individual_reports' => $user->canAccessIndividualReports(),
-            'users' => $user->canAccessUsersModule(),
-            'process_dependency' => $user->canAccessProcessDependencyModule(),
+            'statistics' => $user->puedeAccederModuloEstadisticas(),
+            'statistics_processes' => $user->puedeAccederEstadisticasProcesos(),
+            'statistics_dependencies' => $user->puedeAccederEstadisticasDependencias(),
+            'statistics_services' => $user->puedeAccederEstadisticasServicios(),
+            'general_reports' => $user->puedeAccederReportesGenerales(),
+            'process_reports' => $user->puedeAccederReportesProceso(),
+            'individual_reports' => $user->puedeAccederReportesIndividuales(),
+            'users' => $user->puedeAccederModuloUsuarios(),
+            'process_dependency' => $user->puedeAccederModuloEstructuraOrganizacional(),
             default => false,
         };
 

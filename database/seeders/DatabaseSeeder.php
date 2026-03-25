@@ -15,9 +15,9 @@ class DatabaseSeeder extends Seeder
             EstamentoSeeder::class,
             ProgramaSeeder::class,
             EstructuraOrganizacionalSeeder::class,
-            SurveyResponseSeeder::class,
-            AdminUserSeeder::class,
-            DemoAssignedUsersSeeder::class,
+            RespuestasEncuestaSeeder::class,
+            UsuariosAdminSeeder::class,
+            UsuariosAsignadosDemoSeeder::class,
         ]);
     }
 }
