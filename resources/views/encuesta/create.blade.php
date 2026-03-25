@@ -16,6 +16,7 @@
 
         <title>Encuesta de satisfaccion</title>
 
+        @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/encuesta/formulario.js'])
     </head>
     <body class="min-h-screen bg-slate-950 text-slate-900">

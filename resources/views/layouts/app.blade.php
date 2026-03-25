@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="{{ asset('assets/css/components/navbar.css') }}">
         <link rel="stylesheet" href="{{ asset('assets/css/components/sidebar.css') }}">
 
+        @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
