@@ -22,6 +22,7 @@ class ServicioImagenesGraficosPdf
      *      charts: array{
      *          population_by_program: array{items: array<int, array{label: string, value: int, percentage: float, color: string}>},
      *          population_by_estamento: array{items: array<int, array{label: string, value: int, percentage: float, color: string}>},
+     *          services: array{items: array<int, array{label: string, value: int, percentage: float, color: string}>},
      *          question_results: array<int, array{items: array<int, array{label: string, value: int, percentage: float, color: string}>}>,
      *          satisfied_users_percentage: array{items: array<int, array{label: string, value: float, color: string}>}
      *      }
@@ -29,6 +30,7 @@ class ServicioImagenesGraficosPdf
      * @return array{
      *      population_by_program: string,
      *      population_by_estamento: string,
+     *      services: string,
      *      question_results: array<int, string>,
      *      satisfied_users_percentage: string
      * }
@@ -43,22 +45,30 @@ class ServicioImagenesGraficosPdf
                 700,
                 330,
                 true,
-                false
+                false,
+                0
             ),
             'population_by_estamento' => $this->renderPieImage(
                 $charts['population_by_estamento']['items'] ?? [],
                 700,
                 330,
                 true,
-                false
+                false,
+                0
+            ),
+            'services' => $this->renderHorizontalBarImage(
+                $charts['services']['items'] ?? [],
+                920,
+                620
             ),
             'question_results' => array_map(
                 fn (array $questionChart): string => $this->renderPieImage(
                     $questionChart['items'] ?? [],
                     760,
-                    360,
+                    420,
                     true,
-                    false
+                    false,
+                    78
                 ),
                 $charts['question_results'] ?? []
             ),
@@ -78,7 +88,8 @@ class ServicioImagenesGraficosPdf
         int $width,
         int $height,
         bool $drawOutsidePercentages = false,
-        bool $showPercentageInLegend = true
+        bool $showPercentageInLegend = true,
+        int $horizontalShift = 0
     ): string {
         $outputScale = self::OUTPUT_SCALE;
         $drawScale = $outputScale * self::SUPERSAMPLE_SCALE;
@@ -105,7 +116,7 @@ class ServicioImagenesGraficosPdf
             $items
         ));
 
-        $centerX = (int) round(165 * $scale);
+        $centerX = (int) round((165 + $horizontalShift) * $scale);
         $centerY = (int) floor($canvasHeight / 2);
         $diameter = (int) round(210 * $scale);
 
@@ -161,9 +172,13 @@ class ServicioImagenesGraficosPdf
 
         imageellipse($image, $centerX, $centerY, $diameter, $diameter, $this->allocateHexColor($image, '#D1D5DB'));
 
-        $legendX = (int) round(350 * $scale);
-        $legendY = (int) round(26 * $scale);
+        $legendX = (int) round((350 + $horizontalShift) * $scale);
         $lineHeight = (int) round(21 * $scale);
+        $legendBlockHeight = count($items) * $lineHeight;
+        $legendY = max(
+            (int) round(18 * $scale),
+            (int) round($centerY - ($legendBlockHeight / 2))
+        );
 
         foreach ($items as $index => $item) {
             $y = $legendY + ($index * $lineHeight);
@@ -202,6 +217,111 @@ class ServicioImagenesGraficosPdf
                 $y + (int) round(10 * $scale),
                 $text,
                 $legendText
+            );
+        }
+
+        return $this->toPngDataUri($image, $width * $outputScale, $height * $outputScale);
+    }
+
+    /**
+     * @param  array<int, array{label: string, value: int|float, percentage?: float, color: string}>  $items
+     */
+    private function renderHorizontalBarImage(array $items, int $width, int $height): string
+    {
+        $outputScale = self::OUTPUT_SCALE;
+        $drawScale = $outputScale * self::SUPERSAMPLE_SCALE;
+        $scale = $drawScale;
+        $canvasWidth = $width * $drawScale;
+        $canvasHeight = $height * $drawScale;
+
+        $image = imagecreatetruecolor($canvasWidth, $canvasHeight);
+        imageantialias($image, true);
+        imagealphablending($image, true);
+
+        if (function_exists('imagesetinterpolation')) {
+            imagesetinterpolation($image, IMG_BICUBIC_FIXED);
+        }
+
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $text = imagecolorallocate($image, 17, 24, 39);
+        $grid = imagecolorallocate($image, 229, 231, 235);
+
+        imagefilledrectangle($image, 0, 0, $canvasWidth, $canvasHeight, $white);
+
+        if ($items === []) {
+            $this->drawText(
+                $image,
+                (int) round(11 * $scale),
+                (int) round(60 * $scale),
+                (int) round(80 * $scale),
+                $text,
+                'Sin datos para graficar'
+            );
+
+            return $this->toPngDataUri($image, $width * $outputScale, $height * $outputScale);
+        }
+
+        $top = (int) round(44 * $scale);
+        $leftLabel = (int) round(36 * $scale);
+        $barStart = (int) round(350 * $scale);
+        $right = $canvasWidth - (int) round(60 * $scale);
+        $rowHeight = (int) round(42 * $scale);
+        $barHeight = (int) round(24 * $scale);
+        $maxValue = max(array_map(
+            static fn (array $item): float => (float) ($item['value'] ?? 0),
+            $items
+        ));
+
+        foreach ($items as $index => $item) {
+            $y = $top + ($index * $rowHeight);
+
+            if ($y > $canvasHeight - (int) round(30 * $scale)) {
+                break;
+            }
+
+            $label = $this->truncate((string) ($item['label'] ?? ''), 40);
+            $value = (float) ($item['value'] ?? 0);
+            $percentage = isset($item['percentage']) ? (float) $item['percentage'] : 0.0;
+            $usableWidth = max($right - $barStart, 1);
+            $barWidth = $maxValue > 0
+                ? (int) round(($value / $maxValue) * $usableWidth)
+                : 0;
+            $barTop = $y + (int) round(2 * $scale);
+            $barBottom = $barTop + $barHeight;
+
+            imageline($image, $barStart, $barBottom + (int) round(2 * $scale), $right, $barBottom + (int) round(2 * $scale), $grid);
+
+            $this->drawText(
+                $image,
+                (int) round(11 * $scale),
+                $leftLabel,
+                $y + (int) round(16 * $scale),
+                $text,
+                $label
+            );
+
+            imagefilledrectangle(
+                $image,
+                $barStart,
+                $barTop,
+                $barStart + $barWidth,
+                $barBottom,
+                $this->allocateHexColor($image, (string) ($item['color'] ?? '#1D4ED8'))
+            );
+
+            $valueLabel = sprintf(
+                '%s (%s%%)',
+                (string) ((int) round($value)),
+                $this->formatPercentage($percentage)
+            );
+
+            $this->drawText(
+                $image,
+                (int) round(10 * $scale),
+                min($barStart + $barWidth + (int) round(12 * $scale), $right - (int) round(120 * $scale)),
+                $y + (int) round(16 * $scale),
+                $text,
+                $valueLabel
             );
         }
 
@@ -286,27 +406,23 @@ class ServicioImagenesGraficosPdf
 
         imagefilledrectangle($image, 0, 0, $canvasWidth, $canvasHeight, $white);
 
-        $left = (int) round(42 * $scale);
+        $left = (int) round(24 * $scale);
         $right = $canvasWidth - (int) round(24 * $scale);
         $top = (int) round(18 * $scale);
-        $baseY = $canvasHeight - (int) round(72 * $scale);
+        $baseY = $canvasHeight - (int) round(118 * $scale);
         $chartHeight = $baseY - $top;
 
-        imageline($image, $left, $top, $left, $baseY, $axis);
         imageline($image, $left, $baseY, $right, $baseY, $axis);
 
         for ($tick = 0; $tick <= 5; $tick++) {
             $y = (int) round($top + ($tick * ($chartHeight / 5)));
-            $value = 100 - ($tick * 20);
-
             imageline($image, $left, $y, $right, $y, $grid);
-            $this->drawText($image, (int) round(12 * $scale), (int) round(4 * $scale), $y + (int) round(5 * $scale), $text, $value.'%');
         }
 
         if ($items !== []) {
             $count = max(count($items), 1);
             $step = ($right - $left) / $count;
-            $barWidth = max(min((int) floor($step * 1.10), 152), 60);
+            $barWidth = max(min((int) floor($step * 0.60), 170), 68);
 
             foreach ($items as $index => $item) {
                 $value = max(min((float) ($item['value'] ?? 0), 100), 0);
@@ -322,20 +438,21 @@ class ServicioImagenesGraficosPdf
                 $this->drawText(
                     $image,
                     (int) round(12 * $scale),
-                    $x,
+                    $x + (int) round($barWidth * 0.12),
                     max($y - (int) round(12 * $scale), (int) round(6 * $scale)),
                     $text,
                     $valueText
                 );
 
-                $label = $this->truncate((string) ($item['label'] ?? ''), 18);
+                $label = $this->truncate((string) ($item['label'] ?? ''), 24);
                 $this->drawText(
                     $image,
                     (int) round(10 * $scale),
-                    $x,
-                    $baseY + (int) round(20 * $scale),
+                    $x + (int) round($barWidth * 0.18),
+                    $baseY + (int) round(62 * $scale),
                     $text,
-                    $label
+                    $label,
+                    -38.0
                 );
             }
         } else {

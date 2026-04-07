@@ -39,7 +39,7 @@
                         <div class="mt-8 grid gap-4 sm:grid-cols-2">
                             <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-200">Escala</p>
-                                <p class="mt-2 text-sm text-slate-100">1=Deficiente | 2=Malo | 3=Regular | 4=Satisfactorio | 5=Muy Satisfactorio</p>
+                                <p class="mt-2 text-sm text-slate-100">1=Deficiente | 2=Malo | 3=Regular | 4=Bueno | 5=Excelente</p>
                             </div>
                             <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-200">Cobertura</p>

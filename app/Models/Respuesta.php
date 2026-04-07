@@ -31,7 +31,6 @@ class Respuesta extends Model
         'pregunta3',
         'pregunta4',
         'pregunta5',
-        'pregunta6',
         'observaciones',
         'fecha_respuesta',
     ];
@@ -49,7 +48,6 @@ class Respuesta extends Model
             'pregunta3' => 'integer',
             'pregunta4' => 'integer',
             'pregunta5' => 'integer',
-            'pregunta6' => 'integer',
             'fecha_respuesta' => 'datetime',
         ];
     }

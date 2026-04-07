@@ -32,15 +32,15 @@ class RespuestasEncuestaSeeder extends Seeder
 
     private const OBSERVACIONES = [
         'La atencion fue clara y cordial.',
-        'El tiempo de respuesta fue adecuado.',
-        'Recibi orientacion suficiente para completar el tramite.',
+        'Las condiciones del espacio permitieron una atencion comoda y segura.',
+        'Recibi informacion suficiente para completar el tramite.',
         'El servicio cumplio con lo esperado.',
-        'La informacion entregada fue util y comprensible.',
+        'La informacion entregada fue util, clara y comprensible.',
         'Seria ideal ampliar los horarios de atencion.',
-        'El proceso fue agil y bien explicado.',
+        'La comunicacion del funcionario fue respetuosa e incluyente.',
         'La experiencia general fue positiva.',
         'Hubo demoras, pero finalmente se resolvio la solicitud.',
-        'La senalizacion del area podria mejorar.',
+        'Las instalaciones podrian mejorar para brindar mayor comodidad.',
     ];
 
     /**
@@ -179,7 +179,6 @@ class RespuestasEncuestaSeeder extends Seeder
             'pregunta3' => $calificacion[2],
             'pregunta4' => $calificacion[3],
             'pregunta5' => $calificacion[4],
-            'pregunta6' => $calificacion[5],
             'observaciones' => $this->observacionAleatoria(),
             'fecha_respuesta' => $this->fechaAleatoriaEntre($fechaInicio, $fechaFin),
         ];
@@ -204,18 +203,18 @@ class RespuestasEncuestaSeeder extends Seeder
     private function bloquesCalificacion(): array
     {
         return [
-            [5, 5, 5, 5, 5, 5],
-            [5, 5, 4, 5, 4, 5],
-            [4, 4, 4, 4, 4, 4],
-            [4, 5, 4, 4, 5, 4],
-            [3, 3, 3, 3, 3, 3],
-            [3, 4, 3, 4, 3, 4],
-            [2, 2, 2, 2, 2, 2],
-            [2, 3, 2, 3, 2, 3],
-            [1, 1, 1, 1, 1, 1],
-            [1, 2, 1, 2, 1, 2],
-            [5, 4, 3, 2, 1, 3],
-            [1, 3, 5, 2, 4, 2],
+            [5, 5, 5, 5, 5],
+            [5, 5, 4, 5, 4],
+            [4, 4, 4, 4, 4],
+            [4, 5, 4, 4, 5],
+            [3, 3, 3, 3, 3],
+            [3, 4, 3, 4, 3],
+            [2, 2, 2, 2, 2],
+            [2, 3, 2, 3, 2],
+            [1, 1, 1, 1, 1],
+            [1, 2, 1, 2, 1],
+            [5, 4, 3, 2, 1],
+            [1, 3, 5, 2, 4],
         ];
     }
 }

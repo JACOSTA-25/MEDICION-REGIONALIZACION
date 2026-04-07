@@ -74,9 +74,9 @@ class ModuloEstadisticasTest extends TestCase
         $processA = Proceso::query()->create(['nombre' => 'Bienestar', 'activo' => true]);
         $processB = Proceso::query()->create(['nombre' => 'Registro', 'activo' => true]);
 
-        Respuesta::query()->create($this->responsePayload($estamento, $programa, $processA, null, null, [5, 5, 5, 5, 5, 5]));
-        Respuesta::query()->create($this->responsePayload($estamento, $programa, $processA, null, null, [4, 4, 4, 4, 4, 4]));
-        Respuesta::query()->create($this->responsePayload($estamento, $programa, $processB, null, null, [1, 2, 3, 2, 1, 2]));
+        Respuesta::query()->create($this->responsePayload($estamento, $programa, $processA, null, null, [5, 5, 5, 5, 5]));
+        Respuesta::query()->create($this->responsePayload($estamento, $programa, $processA, null, null, [4, 4, 4, 4, 4]));
+        Respuesta::query()->create($this->responsePayload($estamento, $programa, $processB, null, null, [1, 2, 3, 2, 1]));
 
         $response = $this->actingAs($admin)
             ->getJson(route('statistics.data.show', ['level' => 'processes']));
@@ -120,8 +120,8 @@ class ModuloEstadisticasTest extends TestCase
             'id_dependencia' => $dependencyA->id_dependencia,
         ]);
 
-        Respuesta::query()->create($this->responsePayload($estamento, $programa, $process, $dependencyA, $serviceA, [5, 5, 5, 4, 4, 4]));
-        Respuesta::query()->create($this->responsePayload($estamento, $programa, $process, $dependencyB, $serviceB, [1, 1, 1, 1, 1, 1]));
+        Respuesta::query()->create($this->responsePayload($estamento, $programa, $process, $dependencyA, $serviceA, [5, 5, 5, 4, 4]));
+        Respuesta::query()->create($this->responsePayload($estamento, $programa, $process, $dependencyB, $serviceB, [1, 1, 1, 1, 1]));
 
         $response = $this->actingAs($leaderDependency)
             ->getJson(route('statistics.data.show', ['level' => 'services']));
@@ -156,7 +156,6 @@ class ModuloEstadisticasTest extends TestCase
             'pregunta3' => $answers[2],
             'pregunta4' => $answers[3],
             'pregunta5' => $answers[4],
-            'pregunta6' => $answers[5],
             'fecha_respuesta' => now(),
         ];
     }

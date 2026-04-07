@@ -58,7 +58,7 @@ class ReportesEstadisticosTest extends TestCase
             $serviceA->id_proceso,
             $serviceA->id_dependencia,
             $serviceA->id_servicio,
-            [5, 4, 3, 2, 1, 5],
+            [5, 4, 3, 2, 1],
             '2026-01-05 10:00:00'
         );
 
@@ -68,7 +68,7 @@ class ReportesEstadisticosTest extends TestCase
             $serviceB->id_proceso,
             $serviceB->id_dependencia,
             $serviceB->id_servicio,
-            [4, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4],
             '2026-01-08 15:00:00'
         );
 
@@ -78,7 +78,7 @@ class ReportesEstadisticosTest extends TestCase
             $serviceA->id_proceso,
             $serviceA->id_dependencia,
             $serviceA->id_servicio,
-            [1, 2, 3, 4, 5, 2],
+            [1, 2, 3, 4, 5],
             '2026-01-12 09:30:00'
         );
 
@@ -88,7 +88,7 @@ class ReportesEstadisticosTest extends TestCase
             $serviceA->id_proceso,
             $serviceA->id_dependencia,
             $serviceA->id_servicio,
-            [5, 5, 5, 5, 5, 5],
+            [5, 5, 5, 5, 5],
             '2025-12-20 09:30:00'
         );
 
@@ -96,10 +96,10 @@ class ReportesEstadisticosTest extends TestCase
         $report = $service->generate('general', '2026-01-01', '2026-01-31');
 
         $this->assertSame(3, $report['totals']['survey_count']);
-        $this->assertSame(18, $report['totals']['answer_count']);
-        $this->assertCount(6, $report['questions']);
-        $this->assertCount(6, $report['tables']['satisfaction_consolidated']);
-        $this->assertCount(6, $report['charts']['question_results']);
+        $this->assertSame(15, $report['totals']['answer_count']);
+        $this->assertCount(5, $report['questions']);
+        $this->assertCount(5, $report['tables']['satisfaction_consolidated']);
+        $this->assertCount(5, $report['charts']['question_results']);
 
         $questionOne = collect($report['questions'])->firstWhere('number', 1);
         $this->assertNotNull($questionOne);
@@ -112,7 +112,7 @@ class ReportesEstadisticosTest extends TestCase
         $this->assertSame(2, $programRows[$programa->nombre]['encuestas']);
         $this->assertSame(1, $programRows['Sin programa']['encuestas']);
 
-        $this->assertEquals(61.0, $report['indicators']['global']['satisfaction_percentage']);
+        $this->assertEquals(60.0, $report['indicators']['global']['satisfaction_percentage']);
 
         $processFiltered = $service->generate('process', '2026-01-01', '2026-01-31', $serviceA->id_proceso);
         $this->assertSame(2, $processFiltered['totals']['survey_count']);
@@ -143,42 +143,42 @@ class ReportesEstadisticosTest extends TestCase
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-                $serviceA->id_proceso,
-                $serviceA->id_dependencia,
-                $serviceA->id_servicio,
-                [5, 5, 5, 5, 5, 5],
-                '2026-01-09 08:00:00'
-            );
+            $serviceA->id_proceso,
+            $serviceA->id_dependencia,
+            $serviceA->id_servicio,
+            [5, 5, 5, 5, 5],
+            '2026-01-09 08:00:00'
+        );
 
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-                $serviceA->id_proceso,
-                $serviceA->id_dependencia,
-                $serviceA->id_servicio,
-                [4, 4, 4, 4, 4, 4],
-                '2026-01-10 08:00:00'
-            );
+            $serviceA->id_proceso,
+            $serviceA->id_dependencia,
+            $serviceA->id_servicio,
+            [4, 4, 4, 4, 4],
+            '2026-01-10 08:00:00'
+        );
 
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-                $serviceA->id_proceso,
-                $serviceA->id_dependencia,
-                $serviceA->id_servicio,
-                [3, 3, 3, 3, 3, 3],
-                '2026-03-31 08:00:00'
-            );
+            $serviceA->id_proceso,
+            $serviceA->id_dependencia,
+            $serviceA->id_servicio,
+            [3, 3, 3, 3, 3],
+            '2026-03-31 08:00:00'
+        );
 
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-                $serviceA->id_proceso,
-                $serviceA->id_dependencia,
-                $serviceA->id_servicio,
-                [2, 2, 2, 2, 2, 2],
-                '2026-04-01 08:00:00'
-            );
+            $serviceA->id_proceso,
+            $serviceA->id_dependencia,
+            $serviceA->id_servicio,
+            [2, 2, 2, 2, 2],
+            '2026-04-01 08:00:00'
+        );
 
             $response = $this->actingAs($admin)
                 ->get(route('reports.general', ['trimestre' => 1]));
@@ -215,7 +215,7 @@ class ReportesEstadisticosTest extends TestCase
                 $serviceA->id_proceso,
                 $serviceA->id_dependencia,
                 $serviceA->id_servicio,
-                [4, 4, 4, 4, 4, 4],
+                [4, 4, 4, 4, 4],
                 '2026-10-15 08:00:00'
             );
 
@@ -282,36 +282,35 @@ class ReportesEstadisticosTest extends TestCase
             $this->assertStringContainsString('class="cover-logo"', $generalHtml);
             $this->assertStringContainsString('alt="Logo de portada"', $generalHtml);
             $this->assertStringContainsString(
-                'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE FORMA GENERAL (2026)',
+                '9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE LOS PROCESOS EVALUADOS',
                 $generalHtml
             );
             $this->assertStringContainsString(
-                'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.mb_strtoupper($processName, 'UTF-8').' (2026)',
+                '9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DEL PROCESO '.mb_strtoupper($processName, 'UTF-8'),
                 $processHtml
             );
             $this->assertStringContainsString(
-                'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.mb_strtoupper($dependencyName, 'UTF-8').' (2026)',
+                '9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE LA DEPENDENCIA '.mb_strtoupper($dependencyName, 'UTF-8'),
                 $dependencyHtml
             );
             $this->assertStringContainsString(
-                'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por la dependencia durante el periodo.',
+                'Evaluar el nivel de satisfaccion de los usuarios frente al servicio prestado por la dependencia '.$dependencyName,
                 $dependencyHtml
             );
-            $this->assertStringNotContainsString('servicios brindados por el dependencia', $dependencyHtml);
             $this->assertStringContainsString(
-                'El numero de usuarios encuestados durante el IV Trimestre de 2026 fue de 1 usuario a los cuales se les presto el servicio en todos los procesos.',
+                'La encuesta de satisfaccion fue aplicada durante IV Trimestre de 2026 a 1 usuario que recibio atencion de los procesos evaluados, de la Universidad de La Guajira.',
                 $generalHtml
             );
             $this->assertStringContainsString(
-                'El 100% se siente satisfecho con la atencion del funcionario en la oficina '.mb_strtoupper($processName, 'UTF-8').', durante el IV Trimestre de 2026.',
+                'se concluye que el proceso '.$processName.' presenta un nivel de satisfaccion general del 100%',
                 $processHtml
             );
             $this->assertStringContainsString(
-                'El 100% se siente satisfecho con el lenguaje usado por los funcionarios en la dependencia '.mb_strtoupper($dependencyName, 'UTF-8').', durante el IV Trimestre de 2026.',
+                'se concluye que la dependencia '.$dependencyName.' presenta un nivel de satisfaccion general del 100%',
                 $dependencyHtml
             );
             $this->assertStringContainsString(
-                'En torno a los resultados obtenidos se presento un 0% donde los usuarios perciben un servicio ni satisfactorio ni insatisfactorio, teniendo en cuenta esta informacion se adelantaran acciones para mejorar el nivel de satisfaccion de estos usuarios.',
+                'Asi mismo, las respuestas clasificadas como neutras e insatisfechas constituyen un insumo relevante para el analisis interno del proceso',
                 $generalHtml
             );
             $this->assertStringNotContainsString($processLeaderName, $generalHtml);
@@ -351,7 +350,7 @@ class ReportesEstadisticosTest extends TestCase
                 $serviceA->id_proceso,
                 $serviceA->id_dependencia,
                 $serviceA->id_servicio,
-                [4, 4, 4, 4, 4, 4],
+                [4, 4, 4, 4, 4],
                 '2026-01-10 08:00:00',
                 'El servicio fue agil, pero la informacion inicial no fue tan clara.'
             );
@@ -394,7 +393,7 @@ class ReportesEstadisticosTest extends TestCase
                 $serviceA->id_proceso,
                 $serviceA->id_dependencia,
                 $serviceA->id_servicio,
-                [4, 4, 3, 4, 4, 5],
+                [4, 4, 3, 4, 4],
                 '2026-01-10 08:00:00',
                 'La atencion fue amable, aunque el tiempo de espera pudo ser menor.'
             );
@@ -438,7 +437,7 @@ class ReportesEstadisticosTest extends TestCase
             $serviceA->id_proceso,
             $serviceA->id_dependencia,
             $serviceA->id_servicio,
-            [4, 4, 4, 4, 4, 4],
+            [4, 4, 4, 4, 4],
             '2026-10-15 08:00:00',
             'El proceso fue claro y el personal atendio con respeto.'
         );
@@ -502,7 +501,7 @@ class ReportesEstadisticosTest extends TestCase
                 $serviceA->id_proceso,
                 $serviceA->id_dependencia,
                 $serviceA->id_servicio,
-                [4, 4, 4, 4, 4, 4],
+                [4, 4, 4, 4, 4],
                 '2026-01-10 08:00:00'
             );
 
@@ -558,7 +557,7 @@ class ReportesEstadisticosTest extends TestCase
                 $serviceA->id_proceso,
                 $serviceA->id_dependencia,
                 $serviceA->id_servicio,
-                [4, 4, 4, 4, 4, 4],
+                [4, 4, 4, 4, 4],
                 '2026-01-10 08:00:00'
             );
 
@@ -605,7 +604,7 @@ class ReportesEstadisticosTest extends TestCase
     }
 
     /**
-     * @param  array{0: int, 1: int, 2: int, 3: int, 4: int, 5: int}  $answers
+     * @param  array{0: int, 1: int, 2: int, 3: int, 4: int}  $answers
      */
     private function storeResponse(
         int $estamentoId,
@@ -628,7 +627,6 @@ class ReportesEstadisticosTest extends TestCase
             'pregunta3' => $answers[2],
             'pregunta4' => $answers[3],
             'pregunta5' => $answers[4],
-            'pregunta6' => $answers[5],
             'observaciones' => $observaciones,
             'fecha_respuesta' => $fechaRespuesta,
         ]);

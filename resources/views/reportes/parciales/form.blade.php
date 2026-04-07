@@ -148,13 +148,13 @@
                         <div class="ms-stat-card ms-stat-card-compact">
                             <span class="ms-stat-label">Respuestas</span>
                             <strong>{{ $report['totals']['answer_count'] }}</strong>
-                            <small>Total de respuestas (6 preguntas por encuesta)</small>
+                            <small>Total de respuestas (5 preguntas por encuesta)</small>
                         </div>
 
                         <div class="ms-stat-card ms-stat-card-compact">
                             <span class="ms-stat-label">Indicador global</span>
                             <strong>{{ $report['indicators']['global']['satisfaction_percentage'] }}%</strong>
-                            <small>Promedio de usuarios satisfechos entre las 6 dimensiones</small>
+                            <small>Promedio de usuarios satisfechos entre las 5 dimensiones</small>
                         </div>
 
                         <div class="ms-stat-card ms-stat-card-compact">

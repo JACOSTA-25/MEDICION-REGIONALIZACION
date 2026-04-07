@@ -337,12 +337,11 @@ DATA;
     public static function questionLabels(): array
     {
         return [
-            1 => '¿Como le parecio el servicio de la oficina visitada?',
-            2 => '¿Como le parecio la atencion del funcionario?',
-            3 => '¿El servicio prestado lleno sus expectativas?',
-            4 => '¿El servicio prestado fue oportuno y eficaz?',
-            5 => '¿Como le parecen las condiciones locativas del area visitada?',
-            6 => '¿Considera que el funcionario utilizo un lenguaje claro permitiendo la apropiacion de los temas abordados?',
+            1 => '¿Como se siente usted con la oportunidad y calidad de la atencion brindada por el funcionario?',
+            2 => '¿Que tan satisfecho(a) se encuentra con las condiciones de seguridad y comodidad de las instalaciones de la dependencia para la prestacion del servicio?',
+            3 => '¿Que tan satisfecho(a) se encuentra con el servicio recibido en relacion con sus expectativas?',
+            4 => '¿Que tan satisfecho(a) se encuentra con la claridad, completitud y pertinencia de la informacion suministrada frente a su requerimiento?',
+            5 => '¿Que tan satisfecho(a) se encuentra con la comunicacion del funcionario durante la atencion recibida, en cuanto a que fue clara, incluyente y libre de estereotipos de lenguaje, orientacion sexual, religion, actitudes o cualquier forma de discriminacion?',
         ];
     }
 

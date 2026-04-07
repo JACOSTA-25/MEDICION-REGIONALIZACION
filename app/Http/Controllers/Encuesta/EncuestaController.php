@@ -53,7 +53,6 @@ class EncuestaController extends Controller
             'pregunta3' => (int) $validated['pregunta3'],
             'pregunta4' => (int) $validated['pregunta4'],
             'pregunta5' => (int) $validated['pregunta5'],
-            'pregunta6' => (int) $validated['pregunta6'],
         ]);
 
         return redirect()

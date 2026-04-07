@@ -42,7 +42,7 @@ class EnvioEncuestaTest extends TestCase
             'id_dependencia' => $payload['id_dependencia'],
             'id_servicio' => $payload['id_servicio'],
             'pregunta1' => 5,
-            'pregunta6' => 4,
+            'pregunta5' => 4,
         ]);
     }
 
@@ -163,7 +163,6 @@ class EnvioEncuestaTest extends TestCase
             'pregunta3' => 4,
             'pregunta4' => 5,
             'pregunta5' => 4,
-            'pregunta6' => 4,
         ];
     }
 }

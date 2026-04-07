@@ -49,7 +49,6 @@ class GuardarRespuestaPublicaEncuestaRequest extends FormRequest
             'pregunta3' => ['required', 'integer', 'between:1,5'],
             'pregunta4' => ['required', 'integer', 'between:1,5'],
             'pregunta5' => ['required', 'integer', 'between:1,5'],
-            'pregunta6' => ['required', 'integer', 'between:1,5'],
         ];
     }
 

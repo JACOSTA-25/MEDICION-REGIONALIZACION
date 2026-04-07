@@ -24,7 +24,6 @@ class ServicioConsultaEstadisticas
         'pregunta3',
         'pregunta4',
         'pregunta5',
-        'pregunta6',
     ];
 
     public function __construct(

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ServicioReportes
 {
-    private const QUESTION_NUMBERS = [1, 2, 3, 4, 5, 6];
+    private const QUESTION_NUMBERS = [1, 2, 3, 4, 5];
 
     private const SCALE_LABELS = [
         1 => 'Deficiente',
@@ -22,11 +22,11 @@ class ServicioReportes
     ];
 
     private const SCALE_COLORS = [
-        1 => '#DC2626',
-        2 => '#F97316',
-        3 => '#F59E0B',
-        4 => '#3B82F6',
-        5 => '#16A34A',
+        1 => '#FF0000',
+        2 => '#FFC000',
+        3 => '#FFFF00',
+        4 => '#B7D7A8',
+        5 => '#92D050',
     ];
 
     private const PIE_COLORS = [
@@ -43,21 +43,19 @@ class ServicioReportes
     ];
 
     private const QUESTION_DIMENSIONS = [
-        1 => 'Prestación del servicio',
-        2 => 'Atención del funcionario',
-        3 => 'Expectativas del servicio',
-        4 => 'Eficacia y oportunidad',
-        5 => 'Condiciones locativas',
-        6 => 'Lenguaje claro',
+        1 => 'Oportunidad y calidad',
+        2 => 'Condiciones y comodidad',
+        3 => 'Expectativa del servicio',
+        4 => 'Informacion suministrada',
+        5 => 'Trato, inclusion y lenguaje',
     ];
 
     private const CONSOLIDATED_CATEGORIES = [
-        1 => 'Tiempo empleado',
-        2 => 'Información suministrada',
-        3 => 'Expectativas',
-        4 => 'Atención oportuna',
-        5 => 'Condiciones locativas',
-        6 => 'Lenguaje claro',
+        1 => 'Oportunidad y calidad',
+        2 => 'Condiciones y comodidad',
+        3 => 'Expectativa del servicio',
+        4 => 'Informacion suministrada',
+        5 => 'Trato, inclusion y lenguaje',
     ];
 
     /**
@@ -241,7 +239,7 @@ class ServicioReportes
                     ], $satisfactionByQuestion)
                 ),
                 'satisfied_users_percentage' => $this->buildVerticalBarChart(
-                    '% Usuarios satisfechos',
+                    'Indicador de satisfaccion por categoria',
                     array_map(static fn (array $row): array => [
                         'label' => self::QUESTION_DIMENSIONS[$row['question_number']],
                         'value' => $row['indicador_porcentaje'],
@@ -627,13 +625,15 @@ class ServicioReportes
      *          mejora_porcentaje: float,
      *          indicador_porcentaje: float
      *      }>,
-     *      averages: array{
-     *          usuarios_satisfechos: float,
-     *          usuarios_insatisfechos: float,
-     *          usuarios_neutros: float,
-     *          total: float,
+     *      summary: array{
+     *          usuarios_satisfechos: int,
+     *          usuarios_insatisfechos: int,
+     *          usuarios_neutros: int,
+     *          total: int,
      *          mejora: float,
-     *          indicador: float
+     *          indicador: float,
+     *          mejora_porcentaje: float,
+     *          indicador_porcentaje: float
      *      }
      * }
      */
@@ -664,17 +664,24 @@ class ServicioReportes
             ];
         }
 
-        $count = max(count($rows), 1);
+        $summarySatisfied = (int) array_sum(array_column($rows, 'usuarios_satisfechos'));
+        $summaryDissatisfied = (int) array_sum(array_column($rows, 'usuarios_insatisfechos'));
+        $summaryNeutral = (int) array_sum(array_column($rows, 'usuarios_neutros'));
+        $summaryTotal = (int) array_sum(array_column($rows, 'total'));
+        $summaryMejora = $summaryTotal > 0 ? round($summaryNeutral / $summaryTotal, 5) : 0.0;
+        $summaryIndicador = $summaryTotal > 0 ? round($summarySatisfied / $summaryTotal, 5) : 0.0;
 
         return [
             'rows' => $rows,
-            'averages' => [
-                'usuarios_satisfechos' => round(array_sum(array_column($rows, 'usuarios_satisfechos')) / $count, 5),
-                'usuarios_insatisfechos' => round(array_sum(array_column($rows, 'usuarios_insatisfechos')) / $count, 5),
-                'usuarios_neutros' => round(array_sum(array_column($rows, 'usuarios_neutros')) / $count, 5),
-                'total' => round(array_sum(array_column($rows, 'total')) / $count, 5),
-                'mejora' => round(array_sum(array_column($rows, 'mejora')) / $count, 5),
-                'indicador' => round(array_sum(array_column($rows, 'indicador')) / $count, 5),
+            'summary' => [
+                'usuarios_satisfechos' => $summarySatisfied,
+                'usuarios_insatisfechos' => $summaryDissatisfied,
+                'usuarios_neutros' => $summaryNeutral,
+                'total' => $summaryTotal,
+                'mejora' => $summaryMejora,
+                'indicador' => $summaryIndicador,
+                'mejora_porcentaje' => round($summaryMejora * 100, 2),
+                'indicador_porcentaje' => round($summaryIndicador * 100, 2),
             ],
         ];
     }

@@ -39,24 +39,14 @@
             :root {
                 --paper-width: 215.9mm;
                 --paper-height: 279.4mm;
-                --design-width: 210mm;
                 --design-height: 297mm;
                 --cover-image-bleed: 2mm;
                 --cover-copy-top: 217mm;
                 --cover-year-margin-top: 7.35mm;
                 --header-horizontal-shift: -6mm;
-                --page-content-center-offset: -7px;
-                --consolidated-title-offset: -40px; 
-                --satisfied-chart-offset: -35px;
-                --compact-table-offset: -34px;
-                --compact-table-title-offset: -28px;
-                --question-chart-caption-offset: -40px;
-                --content-shift-left: 88px;
-                --content-trim-right: 180px;
-                --question-offset-left: 80px;
-                --question-offset-right: 176px;
-                --intro-offset-left: 126px;
-                --intro-offset-right: 46.8mm;
+                --content-left: 64px;
+                --content-right: 108px;
+                --content-narrow-right: 108px;
             }
 
             @page {
@@ -65,9 +55,9 @@
             }
 
             body {
-                font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
                 margin: 0;
                 color: #111827;
+                font-family: Arial, Helvetica, sans-serif;
                 font-size: 12px;
             }
 
@@ -76,7 +66,6 @@
                 box-sizing: border-box;
                 width: var(--paper-width);
                 min-height: var(--paper-height);
-                padding: 16mm 12mm 12mm;
                 overflow: hidden;
             }
 
@@ -86,9 +75,6 @@
 
             .cover-page {
                 padding: 0;
-                width: var(--paper-width);
-                height: var(--paper-height);
-                overflow: hidden;
             }
 
             .cover-image {
@@ -108,7 +94,7 @@
                 top: var(--cover-copy-top);
                 width: 150mm;
                 color: #1AA6A6;
-                font-family: 'Montserrat', 'DejaVu Sans', sans-serif;
+                font-family: Arial, Helvetica, sans-serif;
                 z-index: 2;
             }
 
@@ -127,7 +113,6 @@
                 font-size: 4.9mm;
                 font-weight: 700;
                 line-height: 1.12;
-                letter-spacing: 0;
                 text-transform: uppercase;
             }
 
@@ -136,14 +121,10 @@
                 font-size: 14.5mm;
                 font-weight: 700;
                 line-height: 1;
-                letter-spacing: 0.02em;
             }
 
             .page-with-decor {
-                padding-top: 84px;
-                padding-right: 10mm;
-                padding-bottom: 46px;
-                padding-left: 52px;
+                padding: 128px 52px 60px 52px;
             }
 
             .decor-header {
@@ -153,7 +134,6 @@
                 transform: translateX(-50%);
                 width: 160mm;
                 height: auto;
-                max-width: none;
                 z-index: 1;
             }
 
@@ -171,60 +151,69 @@
                 bottom: 10px;
                 height: 52px;
                 width: auto;
-                max-width: 100%;
             }
 
-            .page-header {
-                margin-bottom: 6px;
-                padding-bottom: 4px;
+            .content-block,
+            .content-block-wide,
+            .content-block-full {
+                position: relative;
+                z-index: 2;
+                margin-top: 4px;
+            }
+
+            .content-block {
+                margin-left: var(--content-left);
+                margin-right: var(--content-narrow-right);
+            }
+
+            .content-block-wide {
+                margin-left: var(--content-left);
+                margin-right: var(--content-right);
+            }
+
+            .content-block-full {
+                margin-left: var(--content-left);
+                margin-right: var(--content-right);
             }
 
             h1,
             h2,
             h3,
-            p {
+            p,
+            ul {
                 margin: 0;
             }
 
-            h1 {
-                font-size: 26px;
-                margin-bottom: 12px;
+            .section-title {
+                margin: 0 0 8px;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
             }
 
-            h2 {
-                font-size: 18px;
+            .section-title + .section-title {
+                margin-top: 12px;
             }
 
-            h3 {
-                font-size: 14px;
+            .section-text {
+                margin-bottom: 10px;
+                font-size: 12px;
+                line-height: 1.5;
+                text-align: justify;
+            }
+
+            .section-list {
+                margin: 6px 0 10px 18px;
+                padding: 0;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .table-title {
                 margin: 8px 0 6px;
-            }
-
-            .cover-card {
-                border: 1px solid #d1d5db;
-                border-radius: 10px;
-                padding: 14px;
-                background: #f9fafb;
-                margin-bottom: 12px;
-            }
-
-            .context {
-                display: grid;
-                gap: 8px;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .context-item {
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                padding: 8px;
-            }
-
-            .context-item strong {
-                display: block;
-                margin-bottom: 3px;
-                font-size: 11px;
-                color: #374151;
+                font-size: 12px;
+                font-weight: 700;
+                text-align: center;
             }
 
             table {
@@ -235,21 +224,65 @@
             th,
             td {
                 border: 1px solid #d1d5db;
-                padding: 6px 7px;
+                padding: 5px 6px;
                 vertical-align: top;
                 font-size: 11px;
             }
 
             th {
-                background:rgb(69, 131, 255);
+                background: #4583ff;
+                color: #111827;
+                font-weight: 700;
                 text-align: left;
             }
 
+            .compact-table {
+                width: 70%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .compact-table td:last-child,
+            .compact-table th:last-child,
+            .centered-table td:not(:first-child),
+            .centered-table th:not(:first-child),
+            .summary-table td:last-child,
+            .summary-table th:last-child,
+            .consolidated-table td,
+            .consolidated-table th {
+                text-align: center;
+            }
+
+            .centered-table {
+                width: 74%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .summary-table {
+                width: 66%;
+                margin: 24px auto 24px;
+            }
+
+            .summary-table td:first-child,
+            .summary-table th:first-child {
+                width: 42%;
+                text-align: left;
+            }
+
+            .summary-highlight {
+                font-weight: 700;
+                color: #0f172a;
+            }
+
+            .chart-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+
             .chart-shell {
-                border: none;
-                border-radius: 10px;
-                padding: 2px 2px 0;
-                margin-bottom: 0;
+                padding: 0;
             }
 
             .chart-image {
@@ -258,289 +291,136 @@
                 display: block;
             }
 
-            .split-two {
-                display: grid;
-                gap: 6px;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .muted {
-                color: #6b7280;
-                font-size: 11px;
-            }
-
             .chart-caption {
-                margin-bottom: 10px;
+                margin-top: 4px;
                 text-align: center;
-                font-size: 10.5px;
+                font-size: 10px;
                 color: #374151;
             }
 
-            .chart-caption--question {
+            .services-chart {
+                width: 86%;
+                margin: 18px auto 0;
+            }
+
+            .question-title {
+                margin: 0 0 8px;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .question-chart {
+                width: 76%;
+                margin: 12px auto 0;
                 position: relative;
-                left: var(--question-chart-caption-offset);
+                left: 18px;
             }
 
-            .conclusion-box {
-                padding: 0;
-                min-height: 240px;
-                background: transparent;
+            .question-chart .chart-image {
+                width: 94%;
+                margin-left: auto;
+                margin-right: auto;
             }
 
-            .conclusion-copy {
-                margin-left: var(--content-shift-left);
-                margin-right: var(--content-trim-right);
+            .consolidated-table {
+                width: 74%;
+                margin: 0 auto;
+                table-layout: fixed;
             }
 
-            .conclusion-copy p + p {
-                margin-top: 8px;
+            .consolidated-table th,
+            .consolidated-table td {
+                font-size: 8.7px;
+                padding: 3px;
+                word-break: break-word;
+            }
+
+            .consolidated-table th:nth-child(1),
+            .consolidated-table td:nth-child(1) {
+                width: 8%;
+            }
+
+            .consolidated-table th:nth-child(2),
+            .consolidated-table td:nth-child(2) {
+                width: 22%;
+            }
+
+            .consolidated-table th:nth-child(3),
+            .consolidated-table td:nth-child(3),
+            .consolidated-table th:nth-child(4),
+            .consolidated-table td:nth-child(4),
+            .consolidated-table th:nth-child(5),
+            .consolidated-table td:nth-child(5) {
+                width: 13%;
+            }
+
+            .consolidated-table th:nth-child(6),
+            .consolidated-table td:nth-child(6) {
+                width: 12%;
+            }
+
+            .consolidated-table th:nth-child(7),
+            .consolidated-table td:nth-child(7) {
+                width: 12%;
+            }
+
+            .indicator-chart {
+                width: 56%;
+                margin: 16px auto 0;
             }
 
             .signature-block {
                 margin-top: 20px;
-                margin-left: var(--content-shift-left);
-                margin-right: var(--content-trim-right);
             }
 
             .signature-name,
             .signature-title,
             .signature-scope {
-                margin: 0;
-                font-size: 10.5px;
-                line-height: 1.35;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            .services-page .content-block-wide {
+                margin-left: var(--content-left);
+                margin-right: var(--content-right);
             }
 
             .signature-name {
                 font-weight: 700;
             }
 
-            .report-section-title {
+            .toc-page .content-block {
+                margin-right: var(--content-right);
+            }
+
+            .toc-list {
+                margin-top: 12px;
+            }
+
+            .toc-row {
+                display: flex;
+                align-items: baseline;
+                gap: 8px;
+                margin-bottom: 10px;
                 font-size: 12px;
-                font-weight: 700;
-                margin: 0 0 8px;
-                text-align: left;
-                margin-top: 28px;
+                line-height: 1.3;
             }
 
-            .report-section-title--shift-right {
-                margin-left: var(--content-shift-left);
-            }
-
-            .report-section-title--compact {
-                margin-bottom: 2px;
-            }
-
-            .report-section-text {
-                margin: 0 0 14px;
-                font-size: 10.5px;
-                line-height: 1.35;
-                text-align: justify;
-            }
-
-            .report-section-text--shift-right {
-                margin-left: var(--content-shift-left);
-            }
-
-            .report-section-block--aligned {
-                margin-right: var(--content-trim-right);
-            }
-
-            .question-title {
-                margin: 6px 0 6px;
-                font-size: 11.5px;
-                font-weight: 700;
-            }
-
-            .question-text {
-                margin: 0 0 8px;
-                font-size: 10.5px;
-                line-height: 1.35;
-                text-align: justify;
-            }
-
-            .question-block {
-                padding-top: 14px;
-                padding-left: var(--question-offset-left);
-                padding-right: var(--question-offset-right);
-            }
-
-            .question-title--aligned {
-                margin-top: 12px;
-            }
-
-            .question-chart {
-                width: 92%;
-                margin-top: 8px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .table-title {
-                margin: 4px 0 6px;
-                margin-top: 34px;
-                font-size: 10.5px;
-                font-weight: 700;
-                text-align: center;
-            }
-
-            .table-title--compact {
-                margin-top: 12px;
-            }
-
-            .table-title--spacious {
-                margin-top: 24px;
-            }
-
-            .compact-table th,
-            .compact-table td {
-                font-size: 10px;
-                padding: 4px 5px;
-            }
-
-            .page-intro {
-                padding-top: 126px;
-                padding-right: 10mm;
-                padding-left: 52px;
-            }
-
-            .page-intro .report-section-title,
-            .page-intro .report-section-text {
-                margin-left: var(--content-shift-left);
-                margin-right: var(--content-trim-right);
-            }
-
-            .page-chart-overview .page-header {
-                margin-bottom: 2px;
-            }
-
-            .page-chart-overview .table-title {
-                margin-top: 8px;
-            }
-
-            .page-chart-overview .chart-shell {
-                padding: 0;
-            }
-
-            .page-chart-overview .chart-image {
-                width: 92%;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .page-chart-overview .chart-caption {
-                margin-bottom: 0;
-                font-size: 10px;
-            }
-
-            .compact-table th:first-child {
-                text-align: center;
-            }
-
-            .compact-table {
-                width: 72%;
-                margin-left: auto;
-                margin-right: auto;
-                position: relative;
-                left: var(--compact-table-offset);
-            }
-
-            .compact-table th:nth-child(2),
-            .compact-table td:nth-child(2) {
-                text-align: center;
-            }
-
-            .consolidated-table {
-                width: 76%;
-                margin-left: 8%;
-                /* margin-right: 20%; */
-                position: relative;
-                left: var(--page-content-center-offset);
-                table-layout: fixed;
-            }
-
-            .consolidated-table th,
-            .consolidated-table td {
-                font-size: 9.2px;
-                padding: 4px 4px;
-                word-wrap: break-word;
-            }
-
-            .consolidated-table th:nth-child(1),
-            .consolidated-table td:nth-child(1) {
-                width: 10%;
-                text-align: center;
+            .toc-label {
                 white-space: nowrap;
             }
 
-            .consolidated-table th:nth-child(2),
-            .consolidated-table td:nth-child(2) {
-                text-align: center;
-                width: 21%;
+            .toc-dots {
+                flex: 1 1 auto;
+                min-width: 24px;
+                border-bottom: 1px dotted #6b7280;
+                transform: translateY(-2px);
             }
 
-            .consolidated-table th:nth-child(3),
-            .consolidated-table td:nth-child(3),
-            .consolidated-table th:nth-child(4),
-            .consolidated-table td:nth-child(4) {
-                text-align: center;
-                width: 12%;
-            }
-
-            .consolidated-table th:nth-child(5),
-            .consolidated-table td:nth-child(5),
-            .consolidated-table th:nth-child(6),
-            .consolidated-table td:nth-child(6) {
-                width: 8%;
-                text-align: center;
-            }
-
-            .consolidated-table th:nth-child(7),
-            .consolidated-table td:nth-child(7),
-            .consolidated-table th:nth-child(8),
-            .consolidated-table td:nth-child(8) {
-                width: 11%;
-                text-align: center;
-            }
-
-            .satisfied-users-chart {
-                width: 53%;
-                margin-top: 18px;
-                margin-left: auto;
-                margin-right: auto;
-                position: relative;
-                left: var(--satisfied-chart-offset);
-                text-align: center;
-            }
-
-            .satisfied-users-chart + .chart-caption {
-                position: relative;
-                left: var(--satisfied-chart-offset);
-            }
-
-            .report-subheading {
-                margin-top: 24px;
-                font-size: 12px;
-                font-weight: 700;
-            }
-
-            .report-subheading--shift-right {
-                margin-left: var(--content-shift-left);
-            }
-
-            .table-title--consolidated {
-                width: 76%;
-                margin-left: auto;
-                margin-right: auto;
-                position: relative;
-                left: var(--consolidated-title-offset);
-            }
-
-            .table-title--compact-table {
-                width: 72%;
-                margin-left: auto;
-                margin-right: auto;
-                position: relative;
-                left: var(--compact-table-title-offset);
+            .toc-page-number {
+                min-width: 20px;
+                text-align: right;
             }
         </style>
     </head>
@@ -548,34 +428,92 @@
         @php
             $signature = $signature ?? null;
             $quarterLabel = null;
+            $periodLabel = null;
             $processName = null;
             $dependencyName = null;
 
-            if (! empty($contextRows) && is_array($contextRows)) {
-                foreach ($contextRows as $contextRow) {
-                    if (($contextRow['label'] ?? '') === 'Trimestre') {
-                        $quarterLabel = $contextRow['value'] ?? null;
-                    }
+            foreach (($contextRows ?? []) as $contextRow) {
+                if (($contextRow['label'] ?? '') === 'Trimestre') {
+                    $quarterLabel = $contextRow['value'] ?? null;
+                }
 
-                    if (($contextRow['label'] ?? '') === 'Proceso') {
-                        $processName = $contextRow['value'] ?? null;
-                    }
+                if (($contextRow['label'] ?? '') === 'Periodo') {
+                    $periodLabel = $contextRow['value'] ?? null;
+                }
 
-                    if (($contextRow['label'] ?? '') === 'Dependencia') {
-                        $dependencyName = $contextRow['value'] ?? null;
-                    }
+                if (($contextRow['label'] ?? '') === 'Proceso') {
+                    $processName = $contextRow['value'] ?? null;
+                }
+
+                if (($contextRow['label'] ?? '') === 'Dependencia') {
+                    $dependencyName = $contextRow['value'] ?? null;
                 }
             }
 
-            $coverQuarter = mb_strtoupper((string) $quarterLabel, 'UTF-8');
-            $coverSubtitle = match ($reportType ?? null) {
+            $reportType = $reportType ?? 'general';
+            $surveyCount = (int) ($report['totals']['survey_count'] ?? 0);
+            $answerCount = (int) ($report['totals']['answer_count'] ?? 0);
+            $scopeTable = $report['tables']['scope_population'] ?? ['rows' => [], 'total_general' => 0, 'first_column_title' => 'Encuestados', 'second_column_title' => 'Total'];
+            $estamentoRows = $report['tables']['by_estamento'] ?? [];
+            $consolidated = $report['tables']['measurement_consolidated'] ?? ['rows' => [], 'summary' => []];
+            $globalIndicator = $report['indicators']['global'] ?? [];
+            $coverYear = \Carbon\CarbonImmutable::parse($report['from'] ?? now()->toDateString(), config('app.timezone'))->format('Y');
+            $scopeName = match ($reportType) {
+                'process' => $processName ?: 'Proceso seleccionado',
+                'individual' => $dependencyName ?: 'Dependencia seleccionada',
+                default => 'procesos evaluados',
+            };
+            $scopeNameUpper = mb_strtoupper((string) $scopeName, 'UTF-8');
+            $scopeSentence = match ($reportType) {
+                'process' => 'el proceso '.$scopeName,
+                'individual' => 'la dependencia '.$scopeName,
+                default => 'los procesos evaluados',
+            };
+            $scopeInstitutional = match ($reportType) {
+                'process' => 'del proceso '.$scopeName,
+                'individual' => 'de la dependencia '.$scopeName,
+                default => 'de los procesos evaluados',
+            };
+            $scopeIndicatorTitle = match ($reportType) {
+                'process' => 'DEL PROCESO '.$scopeNameUpper,
+                'individual' => 'DE LA DEPENDENCIA '.$scopeNameUpper,
+                default => 'DE LOS PROCESOS EVALUADOS',
+            };
+            $coverQuarter = mb_strtoupper((string) ($quarterLabel ?? 'TRIMESTRE SELECCIONADO'), 'UTF-8');
+            $coverSubtitle = match ($reportType) {
                 'process' => trim('PROCESO DE '.mb_strtoupper((string) ($processName ?? 'PROCESO SELECCIONADO'), 'UTF-8').' '.$coverQuarter),
                 'individual' => trim('DEPENDENCIA '.mb_strtoupper((string) ($dependencyName ?? 'DEPENDENCIA SELECCIONADA'), 'UTF-8').' '.$coverQuarter),
                 default => trim('SEDE MAICAO '.$coverQuarter),
             };
             $coverSubtitle = preg_replace('/\s+/', ' ', $coverSubtitle) ?? $coverSubtitle;
-            $coverYear = \Carbon\CarbonImmutable::parse($report['from'] ?? now()->toDateString(), config('app.timezone'))
-                ->format('Y');
+            $estamentoTotal = (int) array_sum(array_column($estamentoRows, 'encuestas'));
+            $formatValue = static function (float|int $value): string {
+                $formatted = number_format((float) $value, 2, '.', '');
+
+                return rtrim(rtrim($formatted, '0'), '.');
+            };
+            $questionParagraphs = [
+                1 => 'Los resultados evidencian la percepcion de los usuarios frente a la oportunidad y la calidad de la atencion brindada por el funcionario. En atencion a estos resultados, se continuaran fortaleciendo las estrategias orientadas a mantener una atencion oportuna, cercana y consistente para el usuario.',
+                2 => 'Los resultados evidencian la percepcion de los usuarios frente a las condiciones de seguridad y comodidad de las instalaciones durante la prestacion del servicio. En atencion a estos resultados, se continuaran fortaleciendo las acciones orientadas a garantizar espacios adecuados para la atencion.',
+                3 => 'Los resultados evidencian la percepcion de los usuarios frente al cumplimiento de sus necesidades y expectativas. En atencion a estos resultados, se continuaran fortaleciendo las estrategias orientadas a mejorar la experiencia del usuario y el valor percibido del servicio.',
+                4 => 'Los resultados evidencian la percepcion de los usuarios frente a la claridad, completitud y pertinencia de la informacion suministrada. En atencion a estos resultados, se continuaran fortaleciendo las acciones orientadas a garantizar informacion clara, pertinente y oportuna para los usuarios.',
+                5 => 'Los resultados evidencian la percepcion de los usuarios frente a la comunicacion recibida durante la atencion. En atencion a estos resultados, se continuaran fortaleciendo las practicas institucionales orientadas a garantizar una comunicacion respetuosa, incluyente y libre de cualquier forma de discriminacion.',
+            ];
+            $resolvedGeneratedConclusion = filled($generatedConclusion ?? null)
+                ? trim((string) $generatedConclusion)
+                : null;
+            $questionChartOffset = 4;
+            $tocEntries = [
+                ['label' => '1. INTRODUCCION', 'page' => 3],
+                ['label' => '2. OBJETIVO', 'page' => 3],
+                ['label' => '3. CONTEXTUALIZACION DE LA ENCUESTA', 'page' => 3],
+                ['label' => '4. NUMERO DE USUARIOS ENCUESTADOS', 'page' => 4],
+                ['label' => '5. CARACTERIZACION DE LOS USUARIOS ENCUESTADOS', 'page' => 5],
+                ['label' => '6. RESULTADOS DE LA ENCUESTA APLICADA', 'page' => 7],
+                ['label' => '7. ANALISIS DE LA ENCUESTA', 'page' => 12],
+                ['label' => '8. INDICADOR DE MEDICION DE LA SATISFACCION GLOBAL DE LOS USUARIOS', 'page' => 13],
+                ['label' => '9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS', 'page' => 14],
+            ];
         @endphp
 
         <section class="page cover-page">
@@ -593,320 +531,353 @@
             </div>
         </section>
 
-        <section class="page page-with-decor page-intro">
+        <section class="page page-with-decor toc-page">
             @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block">
+                <h2 class="section-title">CONTENIDO</h2>
+
+                <div class="toc-list">
+                    @foreach ($tocEntries as $tocEntry)
+                        <div class="toc-row">
+                            <span class="toc-label">{{ $tocEntry['label'] }}</span>
+                            <span class="toc-dots" aria-hidden="true"></span>
+                            <span class="toc-page-number">{{ $tocEntry['page'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        <section class="page page-with-decor">
+            @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block">
+                <h2 class="section-title">1. INTRODUCCION</h2>
+                <p class="section-text">
+                    El presente informe tiene como finalidad presentar los resultados de la medicion de la prestacion del servicio, realizada a traves de una encuesta de percepcion aplicada a los usuarios que hicieron uso del servicio durante el periodo evaluado.
+                </p>
+                <p class="section-text">
+                    La informacion obtenida constituye un insumo para la toma de decisiones, el seguimiento al desempeno del proceso y el fortalecimiento de la mejora continua, en concordancia con los lineamientos del Sistema Integrado de Gestion.
+                </p>
+
+                <h2 class="section-title">2. OBJETIVO</h2>
+                <p class="section-text">
+                    Evaluar el nivel de satisfaccion de los usuarios frente al servicio prestado por {{ $scopeSentence }}, considerando la percepcion de los diferentes grupos de interes, a partir de los resultados obtenidos en la encuesta aplicada durante el periodo evaluado.
+                </p>
+
+                <h2 class="section-title">3. CONTEXTUALIZACION DE LA ENCUESTA</h2>
+                <p class="section-text">
+                    La medicion de la satisfaccion del usuario constituye una herramienta estrategica para evaluar la eficacia en la prestacion del servicio y el cumplimiento de las expectativas de los grupos de interes. Este ejercicio se desarrolla en el marco del Sistema Integrado de Gestion, como mecanismo de seguimiento a la percepcion del usuario y al desempeno del proceso.
+                </p>
+                <p class="section-text">
+                    Respecto a las preguntas contenidas en la encuesta, a continuacion, se presenta el analisis integral de los resultados obtenidos, considerando tanto las respuestas cerradas como las observaciones registradas por los participantes. El compromiso institucional se orienta al mejoramiento continuo de la calidad en la atencion prestada a la comunidad universitaria.
+                </p>
+                <p class="section-text">
+                    La encuesta de satisfaccion fue aplicada durante {{ $quarterLabel ?? 'el trimestre seleccionado' }} de {{ $coverYear }} a {{ $surveyCount }} {{ $surveyCount === 1 ? 'usuario' : 'usuarios' }} que {{ $surveyCount === 1 ? 'recibio' : 'recibieron' }} atencion {{ $scopeInstitutional }}, de la Universidad de La Guajira.
+                </p>
+            </div>
+        </section>
+
+        <section class="page page-with-decor">
+            @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block">
+                <h2 class="section-title">4. NUMERO DE USUARIOS ENCUESTADOS</h2>
+                <p class="section-text">
+                    Durante el periodo evaluado, la encuesta de medicion del servicio fue aplicada a un total de {{ $scopeTable['total_general'] ?? $surveyCount }} {{ ($scopeTable['total_general'] ?? $surveyCount) === 1 ? 'usuario' : 'usuarios' }}, quienes hicieron uso de los servicios ofrecidos dentro del alcance analizado, como se describe en la tabla 1.
+                </p>
+
+                <p class="table-title">Tabla 1. Numero de usuarios encuestados {{ $quarterLabel ?? '' }}</p>
+                <table class="compact-table">
+                    <thead>
+                        <tr>
+                            <th>{{ $scopeTable['first_column_title'] }}</th>
+                            <th>{{ $scopeTable['second_column_title'] }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse (($scopeTable['rows'] ?? []) as $row)
+                            <tr>
+                                <td>{{ $row['label'] }}</td>
+                                <td>{{ $row['total'] }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="2">Sin datos para el periodo seleccionado.</td>
+                            </tr>
+                        @endforelse
+                        <tr>
+                            <td><strong>Total general</strong></td>
+                            <td><strong>{{ $scopeTable['total_general'] ?? 0 }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="page page-with-decor">
+            @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block">
+                <h2 class="section-title">5. CARACTERIZACION DE LOS USUARIOS ENCUESTADOS</h2>
+                <p class="section-text">
+                    La encuesta permitio identificar el grupo de interes al que pertenecen los usuarios que participaron en el ejercicio de medicion, lo cual facilita el analisis integral de la percepcion del servicio desde las diferentes partes interesadas de la institucion.
+                </p>
+                <p class="section-text">
+                    Durante el periodo evaluado participaron {{ $estamentoTotal }} {{ $estamentoTotal === 1 ? 'usuario' : 'usuarios' }}, cuya distribucion por grupo de interes se presenta a continuacion:
+                </p>
+
+                <p class="table-title">Tabla 2. Distribucion de usuarios por grupo de interes</p>
+                <table class="centered-table">
+                    <thead>
+                        <tr>
+                            <th>Grupo de interes</th>
+                            <th>Numero de usuarios</th>
+                            <th>Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($estamentoRows as $row)
+                            <tr>
+                                <td>{{ $row['estamento'] }}</td>
+                                <td>{{ $row['encuestas'] }}</td>
+                                <td>{{ $formatValue($row['porcentaje']) }}%</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3">Sin datos para el periodo seleccionado.</td>
+                            </tr>
+                        @endforelse
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td><strong>{{ $estamentoTotal }}</strong></td>
+                            <td><strong>{{ $estamentoTotal > 0 ? '100' : '0' }}%</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="page page-with-decor">
+            @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block-wide">
+                <p class="section-title">GRAFICAS COMPLEMENTARIAS DE CARACTERIZACION</p>
+
+                <div class="chart-grid">
+                    <div>
+                        <div class="chart-shell">
+                            <img src="{{ $chartImages['population_by_program'] ?? '' }}" alt="Programas atendidos" class="chart-image">
+                        </div>
+                        <p class="chart-caption">Grafica 1. Poblacion atendida por programa</p>
+                    </div>
+
+                    <div>
+                        <div class="chart-shell">
+                            <img src="{{ $chartImages['population_by_estamento'] ?? '' }}" alt="Estamentos atendidos" class="chart-image">
+                        </div>
+                        <p class="chart-caption">Grafica 2. Poblacion atendida por estamento</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page page-with-decor services-page">
+            @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block-wide">
+                <p class="section-title">SERVICIOS ATENDIDOS</p>
+
+                <div class="services-chart">
+                    <div class="chart-shell">
+                        <img src="{{ $chartImages['services'] ?? '' }}" alt="Servicios atendidos" class="chart-image">
+                    </div>
+                    <p class="chart-caption">Grafica 3. Servicios atendidos</p>
+                </div>
+            </div>
+        </section>
+
+        @foreach (($report['questions'] ?? []) as $index => $question)
             @php
-                $scopeTable = $report['tables']['scope_population'];
-                $objectiveText = match ($reportType ?? null) {
-                    'process' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por el proceso durante el periodo.',
-                    'individual' => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por la dependencia durante el periodo.',
-                    default => 'Medir el grado de satisfaccion por parte de los usuarios, partes interesadas y grupos de valor con relacion a los servicios brindados por todos los procesos durante el periodo.',
-                };
+                $frequencies = collect($question['frequencies'] ?? []);
+                $excellent = $frequencies->firstWhere('value', 5);
+                $good = $frequencies->firstWhere('value', 4);
+                $regular = $frequencies->firstWhere('value', 3);
+                $bad = $frequencies->firstWhere('value', 2);
+                $deficient = $frequencies->firstWhere('value', 1);
+                $satisfiedCount = (int) ($question['satisfaction']['satisfied'] ?? 0);
+                $neutralCount = (int) ($question['satisfaction']['neutral'] ?? 0);
+                $dissatisfiedCount = (int) ($question['satisfaction']['dissatisfied'] ?? 0);
+                $satisfiedPercentage = (float) ($question['satisfaction']['satisfied_percentage'] ?? 0);
+                $neutralPercentage = (float) ($question['satisfaction']['neutral_percentage'] ?? 0);
+                $dissatisfiedPercentage = (float) ($question['satisfaction']['dissatisfied_percentage'] ?? 0);
+                $graphNumber = $questionChartOffset + $index;
             @endphp
 
-            <h3 class="report-section-title">I. OBJETIVO</h3>
-            <p class="report-section-text">{{ $objectiveText }}</p>
-
-            <h3 class="report-section-title">II. ANALISIS DE LA ENCUESTA</h3>
-            <p class="report-section-text">
-                Respecto a las preguntas contenidas en la encuesta, a continuacion, se presenta el respectivo analisis de la totalidad de resultados dada la percepcion ciudadana. El compromiso institucional es el mejoramiento continuo en la calidad de la atencion prestada a la comunidad universitaria, con el fin de evaluar y mejorar los mecanismos de atencion, y los niveles de satisfaccion de los mismos y de esta manera tomar las acciones necesarias para la mejora continua.
-            </p>
-
-            <h3 class="report-section-title">III. ENCUESTADOS</h3>
-            <p class="report-section-text">
-                Se aplico la encuesta de satisfaccion durante el periodo a usuarios ecuestados, A los cuales se les presto el servicio, como se describe en la tabla 1.
-            </p>
-
-            <p class="table-title table-title--compact-table">Tabla 1. Numero de usuarios encuestados</p>
-            <table class="compact-table">
-                <thead>
-                    <tr>
-                        <th>{{ $scopeTable['first_column_title'] }}</th>
-                        <th>{{ $scopeTable['second_column_title'] }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($scopeTable['rows'] as $row)
-                        <tr>
-                            <td>{{ $row['label'] }}</td>
-                            <td>{{ $row['total'] }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="2">Sin datos para el trimestre seleccionado.</td>
-                        </tr>
-                    @endforelse
-                    <tr>
-                        <td><strong>Total general</strong></td>
-                        <td><strong>{{ $scopeTable['total_general'] }}</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section class="page page-with-decor page-chart-overview">
-            @include('reportes.pdf.parciales.page-decor')
-            <div class="page-header">
-                <h2 class="report-section-title report-section-title--shift-right">IV. ANALISIS DE POBLACI&Oacute;N ENCUESTADA</h2>
-            </div>
-
-            <div class="split-two">
-                <div>
-                    <h3 class="table-title table-title--compact">PROGRAMAS ATENDIDOS</h3>
-                    <div class="chart-shell">
-                        <img src="{{ $chartImages['population_by_program'] }}" alt="Programas atendidos" class="chart-image">
-                    </div>
-                    <p class="chart-caption">Gr&aacute;fico 1. Poblaci&oacute;n atendida por programa</p>
-                </div>
-                <div>
-                    <h3 class="table-title table-title--compact">ESTAMENTOS ATENDIDOS</h3>
-                    <div class="chart-shell">
-                        <img src="{{ $chartImages['population_by_estamento'] }}" alt="Estamentos atendidos" class="chart-image">
-                    </div>
-                    <p class="chart-caption">Gr&aacute;fico 2. Poblaci&oacute;n atendida por Estamento</p>
-                </div>
-            </div>
-        </section>
-
-        @php
-            $scopeName = match ($reportType ?? null) {
-                'individual' => $dependencyName ? 'la dependencia '.$dependencyName : 'la dependencia seleccionada',
-                'process' => $processName ? 'el proceso '.$processName : 'el proceso seleccionado',
-                default => 'los procesos de forma general',
-            };
-
-            $questionTitles = [
-                1 => 'PRESTACI&Oacute;N DEL SERVICIO',
-                2 => 'ATENCI&Oacute;N DEL FUNCIONARIO',
-                3 => 'EXPECTATIVAS DEL SERVICIO',
-                4 => 'EFICACIA Y OPORTUNIDAD',
-                5 => 'CONDICIONES LOCATIVAS',
-                6 => 'LENGUAJE CLARO',
-            ];
-        @endphp
-
-        @foreach ($report['charts']['question_results'] as $index => $chart)
             <section class="page page-with-decor">
                 @include('reportes.pdf.parciales.page-decor')
-                @php
-                    $question = $report['questions'][$index] ?? null;
-                    $questionNumber = $question['number'] ?? ($index + 1);
-                    $questionLabel = $question['label'] ?? ('Pregunta '.$questionNumber);
-                    $surveyCount = $report['totals']['survey_count'] ?? 0;
-                    $frequencies = $question['frequencies'] ?? ($chart['items'] ?? []);
-                    $percentageByValue = [];
 
-                    foreach ($frequencies as $frequency) {
-                        $valueKey = (int) ($frequency['value'] ?? 0);
-                        $percentageByValue[$valueKey] = $frequency['percentage'] ?? 0;
-                    }
+                <div class="content-block-wide">
+                    @if ($index === 0)
+                        <h2 class="section-title">6. RESULTADOS DE LA ENCUESTA APLICADA</h2>
+                    @endif
 
-                    $percentageExcelente = $percentageByValue[5] ?? 0;
-                    $percentageBueno = $percentageByValue[4] ?? 0;
-                    $percentageRegular = $percentageByValue[3] ?? 0;
-                    $percentageMalo = $percentageByValue[2] ?? 0;
-                    $percentageDeficiente = $percentageByValue[1] ?? 0;
-                    $satisfactionPercentage = $question['satisfaction']['satisfied_percentage'] ?? 0;
-                    $dissatisfactionPercentage = $percentageMalo + $percentageDeficiente;
-                    $neutralPercentage = $percentageRegular;
-                    $chartNumber = 4 + $index;
-                @endphp
-
-                @if ($index === 0)
-                    <div class="page-header">
-                        <h2 class="report-section-title report-section-title--shift-right report-section-title--compact">V. RESULTADOS DE LA ENCUESTA APLICADA</h2>
-                    </div>
-                @endif
-
-                <div class="question-block">
-                    <h3 class="question-title question-title--aligned">
-                        PREGUNTA {{ $questionNumber }}. {!! $questionTitles[$questionNumber] ?? strtoupper((string) ($chart['title'] ?? '')) !!}
+                    <h3 class="question-title">
+                        PREGUNTA {{ $question['number'] }}. {{ mb_strtoupper((string) ($question['label'] ?? 'Pregunta'), 'UTF-8') }}
                     </h3>
-                    <p class="question-text">
-                        A los {{ $surveyCount }} usuarios encuestados se les formul&oacute; la pregunta No. {{ $questionNumber }}: {{ $questionLabel }}. Los resultados obtenidos fueron los siguientes:
-                        <br>
-                        &bull; El {{ number_format($percentageExcelente, 2, '.', '') }}% de los usuarios calific&oacute; el servicio como excelente.
-                        <br>
-                        &bull; El {{ number_format($percentageBueno, 2, '.', '') }}% lo calific&oacute; como bueno.
-                        <br>
-                        &bull; El {{ number_format($percentageRegular, 2, '.', '') }}% consider&oacute; que fue regular.
-                        <br>
-                        &bull; El {{ number_format($percentageMalo, 2, '.', '') }}% manifest&oacute; que fue malo.
-                        <br>
-                        &bull; El {{ number_format($percentageDeficiente, 2, '.', '') }}% lo calific&oacute; como deficiente.
-                        <br>
-                        En t&eacute;rminos generales, se observa que el {{ number_format($satisfactionPercentage, 2, '.', '') }}% de los usuarios manifiesta satisfacci&oacute;n con el servicio prestado, considerando las valoraciones positivas (excelente y bueno). Por otra parte, el {{ number_format($dissatisfactionPercentage, 2, '.', '') }}% presenta niveles de insatisfacci&oacute;n, al calificar el servicio como malo o deficiente, mientras que el <strong>{{ number_format($neutralPercentage, 2, '.', '') }}% mantiene una percepci&oacute;n neutral al catalogarlo como regular.</strong>
-                    </p>
-                </div>
 
-                <div class="chart-shell question-chart">
-                    <img src="{{ $chartImages['question_results'][$index] ?? '' }}" alt="{{ $chart['title'] }}" class="chart-image">
+                    <p class="section-text">
+                        Al preguntarles a los {{ $surveyCount }} {{ $surveyCount === 1 ? 'usuario encuestado' : 'usuarios encuestados' }} la pregunta No. {{ $question['number'] }}, se evidencio que {{ $formatValue($satisfiedPercentage) }}% considera una calificacion satisfactoria, {{ $formatValue($neutralPercentage) }}% presenta una percepcion neutra y {{ $formatValue($dissatisfiedPercentage) }}% manifiesta insatisfaccion.
+                    </p>
+
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Clasificacion</th>
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Satisfecho (Excelente + Bueno)</td>
+                                <td>{{ $satisfiedCount }} usuarios ({{ $formatValue($satisfiedPercentage) }}%)</td>
+                            </tr>
+                            <tr>
+                                <td>Neutro (Regular)</td>
+                                <td>{{ $neutralCount }} usuarios ({{ $formatValue($neutralPercentage) }}%)</td>
+                            </tr>
+                            <tr>
+                                <td class="summary-highlight">Indicador de satisfaccion</td>
+                                <td class="summary-highlight">{{ $formatValue($satisfiedPercentage) }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Insatisfecho (Malo + Deficiente)</td>
+                                <td>{{ $dissatisfiedCount }} usuarios ({{ $formatValue($dissatisfiedPercentage) }}%)</td>
+                            </tr>
+                            <tr>
+                                <td>Detalle de valoraciones positivas</td>
+                                <td>
+                                    Excelente: {{ (int) ($excellent['frequency'] ?? 0) }} ({{ $formatValue($excellent['percentage'] ?? 0) }}%) |
+                                    Bueno: {{ (int) ($good['frequency'] ?? 0) }} ({{ $formatValue($good['percentage'] ?? 0) }}%)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Detalle de valoraciones no favorables</td>
+                                <td>
+                                    Regular: {{ (int) ($regular['frequency'] ?? 0) }} ({{ $formatValue($regular['percentage'] ?? 0) }}%) |
+                                    Malo: {{ (int) ($bad['frequency'] ?? 0) }} ({{ $formatValue($bad['percentage'] ?? 0) }}%) |
+                                    Deficiente: {{ (int) ($deficient['frequency'] ?? 0) }} ({{ $formatValue($deficient['percentage'] ?? 0) }}%)
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="section-text">
+                        {{ $questionParagraphs[$question['number']] ?? 'Los resultados obtenidos permiten identificar fortalezas y oportunidades de mejora en la prestacion del servicio evaluado.' }}
+                    </p>
+
+                    <div class="question-chart">
+                        <div class="chart-shell">
+                            <img src="{{ $chartImages['question_results'][$index] ?? '' }}" alt="Resultado pregunta {{ $question['number'] }}" class="chart-image">
+                        </div>
+                        <p class="chart-caption">Grafica {{ $graphNumber }}. Resultado de la medicion de la pregunta {{ $question['number'] }} {{ $scopeInstitutional }}.</p>
+                    </div>
                 </div>
-                <p class="chart-caption chart-caption--question">
-                    Gr&aacute;fica {{ $chartNumber }}. Resultados de la medici&oacute;n del servicio prestado en {{ $scopeName }}.
-                </p>
             </section>
         @endforeach
 
         <section class="page page-with-decor">
             @include('reportes.pdf.parciales.page-decor')
-            @php
-                $consolidated = $report['tables']['measurement_consolidated'];
-                $averages = $consolidated['averages'];
-                $globalIndicator = $report['indicators']['global'] ?? [];
-                $scopeIndicatorName = mb_strtoupper((string) ($dependencyName ?? $processName ?? 'GESTION DOCUMENTAL'), 'UTF-8');
-                $formatReportValue = static function (float|int $value): string {
-                    $formatted = number_format((float) $value, 2, '.', '');
 
-                    return rtrim(rtrim($formatted, '0'), '.');
-                };
-                $questionPercentages = [];
-
-                foreach (($report['questions'] ?? []) as $questionData) {
-                    $questionPercentages[(int) ($questionData['number'] ?? 0)] = $questionData['satisfaction']['satisfied_percentage'] ?? 0;
-                }
-            @endphp
-
-            <div class="page-header">
-                <h2 class="report-section-title report-section-title--shift-right report-section-title--compact report-section-block--aligned">
-                    VI. INDICADOR DE MEDICI&Oacute;N DE LA SATISFACCI&Oacute;N GLOBAL DE LOS USUARIOS DE {{ $scopeIndicatorName }}
-                </h2>
+            <div class="content-block">
+                <h2 class="section-title">7. ANALISIS DE LA ENCUESTA</h2>
+                <p class="section-text">
+                    Con base en los resultados obtenidos a traves de la encuesta de satisfaccion aplicada durante el periodo evaluado, se realizo el analisis integral de la percepcion de los usuarios frente a la prestacion del servicio {{ $scopeInstitutional }}.
+                </p>
+                <p class="section-text">
+                    El analisis contempla la revision de las respuestas relacionadas con la oportunidad y calidad de la atencion, las condiciones del entorno para la prestacion del servicio, el cumplimiento de necesidades y expectativas, la claridad y pertinencia de la informacion suministrada, asi como la comunicacion incluyente y respetuosa durante la atencion.
+                </p>
+                <p class="section-text">
+                    Los resultados evidencian, en terminos generales, una percepcion mayoritariamente favorable por parte de los usuarios. No obstante, las percepciones neutras e insatisfactorias identificadas constituyen oportunidades de mejora que seran consideradas en la formulacion de acciones orientadas al fortalecimiento continuo del servicio.
+                </p>
+                <p class="section-text">
+                    Este ejercicio de medicion permite realizar seguimiento a la satisfaccion de los grupos de interes y apoyar la toma de decisiones en el marco del Sistema Integrado de Gestion.
+                </p>
             </div>
-
-            <p class="report-section-text report-section-text--shift-right report-section-block--aligned">
-                Seg&uacute;n los resultados obtenidos en las gr&aacute;ficas, podemos decir que, en promedio de los {{ $report['totals']['survey_count'] ?? 0 }} usuarios encuestados, {{ $formatReportValue($globalIndicator['satisfied_users'] ?? 0) }} se sintieron satisfechos, lo que da un porcentaje de satisfacci&oacute;n global del {{ $formatReportValue($globalIndicator['satisfaction_percentage'] ?? 0) }}%.
-                Respecto a los aspectos evaluados el porcentaje de satisfacci&oacute;n para el Servicio fue de {{ $formatReportValue($questionPercentages[1] ?? 0) }}%, para la Atencion fue de {{ $formatReportValue($questionPercentages[2] ?? 0) }}%, para la expectativa del servicio fue de {{ $formatReportValue($questionPercentages[3] ?? 0) }}%, para el Servicio oportuno y eficaz fue de {{ $formatReportValue($questionPercentages[4] ?? 0) }}%, para el aspecto de Condiciones locativas fue de {{ $formatReportValue($questionPercentages[5] ?? 0) }}% y para el aspecto del lenguaje usado por el funcionario fue de {{ $formatReportValue($questionPercentages[6] ?? 0) }}%.
-            </p>
-
-            <p class="table-title table-title--compact table-title--spacious table-title--consolidated">Tabla 2. CONSOLIDADO GLOBAL MEDICI&Oacute;N DE LA SATISFACCI&Oacute;N DE LOS USUARIOS</p>
-
-            <table class="consolidated-table">
-                <thead>
-                    <tr>
-                        <th>Pregunta</th>
-                        <th>Categoria</th>
-                        <th>Numero de<br>usuarios<br>satisfechos</th>
-                        <th>Numero de<br>usuarios insatisfechos</th>
-                        <th>Neutro</th>
-                        <th>Total</th>
-                        <th>Mejora</th>
-                        <th>Indicador</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($consolidated['rows'] as $row)
-                        <tr>
-                            <td>{{ $row['question_number'] }}</td>
-                            <td>{{ $row['categoria'] }}</td>
-                            <td>{{ $row['usuarios_satisfechos'] }}</td>
-                            <td>{{ $row['usuarios_insatisfechos'] }}</td>
-                            <td>{{ $row['usuarios_neutros'] }}</td>
-                            <td>{{ $row['total'] }}</td>
-                            <td>{{ number_format($row['mejora'], 2, '.', '') }}</td>
-                            <td>{{ number_format($row['indicador'], 2, '.', '') }}</td>
-                        </tr>
-                    @endforeach
-                    <tr>
-                        <td colspan="2"><strong>Total</strong></td>
-                        <td><strong>{{ number_format($averages['usuarios_satisfechos'], 2, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['usuarios_insatisfechos'], 2, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['usuarios_neutros'], 2, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['total'], 2, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['mejora'], 2, '.', '') }}</strong></td>
-                        <td><strong>{{ number_format($averages['indicador'], 2, '.', '') }}</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 class="report-subheading report-subheading--shift-right">Porcentaje de usuarios satisfechos</h3>
-            <div class="chart-shell satisfied-users-chart">
-                <img src="{{ $chartImages['satisfied_users_percentage'] }}" alt="% Usuarios satisfechos" class="chart-image">
-            </div>
-            <p class="chart-caption">Gr&aacute;fico 10. Porcentaje de Usuarios Satisfechos</p>
         </section>
 
         <section class="page page-with-decor">
             @include('reportes.pdf.parciales.page-decor')
-            @php
-                $questionPercentages = [];
 
-                foreach (($report['questions'] ?? []) as $questionData) {
-                    $questionPercentages[(int) ($questionData['number'] ?? 0)] = $questionData['satisfaction']['satisfied_percentage'] ?? 0;
-                }
+            <div class="content-block-full">
+                <h2 class="section-title">8. INDICADOR DE MEDICION DE LA SATISFACCION GLOBAL DE LOS USUARIOS {{ $scopeIndicatorTitle }}</h2>
+                <p class="section-text">
+                    Con base en los resultados consolidados de la encuesta aplicada durante el periodo evaluado, se calculo el indicador de satisfaccion global de los usuarios, el cual permite medir el nivel general de percepcion frente a la calidad del servicio prestado.
+                </p>
+                <p class="section-text">
+                    Durante el periodo evaluado, el indicador global de satisfaccion alcanzo un valor de {{ $formatValue($globalIndicator['satisfaction_percentage'] ?? 0) }}%, con {{ $formatValue($globalIndicator['neutral_answer_percentage'] ?? 0) }}% de respuestas neutras y {{ $formatValue($globalIndicator['dissatisfaction_answer_percentage'] ?? 0) }}% de respuestas insatisfactorias, sobre un total de {{ $answerCount }} respuestas consolidadas.
+                </p>
 
-                $formatConclusionPercentage = static function (float|int $value): string {
-                    $formatted = number_format((float) $value, 2, '.', '');
+                <p class="table-title">Tabla 3. Consolidado {{ $quarterLabel ?? '' }}</p>
+                <table class="consolidated-table">
+                    <thead>
+                        <tr>
+                            <th>Pregunta</th>
+                            <th>Categoria</th>
+                            <th>Nro. usuarios satisfechos</th>
+                            <th>Nro. usuarios neutros</th>
+                            <th>Nro. usuarios insatisfechos</th>
+                            <th>Total encuestados</th>
+                            <th>Indicador</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (($consolidated['rows'] ?? []) as $row)
+                            <tr>
+                                <td>{{ $row['question_number'] }}</td>
+                                <td>{{ $row['categoria'] }}</td>
+                                <td>{{ $row['usuarios_satisfechos'] }}</td>
+                                <td>{{ $row['usuarios_neutros'] }}</td>
+                                <td>{{ $row['usuarios_insatisfechos'] }}</td>
+                                <td>{{ $row['total'] }}</td>
+                                <td>{{ $formatValue($row['indicador_porcentaje']) }}%</td>
+                            </tr>
+                        @endforeach
+                        <tr>
+                            <td colspan="2"><strong>Total</strong></td>
+                            <td><strong>{{ $consolidated['summary']['usuarios_satisfechos'] ?? 0 }}</strong></td>
+                            <td><strong>{{ $consolidated['summary']['usuarios_neutros'] ?? 0 }}</strong></td>
+                            <td><strong>{{ $consolidated['summary']['usuarios_insatisfechos'] ?? 0 }}</strong></td>
+                            <td><strong>{{ $consolidated['summary']['total'] ?? 0 }}</strong></td>
+                            <td><strong>{{ $formatValue($consolidated['summary']['indicador_porcentaje'] ?? 0) }}%</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
 
-                    return rtrim(rtrim($formatted, '0'), '.');
-                };
-
-                $scopeEntityName = match ($reportType ?? null) {
-                    'individual' => mb_strtoupper((string) ($dependencyName ?? 'DEPENDENCIA SELECCIONADA'), 'UTF-8'),
-                    'process' => mb_strtoupper((string) ($processName ?? 'PROCESO SELECCIONADO'), 'UTF-8'),
-                    default => 'FORMA GENERAL',
-                };
-
-                $conclusionTitle = match ($reportType ?? null) {
-                    'individual' => 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.$scopeEntityName.' ('.$coverYear.')',
-                    'process' => 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE '.$scopeEntityName.' ('.$coverYear.')',
-                    default => 'CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE FORMA GENERAL ('.$coverYear.')',
-                };
-
-                $conclusionProvider = match ($reportType ?? null) {
-                    'individual' => 'por parte de la dependencia '.$scopeEntityName,
-                    'process' => 'por parte de la oficina '.$scopeEntityName,
-                    default => 'en todos los procesos',
-                };
-
-                $conclusionLocation = match ($reportType ?? null) {
-                    'individual' => 'en la dependencia '.$scopeEntityName,
-                    'process' => 'en la oficina '.$scopeEntityName,
-                    default => 'en todos los procesos',
-                };
-
-                $surveyCount = (int) ($report['totals']['survey_count'] ?? 0);
-                $surveyLabel = $surveyCount === 1 ? 'usuario' : 'usuarios';
-                $neutralAnswersPercentage = $formatConclusionPercentage(
-                    $report['indicators']['global']['neutral_answer_percentage'] ?? 0
-                );
-                $resolvedGeneratedConclusion = filled($generatedConclusion ?? null)
-                    ? trim((string) $generatedConclusion)
-                    : null;
-            @endphp
-
-            <div class="page-header">
-                <h2 class="report-section-title report-section-title--shift-right report-section-title--compact report-section-block--aligned">
-                    {{ $conclusionTitle }}
-                </h2>
-            </div>
-
-            <div class="conclusion-box">
-                <div class="conclusion-copy">
-                    <p class="report-section-text">
-                        El numero de usuarios encuestados durante el {{ $quarterLabel }} de {{ $coverYear }} fue de {{ $surveyCount }} {{ $surveyLabel }} a los cuales se les presto el servicio {{ $conclusionProvider }}.
-                    </p>
-                    <p class="report-section-text">
-                        El {{ $formatConclusionPercentage($questionPercentages[2] ?? 0) }}% se siente satisfecho con la atencion del funcionario {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
-                    </p>
-                    <p class="report-section-text">
-                        El {{ $formatConclusionPercentage($questionPercentages[1] ?? 0) }}% se siente satisfecho con el servicio prestado {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
-                    </p>
-                    <p class="report-section-text">
-                        El {{ $formatConclusionPercentage($questionPercentages[3] ?? 0) }}% sintio que el servicio lleno sus expectativas {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
-                    </p>
-                    <p class="report-section-text">
-                        El {{ $formatConclusionPercentage($questionPercentages[4] ?? 0) }}% se siente satisfecho con la eficacia y la oportunidad del servicio prestado {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
-                    </p>
-                    <p class="report-section-text">
-                        El {{ $formatConclusionPercentage($questionPercentages[5] ?? 0) }}% se siente satisfecho con las condiciones locativas {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
-                    </p>
-                    <p class="report-section-text">
-                        El {{ $formatConclusionPercentage($questionPercentages[6] ?? 0) }}% se siente satisfecho con el lenguaje usado por los funcionarios {{ $conclusionLocation }}, durante el {{ $quarterLabel }} de {{ $coverYear }}.
-                    </p>
-                    <p class="report-section-text">
-                        {{ $resolvedGeneratedConclusion ?? 'En torno a los resultados obtenidos se presento un '.$neutralAnswersPercentage.'% donde los usuarios perciben un servicio ni satisfactorio ni insatisfactorio, teniendo en cuenta esta informacion se adelantaran acciones para mejorar el nivel de satisfaccion de estos usuarios.' }}
-                    </p>
+                <div class="indicator-chart">
+                    <div class="chart-shell">
+                        <img src="{{ $chartImages['satisfied_users_percentage'] ?? '' }}" alt="Indicador por categoria" class="chart-image">
+                    </div>
+                    <p class="chart-caption">Grafica {{ $questionChartOffset + count($report['questions'] ?? []) }}. Indicador de satisfaccion por categoria</p>
                 </div>
+            </div>
+        </section>
+
+        <section class="page page-with-decor">
+            @include('reportes.pdf.parciales.page-decor')
+
+            <div class="content-block">
+                <h2 class="section-title">9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS {{ $scopeIndicatorTitle }}</h2>
+                <p class="section-text">
+                    Con base en los resultados obtenidos durante {{ $quarterLabel ?? 'el periodo evaluado' }} de {{ $coverYear }}, se concluye que {{ $scopeSentence }} presenta un nivel de satisfaccion general del {{ $formatValue($globalIndicator['satisfaction_percentage'] ?? 0) }}%, a partir de la percepcion de los usuarios que participaron en la medicion del servicio.
+                </p>
+                <p class="section-text">
+                    Los aspectos relacionados con la oportunidad y calidad de la atencion, la informacion suministrada, el cumplimiento de necesidades y expectativas, las condiciones del entorno de prestacion del servicio y la comunicacion institucional reflejan una percepcion mayoritariamente positiva, lo que evidencia el compromiso del equipo de trabajo con la prestacion de un servicio eficiente, pertinente y orientado al usuario.
+                </p>
+                <p class="section-text">
+                    {{ $resolvedGeneratedConclusion ?? 'Asi mismo, las respuestas clasificadas como neutras e insatisfechas constituyen un insumo relevante para el analisis interno del proceso, permitiendo identificar oportunidades de mejora y fortalecer las estrategias orientadas a optimizar la experiencia del usuario y consolidar la mejora continua.' }}
+                </p>
 
                 @if ($signature)
                     <div class="signature-block">
