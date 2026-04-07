@@ -5,7 +5,6 @@ namespace App\Services\Reportes;
 use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\Respuesta;
-use App\Models\Servicio;
 use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -539,15 +538,14 @@ class ServicioReportes
                 'fallback' => 'Dependencia sin catalogar',
             ],
             'individual' => [
-                'field' => 'id_servicio',
+                'field' => 'id_dependencia',
                 'header' => 'Total encuestados de la dependencia',
                 'items' => $dependencyId !== null
-                    ? Servicio::query()
+                    ? Dependencia::query()
                         ->where('id_dependencia', $dependencyId)
-                        ->orderBy('nombre')
-                        ->get(['id_servicio as id', 'nombre'])
+                        ->get(['id_dependencia as id', 'nombre'])
                     : collect(),
-                'fallback' => 'Servicio sin catalogar',
+                'fallback' => 'Dependencia sin catalogar',
             ],
             default => [
                 'field' => 'id_proceso',
@@ -801,19 +799,32 @@ class ServicioReportes
         $charts = [];
 
         foreach ($questionStats as $question) {
+            $satisfaction = $question['satisfaction'] ?? [];
+
             $charts[] = [
                 'type' => 'pie',
                 'title' => $question['dimension'],
                 'subtitle' => 'Pregunta '.$question['number'],
-                'items' => array_values(array_map(
-                    static fn (array $frequency): array => [
-                        'label' => $frequency['label'],
-                        'value' => $frequency['frequency'],
-                        'percentage' => $frequency['percentage'],
-                        'color' => $frequency['color'],
+                'items' => [
+                    [
+                        'label' => 'Satisfecho',
+                        'value' => (int) ($satisfaction['satisfied'] ?? 0),
+                        'percentage' => (float) ($satisfaction['satisfied_percentage'] ?? 0.0),
+                        'color' => '#4472C4',
                     ],
-                    $question['frequencies']
-                )),
+                    [
+                        'label' => 'Neutro',
+                        'value' => (int) ($satisfaction['neutral'] ?? 0),
+                        'percentage' => (float) ($satisfaction['neutral_percentage'] ?? 0.0),
+                        'color' => '#ED7D31',
+                    ],
+                    [
+                        'label' => 'Insatisfecho',
+                        'value' => (int) ($satisfaction['dissatisfied'] ?? 0),
+                        'percentage' => (float) ($satisfaction['dissatisfied_percentage'] ?? 0.0),
+                        'color' => '#A5A5A5',
+                    ],
+                ],
             ];
         }
 

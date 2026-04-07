@@ -60,6 +60,32 @@ class PanelTest extends TestCase
         }
     }
 
+    public function test_super_admin_cannot_configure_a_quarter_outside_its_three_month_range(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            $this->actingAs($admin)
+                ->from(route('dashboard'))
+                ->put(route('dashboard.quarters.update'), [
+                    'quarters' => [
+                        1 => ['start_date' => '2026-01-01', 'end_date' => '2026-05-31'],
+                        2 => ['start_date' => '2026-06-01', 'end_date' => '2026-06-30'],
+                        3 => ['start_date' => '2026-07-01', 'end_date' => '2026-09-30'],
+                        4 => ['start_date' => '2026-10-01', 'end_date' => '2026-12-31'],
+                    ],
+                ])
+                ->assertRedirect(route('dashboard'))
+                ->assertSessionHasErrorsIn('updateQuarters', ['quarters.1.end_date']);
+
+            $this->assertDatabaseCount('reporting_quarters', 0);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
     public function test_non_super_admin_cannot_update_reporting_quarters(): void
     {
         CarbonImmutable::setTestNow('2026-03-14 09:00:00');

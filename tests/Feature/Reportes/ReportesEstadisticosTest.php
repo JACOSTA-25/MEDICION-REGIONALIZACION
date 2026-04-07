@@ -119,6 +119,11 @@ class ReportesEstadisticosTest extends TestCase
 
         $dependencyFiltered = $service->generate('individual', '2026-01-01', '2026-01-31', null, $serviceB->id_dependencia);
         $this->assertSame(1, $dependencyFiltered['totals']['survey_count']);
+        $dependencyRow = $dependencyFiltered['tables']['scope_population']['rows'][0] ?? null;
+        $dependencyName = Dependencia::query()->findOrFail($serviceB->id_dependencia)->nombre;
+        $this->assertNotNull($dependencyRow);
+        $this->assertSame($dependencyName, $dependencyRow['label']);
+        $this->assertSame(1, $dependencyRow['total']);
     }
 
     public function test_general_report_route_uses_the_selected_quarter_configuration(): void
@@ -194,7 +199,7 @@ class ReportesEstadisticosTest extends TestCase
         }
     }
 
-    public function test_export_view_renders_cover_subtitle_for_each_report_type(): void
+    public function test_export_view_renders_full_page_cover_for_each_report_type(): void
     {
         CarbonImmutable::setTestNow('2026-03-14 09:00:00');
 
@@ -275,12 +280,12 @@ class ReportesEstadisticosTest extends TestCase
                 'title' => 'Reporte individual',
             ])->render();
 
-            $this->assertStringContainsString('SEDE MAICAO IV TRIMESTRE', $generalHtml);
-            $this->assertStringContainsString('PROCESO DE '.mb_strtoupper($processName, 'UTF-8').' IV TRIMESTRE', $processHtml);
-            $this->assertStringContainsString('DEPENDENCIA '.mb_strtoupper($dependencyName, 'UTF-8').' IV TRIMESTRE', $dependencyHtml);
+            $this->assertStringContainsString('class="cover-image"', $generalHtml);
+            $this->assertStringContainsString('class="cover-image"', $processHtml);
+            $this->assertStringContainsString('class="cover-image"', $dependencyHtml);
             $this->assertStringContainsString('2026', $generalHtml);
-            $this->assertStringContainsString('class="cover-logo"', $generalHtml);
-            $this->assertStringContainsString('alt="Logo de portada"', $generalHtml);
+            $this->assertStringNotContainsString('class="cover-logo"', $generalHtml);
+            $this->assertStringNotContainsString('class="cover-copy"', $generalHtml);
             $this->assertStringContainsString(
                 '9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS DE LOS PROCESOS EVALUADOS',
                 $generalHtml

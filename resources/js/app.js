@@ -1,5 +1,6 @@
 import './bootstrap';
 import './compartido/copiar-enlace';
+import './panel/trimestres';
 import './reportes/filtros';
 
 import Alpine from 'alpinejs';

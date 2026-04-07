@@ -30,19 +30,14 @@
             };
 
             $sidebarImage = $toDataUri('assets/images/sidebar.png');
-            $encabezadoImage = $toDataUri('assets/images/encabezado.png');
-            $piePaginaImage = $toDataUri('assets/images/pie-de-pagina.png');
-            $portadaImage = $toDataUri('assets/images/portada.png');
-            $coverLogoImage = $toDataUri('assets/images/logo-portada.png');
+            $encabezadoImage = $toDataUri('assets/images/Ecabezado2.png');
+            $portadaImage = $toDataUri('assets/images/Portada2.png');
         @endphp
         <style>
             :root {
                 --paper-width: 215.9mm;
                 --paper-height: 279.4mm;
                 --design-height: 297mm;
-                --cover-image-bleed: 2mm;
-                --cover-copy-top: 217mm;
-                --cover-year-margin-top: 7.35mm;
                 --header-horizontal-shift: -6mm;
                 --content-left: 64px;
                 --content-right: 108px;
@@ -75,52 +70,17 @@
 
             .cover-page {
                 padding: 0;
+                height: var(--paper-height);
             }
 
             .cover-image {
                 position: absolute;
-                top: 0;
-                left: 50%;
-                transform: translateX(-50%);
+                inset: 0;
                 display: block;
-                width: calc(var(--paper-width) + var(--cover-image-bleed));
-                height: auto;
+                width: 100%;
+                height: 100%;
+                object-fit: fill;
                 z-index: 0;
-            }
-
-            .cover-copy {
-                position: absolute;
-                left: 7mm;
-                top: var(--cover-copy-top);
-                width: 150mm;
-                color: #1AA6A6;
-                font-family: Arial, Helvetica, sans-serif;
-                z-index: 2;
-            }
-
-            .cover-logo {
-                position: absolute;
-                right: 7mm;
-                bottom: 5mm;
-                display: block;
-                width: 58mm;
-                height: auto;
-                z-index: 1;
-            }
-
-            .cover-subtitle {
-                margin: 0;
-                font-size: 4.9mm;
-                font-weight: 700;
-                line-height: 1.12;
-                text-transform: uppercase;
-            }
-
-            .cover-year {
-                margin: var(--cover-year-margin-top) 0 0;
-                font-size: 14.5mm;
-                font-weight: 700;
-                line-height: 1;
             }
 
             .page-with-decor {
@@ -143,14 +103,6 @@
                 left: 0;
                 width: 36px;
                 height: var(--design-height);
-            }
-
-            .decor-footer {
-                position: absolute;
-                left: 40px;
-                bottom: 10px;
-                height: 52px;
-                width: auto;
             }
 
             .content-block,
@@ -308,6 +260,79 @@
                 font-size: 12px;
                 font-weight: 700;
                 text-transform: uppercase;
+            }
+
+            .question-result-table {
+                width: 92%;
+                margin: 12px auto 0;
+                border-collapse: collapse;
+                table-layout: fixed;
+            }
+
+            .question-result-table td {
+                border: 1px solid #111827;
+                padding: 8px 10px;
+                font-size: 11.4px;
+                line-height: 1.26;
+                vertical-align: top;
+            }
+
+            .question-row-title {
+                padding: 10px 14px;
+                font-size: 15px;
+                font-weight: 700;
+                line-height: 1.14;
+                text-align: center;
+                text-transform: uppercase;
+            }
+
+            .question-row-intro {
+                font-size: 11.7px;
+            }
+
+            .question-row-summary {
+                font-size: 11.7px;
+                line-height: 1.18;
+            }
+
+            .question-row-indicator {
+                font-size: 14px;
+                font-weight: 700;
+                text-align: center;
+                vertical-align: middle !important;
+            }
+
+            .question-row-analysis {
+                padding: 10px 12px;
+                text-align: justify;
+            }
+
+            .question-row-analysis p {
+                margin: 0 0 12px;
+            }
+
+            .question-row-analysis p:last-child {
+                margin-bottom: 0;
+            }
+
+            .question-row-chart {
+                padding: 12px 10px 8px;
+            }
+
+            .question-row-caption {
+                padding: 8px 10px;
+                text-align: center;
+                font-size: 10px;
+            }
+
+            .question-inline-number {
+                color: #111827;
+                font-weight: 700;
+            }
+
+            .question-chart-figure {
+                width: 84%;
+                margin: 0 auto;
             }
 
             .question-chart {
@@ -479,25 +504,18 @@
                 'individual' => 'DE LA DEPENDENCIA '.$scopeNameUpper,
                 default => 'DE LOS PROCESOS EVALUADOS',
             };
-            $coverQuarter = mb_strtoupper((string) ($quarterLabel ?? 'TRIMESTRE SELECCIONADO'), 'UTF-8');
-            $coverSubtitle = match ($reportType) {
-                'process' => trim('PROCESO DE '.mb_strtoupper((string) ($processName ?? 'PROCESO SELECCIONADO'), 'UTF-8').' '.$coverQuarter),
-                'individual' => trim('DEPENDENCIA '.mb_strtoupper((string) ($dependencyName ?? 'DEPENDENCIA SELECCIONADA'), 'UTF-8').' '.$coverQuarter),
-                default => trim('SEDE MAICAO '.$coverQuarter),
-            };
-            $coverSubtitle = preg_replace('/\s+/', ' ', $coverSubtitle) ?? $coverSubtitle;
             $estamentoTotal = (int) array_sum(array_column($estamentoRows, 'encuestas'));
             $formatValue = static function (float|int $value): string {
                 $formatted = number_format((float) $value, 2, '.', '');
 
                 return rtrim(rtrim($formatted, '0'), '.');
             };
-            $questionParagraphs = [
-                1 => 'Los resultados evidencian la percepcion de los usuarios frente a la oportunidad y la calidad de la atencion brindada por el funcionario. En atencion a estos resultados, se continuaran fortaleciendo las estrategias orientadas a mantener una atencion oportuna, cercana y consistente para el usuario.',
-                2 => 'Los resultados evidencian la percepcion de los usuarios frente a las condiciones de seguridad y comodidad de las instalaciones durante la prestacion del servicio. En atencion a estos resultados, se continuaran fortaleciendo las acciones orientadas a garantizar espacios adecuados para la atencion.',
-                3 => 'Los resultados evidencian la percepcion de los usuarios frente al cumplimiento de sus necesidades y expectativas. En atencion a estos resultados, se continuaran fortaleciendo las estrategias orientadas a mejorar la experiencia del usuario y el valor percibido del servicio.',
-                4 => 'Los resultados evidencian la percepcion de los usuarios frente a la claridad, completitud y pertinencia de la informacion suministrada. En atencion a estos resultados, se continuaran fortaleciendo las acciones orientadas a garantizar informacion clara, pertinente y oportuna para los usuarios.',
-                5 => 'Los resultados evidencian la percepcion de los usuarios frente a la comunicacion recibida durante la atencion. En atencion a estos resultados, se continuaran fortaleciendo las practicas institucionales orientadas a garantizar una comunicacion respetuosa, incluyente y libre de cualquier forma de discriminacion.',
+            $questionActionParagraphs = [
+                1 => 'En atencion a estos resultados, se continuara fortaleciendo las estrategias orientadas a mantener la calidad del servicio y la atencion oportuna al usuario.',
+                2 => 'En atencion a estos resultados, se continuaran fortaleciendo las acciones orientadas a garantizar condiciones adecuadas de seguridad y comodidad para los usuarios.',
+                3 => 'En atencion a estos resultados, se continuaran fortaleciendo las estrategias orientadas a mejorar la experiencia del usuario y el valor percibido del servicio.',
+                4 => 'En atencion a estos resultados, se continuaran fortaleciendo las acciones orientadas a garantizar informacion clara, pertinente y oportuna para los usuarios.',
+                5 => 'En atencion a estos resultados, se continuaran fortaleciendo las practicas institucionales orientadas a garantizar una comunicacion respetuosa, incluyente y libre de cualquier forma de discriminacion.',
             ];
             $resolvedGeneratedConclusion = filled($generatedConclusion ?? null)
                 ? trim((string) $generatedConclusion)
@@ -520,15 +538,6 @@
             @if ($portadaImage)
                 <img src="{{ $portadaImage }}" alt="Portada" class="cover-image">
             @endif
-
-            @if ($coverLogoImage)
-                <img src="{{ $coverLogoImage }}" alt="Logo de portada" class="cover-logo">
-            @endif
-
-            <div class="cover-copy">
-                <p class="cover-subtitle">{{ $coverSubtitle }}</p>
-                <p class="cover-year">{{ $coverYear }}</p>
-            </div>
         </section>
 
         <section class="page page-with-decor toc-page">
@@ -700,19 +709,12 @@
 
         @foreach (($report['questions'] ?? []) as $index => $question)
             @php
-                $frequencies = collect($question['frequencies'] ?? []);
-                $excellent = $frequencies->firstWhere('value', 5);
-                $good = $frequencies->firstWhere('value', 4);
-                $regular = $frequencies->firstWhere('value', 3);
-                $bad = $frequencies->firstWhere('value', 2);
-                $deficient = $frequencies->firstWhere('value', 1);
-                $satisfiedCount = (int) ($question['satisfaction']['satisfied'] ?? 0);
-                $neutralCount = (int) ($question['satisfaction']['neutral'] ?? 0);
-                $dissatisfiedCount = (int) ($question['satisfaction']['dissatisfied'] ?? 0);
                 $satisfiedPercentage = (float) ($question['satisfaction']['satisfied_percentage'] ?? 0);
                 $neutralPercentage = (float) ($question['satisfaction']['neutral_percentage'] ?? 0);
                 $dissatisfiedPercentage = (float) ($question['satisfaction']['dissatisfied_percentage'] ?? 0);
                 $graphNumber = $questionChartOffset + $index;
+                $dimensionLower = mb_strtolower((string) ($question['dimension'] ?? 'la pregunta '.$question['number']), 'UTF-8');
+                $questionSummaryParagraph = 'Los resultados evidencian que el '.$formatValue($satisfiedPercentage).'% de los usuarios manifiesta estar satisfecho, mientras que un '.$formatValue($neutralPercentage).'% presenta una percepcion neutra y un '.$formatValue($dissatisfiedPercentage).'% expresa insatisfaccion frente a '.$dimensionLower.'.';
             @endphp
 
             <section class="page page-with-decor">
@@ -723,66 +725,59 @@
                         <h2 class="section-title">6. RESULTADOS DE LA ENCUESTA APLICADA</h2>
                     @endif
 
-                    <h3 class="question-title">
-                        PREGUNTA {{ $question['number'] }}. {{ mb_strtoupper((string) ($question['label'] ?? 'Pregunta'), 'UTF-8') }}
-                    </h3>
-
-                    <p class="section-text">
-                        Al preguntarles a los {{ $surveyCount }} {{ $surveyCount === 1 ? 'usuario encuestado' : 'usuarios encuestados' }} la pregunta No. {{ $question['number'] }}, se evidencio que {{ $formatValue($satisfiedPercentage) }}% considera una calificacion satisfactoria, {{ $formatValue($neutralPercentage) }}% presenta una percepcion neutra y {{ $formatValue($dissatisfiedPercentage) }}% manifiesta insatisfaccion.
-                    </p>
-
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Clasificacion</th>
-                                <th>Resultado</th>
-                            </tr>
-                        </thead>
+                    <table class="question-result-table">
+                        <colgroup>
+                            <col style="width: 41%">
+                            <col style="width: 29%">
+                            <col style="width: 30%">
+                        </colgroup>
                         <tbody>
                             <tr>
-                                <td>Satisfecho (Excelente + Bueno)</td>
-                                <td>{{ $satisfiedCount }} usuarios ({{ $formatValue($satisfiedPercentage) }}%)</td>
-                            </tr>
-                            <tr>
-                                <td>Neutro (Regular)</td>
-                                <td>{{ $neutralCount }} usuarios ({{ $formatValue($neutralPercentage) }}%)</td>
-                            </tr>
-                            <tr>
-                                <td class="summary-highlight">Indicador de satisfaccion</td>
-                                <td class="summary-highlight">{{ $formatValue($satisfiedPercentage) }}%</td>
-                            </tr>
-                            <tr>
-                                <td>Insatisfecho (Malo + Deficiente)</td>
-                                <td>{{ $dissatisfiedCount }} usuarios ({{ $formatValue($dissatisfiedPercentage) }}%)</td>
-                            </tr>
-                            <tr>
-                                <td>Detalle de valoraciones positivas</td>
-                                <td>
-                                    Excelente: {{ (int) ($excellent['frequency'] ?? 0) }} ({{ $formatValue($excellent['percentage'] ?? 0) }}%) |
-                                    Bueno: {{ (int) ($good['frequency'] ?? 0) }} ({{ $formatValue($good['percentage'] ?? 0) }}%)
+                                <td colspan="3" class="question-row-title">
+                                    PREGUNTA {{ $question['number'] }}. {{ mb_strtoupper((string) ($question['label'] ?? 'Pregunta'), 'UTF-8') }}
                                 </td>
                             </tr>
                             <tr>
-                                <td>Detalle de valoraciones no favorables</td>
-                                <td>
-                                    Regular: {{ (int) ($regular['frequency'] ?? 0) }} ({{ $formatValue($regular['percentage'] ?? 0) }}%) |
-                                    Malo: {{ (int) ($bad['frequency'] ?? 0) }} ({{ $formatValue($bad['percentage'] ?? 0) }}%) |
-                                    Deficiente: {{ (int) ($deficient['frequency'] ?? 0) }} ({{ $formatValue($deficient['percentage'] ?? 0) }}%)
+                                <td colspan="3" class="question-row-intro">
+                                    Al preguntarles a los <span class="question-inline-number">{{ $surveyCount }}</span> {{ $surveyCount === 1 ? 'usuario encuestado' : 'usuarios encuestados' }} la pregunta No. <strong>{{ $question['number'] }}</strong>, ellos respondieron:
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="question-row-summary">
+                                    El <strong>{{ $formatValue($satisfiedPercentage) }}%</strong> considera en una calificacion <strong>SATISFECHO</strong>
+                                </td>
+                                <td class="question-row-summary">
+                                    Y el <strong>{{ $formatValue($neutralPercentage) }}%</strong> la califica como <strong>NEUTRO</strong>
+                                </td>
+                                <td rowspan="2" class="question-row-indicator">
+                                    SATISFACCION <strong>{{ $formatValue($satisfiedPercentage) }}%</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="question-row-summary">
+                                    Mientras que el <strong>{{ $formatValue($dissatisfiedPercentage) }}%</strong> manifiesta estar <strong>INSATISFECHO</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="question-row-analysis">
+                                    <p>{{ $questionSummaryParagraph }}</p>
+                                    <p>{{ $questionActionParagraphs[$question['number']] ?? 'En atencion a estos resultados, se continuaran fortaleciendo las acciones de mejora orientadas a elevar la satisfaccion de los usuarios.' }}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="question-row-chart">
+                                    <div class="question-chart-figure">
+                                        <img src="{{ $chartImages['question_results'][$index] ?? '' }}" alt="Resultado pregunta {{ $question['number'] }}" class="chart-image">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="question-row-caption">
+                                    <strong>Grafica {{ $graphNumber }}.</strong> Resultado de la medicion de {{ $dimensionLower }} {{ $scopeInstitutional }}.
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-
-                    <p class="section-text">
-                        {{ $questionParagraphs[$question['number']] ?? 'Los resultados obtenidos permiten identificar fortalezas y oportunidades de mejora en la prestacion del servicio evaluado.' }}
-                    </p>
-
-                    <div class="question-chart">
-                        <div class="chart-shell">
-                            <img src="{{ $chartImages['question_results'][$index] ?? '' }}" alt="Resultado pregunta {{ $question['number'] }}" class="chart-image">
-                        </div>
-                        <p class="chart-caption">Grafica {{ $graphNumber }}. Resultado de la medicion de la pregunta {{ $question['number'] }} {{ $scopeInstitutional }}.</p>
-                    </div>
                 </div>
             </section>
         @endforeach

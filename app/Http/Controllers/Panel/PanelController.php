@@ -20,10 +20,24 @@ class PanelController extends Controller
 
     public function index(Request $request): View
     {
+        $quarterYear = $this->reportingQuarterService->currentYear();
+
         return view('panel', [
             'puedeGestionarTrimestres' => $request->user()?->puedeGestionarTrimestresReporte() ?? false,
-            'quarterYear' => $this->reportingQuarterService->currentYear(),
+            'quarterYear' => $quarterYear,
             'quarters' => $this->reportingQuarterService->forCurrentYear(),
+            'quarterLimits' => collect(range(1, 4))
+                ->mapWithKeys(function (int $quarterNumber) use ($quarterYear): array {
+                    $range = $this->reportingQuarterService->calendarRange($quarterYear, $quarterNumber);
+
+                    return [
+                        $quarterNumber => [
+                            'start_date' => $range['start_date']->toDateString(),
+                            'end_date' => $range['end_date']->toDateString(),
+                        ],
+                    ];
+                })
+                ->all(),
         ]);
     }
 
@@ -87,6 +101,13 @@ class PanelController extends Controller
                     continue;
                 }
 
+                $allowedRange = $this->reportingQuarterService->calendarRange($year, $quarterNumber);
+                $allowedStart = $allowedRange['start_date'];
+                $allowedEnd = $allowedRange['end_date'];
+                $rangeMessage = ReportingQuarter::labelFor($quarterNumber)
+                    .' no puede superar los 3 meses permitidos. '
+                    .'Solo se permite entre '.$allowedStart->toDateString().' y '.$allowedEnd->toDateString().'.';
+
                 if ($startDate->year !== $year) {
                     $validator->errors()->add(
                         'quarters.'.$quarterNumber.'.start_date',
@@ -105,6 +126,20 @@ class PanelController extends Controller
                     $validator->errors()->add(
                         'quarters.'.$quarterNumber.'.end_date',
                         ReportingQuarter::labelFor($quarterNumber).' debe terminar despues de la fecha inicial.'
+                    );
+                }
+
+                if ($startDate->lt($allowedStart) || $startDate->gt($allowedEnd)) {
+                    $validator->errors()->add(
+                        'quarters.'.$quarterNumber.'.start_date',
+                        $rangeMessage
+                    );
+                }
+
+                if ($endDate->lt($allowedStart) || $endDate->gt($allowedEnd)) {
+                    $validator->errors()->add(
+                        'quarters.'.$quarterNumber.'.end_date',
+                        $rangeMessage
                     );
                 }
 

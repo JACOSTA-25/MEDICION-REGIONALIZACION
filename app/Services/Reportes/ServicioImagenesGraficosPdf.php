@@ -62,13 +62,9 @@ class ServicioImagenesGraficosPdf
                 620
             ),
             'question_results' => array_map(
-                fn (array $questionChart): string => $this->renderPieImage(
+                fn (array $questionChart): string => $this->renderQuestionResultPieImage(
+                    (string) ($questionChart['title'] ?? ''),
                     $questionChart['items'] ?? [],
-                    760,
-                    420,
-                    true,
-                    false,
-                    78
                 ),
                 $charts['question_results'] ?? []
             ),
@@ -219,6 +215,160 @@ class ServicioImagenesGraficosPdf
                 $legendText
             );
         }
+
+        return $this->toPngDataUri($image, $width * $outputScale, $height * $outputScale);
+    }
+
+    /**
+     * @param  array<int, array{label: string, value: int|float, percentage?: float, color: string}>  $items
+     */
+    private function renderQuestionResultPieImage(string $title, array $items): string
+    {
+        $width = 760;
+        $height = 520;
+        $outputScale = self::OUTPUT_SCALE;
+        $drawScale = $outputScale * self::SUPERSAMPLE_SCALE;
+        $scale = $drawScale;
+        $canvasWidth = $width * $drawScale;
+        $canvasHeight = $height * $drawScale;
+
+        $image = imagecreatetruecolor($canvasWidth, $canvasHeight);
+        imageantialias($image, true);
+        imagealphablending($image, true);
+
+        if (function_exists('imagesetinterpolation')) {
+            imagesetinterpolation($image, IMG_BICUBIC_FIXED);
+        }
+
+        $white = imagecolorallocate($image, 255, 255, 255);
+        $text = imagecolorallocate($image, 75, 85, 99);
+        $labelColor = imagecolorallocate($image, 255, 255, 255);
+
+        imagefilledrectangle($image, 0, 0, $canvasWidth, $canvasHeight, $white);
+
+        $titleText = mb_strtoupper($title !== '' ? $title : 'RESULTADOS', 'UTF-8');
+        $this->drawCenteredText(
+            $image,
+            (int) round(22 * $scale),
+            (int) round($canvasWidth / 2),
+            (int) round(48 * $scale),
+            $text,
+            $titleText
+        );
+
+        $legendFontSize = (int) round(11 * $scale);
+        $legendSquare = (int) round(13 * $scale);
+        $legendGap = (int) round(24 * $scale);
+        $legendItems = [];
+        $legendWidth = 0;
+
+        foreach ($items as $item) {
+            $label = (string) ($item['label'] ?? '');
+            $itemWidth = $legendSquare + (int) round(8 * $scale) + $this->estimateTextWidth($legendFontSize, $label);
+            $legendItems[] = [
+                'label' => $label,
+                'color' => (string) ($item['color'] ?? '#4472C4'),
+                'width' => $itemWidth,
+            ];
+            $legendWidth += $itemWidth;
+        }
+
+        if ($legendItems !== []) {
+            $legendWidth += $legendGap * max(count($legendItems) - 1, 0);
+            $legendX = (int) round(($canvasWidth - $legendWidth) / 2);
+            $legendY = (int) round(92 * $scale);
+
+            foreach ($legendItems as $legendItem) {
+                $color = $this->allocateHexColor($image, $legendItem['color']);
+                imagefilledrectangle(
+                    $image,
+                    $legendX,
+                    $legendY,
+                    $legendX + $legendSquare,
+                    $legendY + $legendSquare,
+                    $color
+                );
+
+                $this->drawText(
+                    $image,
+                    $legendFontSize,
+                    $legendX + $legendSquare + (int) round(8 * $scale),
+                    $legendY + (int) round(11 * $scale),
+                    $text,
+                    $legendItem['label']
+                );
+
+                $legendX += $legendItem['width'] + $legendGap;
+            }
+        }
+
+        $total = (float) array_sum(array_map(
+            static fn (array $item): float => (float) ($item['value'] ?? 0),
+            $items
+        ));
+
+        $centerX = (int) round($canvasWidth / 2);
+        $centerY = (int) round(328 * $scale);
+        $diameter = (int) round(280 * $scale);
+        $radius = (float) ($diameter / 2);
+
+        if ($total <= 0) {
+            imagefilledellipse($image, $centerX, $centerY, $diameter, $diameter, $this->allocateHexColor($image, '#E5E7EB'));
+            $this->drawCenteredText(
+                $image,
+                (int) round(12 * $scale),
+                $centerX,
+                $centerY,
+                $text,
+                'Sin datos'
+            );
+
+            return $this->toPngDataUri($image, $width * $outputScale, $height * $outputScale);
+        }
+
+        $start = 270.0;
+
+        foreach ($items as $item) {
+            $value = (float) ($item['value'] ?? 0);
+
+            if ($value <= 0) {
+                continue;
+            }
+
+            $angle = ($value / $total) * 360.0;
+            $end = $start + $angle;
+
+            imagefilledarc(
+                $image,
+                $centerX,
+                $centerY,
+                $diameter,
+                $diameter,
+                (int) round($start),
+                (int) round($end),
+                $this->allocateHexColor($image, (string) ($item['color'] ?? '#4472C4')),
+                IMG_ARC_PIE
+            );
+
+            $percentage = isset($item['percentage']) ? (float) $item['percentage'] : (($value / $total) * 100);
+            $midAngle = deg2rad(($start + $end) / 2);
+            $labelRadius = $radius * 0.76;
+            $labelX = (int) round($centerX + (cos($midAngle) * $labelRadius));
+            $labelY = (int) round($centerY + (sin($midAngle) * $labelRadius));
+
+            $this->drawCenteredText(
+                $image,
+                (int) round(14 * $scale),
+                $labelX,
+                $labelY,
+                $labelColor,
+                $this->formatPercentage($percentage).'%'
+            );
+
+            $start = $end;
+        }
+
+        imageellipse($image, $centerX, $centerY, $diameter, $diameter, $this->allocateHexColor($image, '#D1D5DB'));
 
         return $this->toPngDataUri($image, $width * $outputScale, $height * $outputScale);
     }
@@ -497,6 +647,35 @@ class ServicioImagenesGraficosPdf
         };
 
         imagestring($image, $font, $x, max($y - 12, 0), $text, $color);
+    }
+
+    private function drawCenteredText(
+        \GdImage $image,
+        int $fontSize,
+        int $centerX,
+        int $y,
+        int $color,
+        string $text,
+        float $angle = 0.0
+    ): void {
+        $x = $centerX - (int) round($this->estimateTextWidth($fontSize, $text, $angle) / 2);
+
+        $this->drawText($image, $fontSize, $x, $y, $color, $text, $angle);
+    }
+
+    private function estimateTextWidth(int $fontSize, string $text, float $angle = 0.0): int
+    {
+        $fontPath = $this->resolveFontPath();
+
+        if ($fontPath !== null && function_exists('imagettfbbox')) {
+            $box = @imagettfbbox($fontSize, $angle, $fontPath, $text);
+
+            if ($box !== false) {
+                return (int) abs($box[2] - $box[0]);
+            }
+        }
+
+        return (int) round(mb_strlen($text) * $fontSize * 0.56);
     }
 
     private function resolveFontPath(): ?string

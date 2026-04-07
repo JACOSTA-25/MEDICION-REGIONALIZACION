@@ -8,6 +8,19 @@ use Illuminate\Support\Collection;
 
 class ServicioTrimestresReporte
 {
+    /**
+     * @return array{start_date: CarbonImmutable, end_date: CarbonImmutable}
+     */
+    public function calendarRange(int $year, int $quarterNumber): array
+    {
+        $payload = $this->defaultQuarterPayload($year, $quarterNumber);
+
+        return [
+            'start_date' => $payload['start_date'],
+            'end_date' => $payload['end_date'],
+        ];
+    }
+
     public function currentYear(): int
     {
         return (int) now(config('app.timezone'))->year;

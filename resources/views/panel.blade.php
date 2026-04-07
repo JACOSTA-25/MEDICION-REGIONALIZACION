@@ -119,7 +119,12 @@
                     @endif
 
                     @if ($puedeGestionarTrimestres)
-                        <form method="POST" action="{{ route('dashboard.quarters.update') }}" class="ms-report-form">
+                        <form
+                            method="POST"
+                            action="{{ route('dashboard.quarters.update') }}"
+                            class="ms-report-form"
+                            data-quarter-validation-form
+                        >
                             @csrf
                             @method('PUT')
 
@@ -134,6 +139,9 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($quarters as $quarter)
+                                            @php
+                                                $quarterLimit = $quarterLimits[$quarter->quarter_number] ?? null;
+                                            @endphp
                                             <tr>
                                                 <td class="ms-cell-name">{{ $quarter->label() }}</td>
                                                 <td>
@@ -142,6 +150,13 @@
                                                         type="date"
                                                         name="quarters[{{ $quarter->quarter_number }}][start_date]"
                                                         value="{{ old('quarters.'.$quarter->quarter_number.'.start_date', $quarter->start_date?->format('Y-m-d')) }}"
+                                                        min="{{ $quarterLimit['start_date'] ?? '' }}"
+                                                        max="{{ $quarterLimit['end_date'] ?? '' }}"
+                                                        data-quarter-number="{{ $quarter->quarter_number }}"
+                                                        data-quarter-label="{{ $quarter->label() }}"
+                                                        data-allowed-start="{{ $quarterLimit['start_date'] ?? '' }}"
+                                                        data-allowed-end="{{ $quarterLimit['end_date'] ?? '' }}"
+                                                        data-quarter-role="start"
                                                     >
                                                 </td>
                                                 <td>
@@ -150,6 +165,13 @@
                                                         type="date"
                                                         name="quarters[{{ $quarter->quarter_number }}][end_date]"
                                                         value="{{ old('quarters.'.$quarter->quarter_number.'.end_date', $quarter->end_date?->format('Y-m-d')) }}"
+                                                        min="{{ $quarterLimit['start_date'] ?? '' }}"
+                                                        max="{{ $quarterLimit['end_date'] ?? '' }}"
+                                                        data-quarter-number="{{ $quarter->quarter_number }}"
+                                                        data-quarter-label="{{ $quarter->label() }}"
+                                                        data-allowed-start="{{ $quarterLimit['start_date'] ?? '' }}"
+                                                        data-allowed-end="{{ $quarterLimit['end_date'] ?? '' }}"
+                                                        data-quarter-role="end"
                                                     >
                                                 </td>
                                             </tr>
@@ -165,7 +187,7 @@
                             </div>
 
                             <p class="ms-form-note">
-                                Solo el Super Administrador puede actualizar estos periodos. Los reportes tomaran estas fechas de forma automatica.
+                                Solo el Super Administrador puede actualizar estos periodos. Cada trimestre debe mantenerse dentro de su rango natural: enero-marzo, abril-junio, julio-septiembre y octubre-diciembre.
                             </p>
                         </form>
                     @else
