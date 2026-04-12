@@ -83,6 +83,25 @@
                 z-index: 0;
             }
 
+            .cover-quarter-roman {
+                position: absolute;
+                left: 48%;
+                top: 35.5%;
+                width: 7.45%;
+                height: 4.45%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #f3f4f6;
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 35px;
+                font-style: normal;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                line-height: 1;
+                z-index: 2;
+            }
+
             .page-with-decor {
                 padding: 128px 52px 60px 52px;
             }
@@ -419,33 +438,51 @@
                 margin-right: var(--content-right);
             }
 
+            .balanced-right-spacing .content-block,
+            .balanced-right-spacing .content-block-full {
+                margin-right: 116px !important;
+            }
+
             .toc-list {
                 margin-top: 12px;
             }
 
             .toc-row {
-                display: flex;
-                align-items: baseline;
-                gap: 8px;
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: auto;
                 margin-bottom: 10px;
                 font-size: 12px;
                 line-height: 1.3;
             }
 
+            .toc-row td {
+                border: 0;
+                padding: 0;
+                vertical-align: bottom;
+                font-size: 12px;
+            }
+
             .toc-label {
+                width: 1%;
                 white-space: nowrap;
+                padding-right: 6px;
+                padding-bottom: 6px;
             }
 
             .toc-dots {
-                flex: 1 1 auto;
-                min-width: 24px;
+                width: auto;
                 border-bottom: 1px dotted #6b7280;
-                transform: translateY(-2px);
+                padding-bottom: 3px;
             }
 
             .toc-page-number {
-                min-width: 20px;
+                width: 30px;
                 text-align: right;
+                white-space: nowrap;
+                padding-left: 8px;
+                padding-right: 8px;
+                padding-bottom: 6px;
             }
         </style>
     </head>
@@ -453,6 +490,7 @@
         @php
             $signature = $signature ?? null;
             $quarterLabel = null;
+            $quarterRoman = null;
             $periodLabel = null;
             $processName = null;
             $dependencyName = null;
@@ -472,6 +510,22 @@
 
                 if (($contextRow['label'] ?? '') === 'Dependencia') {
                     $dependencyName = $contextRow['value'] ?? null;
+                }
+            }
+
+            if (is_string($quarterLabel)) {
+                $normalizedQuarterLabel = mb_strtoupper($quarterLabel, 'UTF-8');
+
+                if (preg_match('/\b(IV|III|II|I)\b/u', $normalizedQuarterLabel, $romanMatch) === 1) {
+                    $quarterRoman = $romanMatch[1];
+                } elseif (preg_match('/\b([1-4])\b/u', $normalizedQuarterLabel, $numericMatch) === 1) {
+                    $quarterRoman = match ((int) $numericMatch[1]) {
+                        1 => 'I',
+                        2 => 'II',
+                        3 => 'III',
+                        4 => 'IV',
+                        default => null,
+                    };
                 }
             }
 
@@ -538,6 +592,9 @@
             @if ($portadaImage)
                 <img src="{{ $portadaImage }}" alt="Portada" class="cover-image">
             @endif
+            @if ($quarterRoman)
+                <div class="cover-quarter-roman">{{ $quarterRoman }}</div>
+            @endif
         </section>
 
         <section class="page page-with-decor toc-page">
@@ -548,20 +605,24 @@
 
                 <div class="toc-list">
                     @foreach ($tocEntries as $tocEntry)
-                        <div class="toc-row">
-                            <span class="toc-label">{{ $tocEntry['label'] }}</span>
-                            <span class="toc-dots" aria-hidden="true"></span>
-                            <span class="toc-page-number">{{ $tocEntry['page'] }}</span>
-                        </div>
+                        <table class="toc-row" role="presentation">
+                            <tbody>
+                                <tr>
+                                    <td class="toc-label">{{ $tocEntry['label'] }}</td>
+                                    <td class="toc-dots" aria-hidden="true">&nbsp;</td>
+                                    <td class="toc-page-number">{{ $tocEntry['page'] }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     @endforeach
                 </div>
             </div>
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor balanced-right-spacing">
             @include('reportes.pdf.parciales.page-decor')
 
-            <div class="content-block">
+            <div class="content-block" style="margin-right: 116px !important;">
                 <h2 class="section-title">1. INTRODUCCION</h2>
                 <p class="section-text">
                     El presente informe tiene como finalidad presentar los resultados de la medicion de la prestacion del servicio, realizada a traves de una encuesta de percepcion aplicada a los usuarios que hicieron uso del servicio durante el periodo evaluado.
@@ -588,10 +649,10 @@
             </div>
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor balanced-right-spacing">
             @include('reportes.pdf.parciales.page-decor')
 
-            <div class="content-block">
+            <div class="content-block" style="margin-right: 116px !important;">
                 <h2 class="section-title">4. NUMERO DE USUARIOS ENCUESTADOS</h2>
                 <p class="section-text">
                     Durante el periodo evaluado, la encuesta de medicion del servicio fue aplicada a un total de {{ $scopeTable['total_general'] ?? $surveyCount }} {{ ($scopeTable['total_general'] ?? $surveyCount) === 1 ? 'usuario' : 'usuarios' }}, quienes hicieron uso de los servicios ofrecidos dentro del alcance analizado, como se describe en la tabla 1.
@@ -625,10 +686,10 @@
             </div>
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor balanced-right-spacing">
             @include('reportes.pdf.parciales.page-decor')
 
-            <div class="content-block">
+            <div class="content-block" style="margin-right: 116px !important;">
                 <h2 class="section-title">5. CARACTERIZACION DE LOS USUARIOS ENCUESTADOS</h2>
                 <p class="section-text">
                     La encuesta permitio identificar el grupo de interes al que pertenecen los usuarios que participaron en el ejercicio de medicion, lo cual facilita el analisis integral de la percepcion del servicio desde las diferentes partes interesadas de la institucion.
@@ -782,10 +843,10 @@
             </section>
         @endforeach
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor balanced-right-spacing">
             @include('reportes.pdf.parciales.page-decor')
 
-            <div class="content-block">
+            <div class="content-block" style="margin-right: 116px !important;">
                 <h2 class="section-title">7. ANALISIS DE LA ENCUESTA</h2>
                 <p class="section-text">
                     Con base en los resultados obtenidos a traves de la encuesta de satisfaccion aplicada durante el periodo evaluado, se realizo el analisis integral de la percepcion de los usuarios frente a la prestacion del servicio {{ $scopeInstitutional }}.
@@ -802,10 +863,10 @@
             </div>
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor balanced-right-spacing">
             @include('reportes.pdf.parciales.page-decor')
 
-            <div class="content-block-full">
+            <div class="content-block-full" style="margin-right: 116px !important;">
                 <h2 class="section-title">8. INDICADOR DE MEDICION DE LA SATISFACCION GLOBAL DE LOS USUARIOS {{ $scopeIndicatorTitle }}</h2>
                 <p class="section-text">
                     Con base en los resultados consolidados de la encuesta aplicada durante el periodo evaluado, se calculo el indicador de satisfaccion global de los usuarios, el cual permite medir el nivel general de percepcion frente a la calidad del servicio prestado.
@@ -859,10 +920,10 @@
             </div>
         </section>
 
-        <section class="page page-with-decor">
+        <section class="page page-with-decor balanced-right-spacing">
             @include('reportes.pdf.parciales.page-decor')
 
-            <div class="content-block">
+            <div class="content-block" style="margin-right: 116px !important;">
                 <h2 class="section-title">9. CONCLUSIONES DE LA MEDICION DE LA SATISFACCION DE LOS USUARIOS {{ $scopeIndicatorTitle }}</h2>
                 <p class="section-text">
                     Con base en los resultados obtenidos durante {{ $quarterLabel ?? 'el periodo evaluado' }} de {{ $coverYear }}, se concluye que {{ $scopeSentence }} presenta un nivel de satisfaccion general del {{ $formatValue($globalIndicator['satisfaction_percentage'] ?? 0) }}%, a partir de la percepcion de los usuarios que participaron en la medicion del servicio.
