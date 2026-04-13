@@ -26,6 +26,10 @@
     </x-nav-link>
 @endif
 
+<x-nav-link :href="route('survey.qr')" :active="request()->routeIs('survey.qr')">
+    {{ __('QR de encuesta') }}
+</x-nav-link>
+
 @if ($user->puedeAccederModuloUsuarios())
     <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
         {{ __('Usuarios') }}

@@ -87,6 +87,21 @@ class UsuarioController extends Controller
             ->with('user_status', 'Usuario actualizado correctamente.');
     }
 
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($request->user()?->is($user)) {
+            return redirect()
+                ->route('users.index')
+                ->with('user_error', 'No puedes eliminar tu propio usuario.');
+        }
+
+        $user->delete();
+
+        return redirect()
+            ->route('users.index')
+            ->with('user_status', 'Usuario eliminado correctamente.');
+    }
+
     /**
      * @return array<string, string>
      */

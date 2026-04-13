@@ -7,6 +7,7 @@
 <x-app-layout>
     <div
         class="ms-content-shell"
+        data-dependencies-by-process='@json($dependenciesByProcess)'
         x-data="{
             createOpen: {{ session('open_create_user') || $createErrors->any() ? 'true' : 'false' }},
             editUserId: {{ $openEditUser ? (int) $openEditUser : 'null' }},
@@ -36,6 +37,12 @@
                     </div>
                 @endif
 
+                @if (session('user_error'))
+                    <div class="ms-inline-alert">
+                        {{ session('user_error') }}
+                    </div>
+                @endif
+
                 <div class="ms-table-shell ms-table-shell-compact">
                     <table class="ms-data-table ms-data-table-compact">
                         <thead>
@@ -46,6 +53,7 @@
                                 <th>Proceso</th>
                                 <th>Dependencia</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,10 +65,50 @@
                                     <td>{{ $managedUser->proceso?->nombre ?? 'No aplica' }}</td>
                                     <td>{{ $managedUser->dependencia?->nombre ?? 'No aplica' }}</td>
                                     <td>{{ $managedUser->activo ? 'Activo' : 'Inactivo' }}</td>
+                                    <td x-on:click.stop>
+                                        <div class="ms-inline-actions">
+                                            @if (auth()->id() !== $managedUser->id)
+                                                <form
+                                                    method="POST"
+                                                    action="{{ route('users.destroy', $managedUser) }}"
+                                                    data-confirm-user-delete
+                                                    data-user-name="{{ $managedUser->nombre }}"
+                                                >
+                                                    @csrf
+                                                    @method('DELETE')
+
+                                                    <button
+                                                        type="submit"
+                                                        class="ms-btn ms-btn-muted ms-btn-icon"
+                                                        aria-label="Eliminar usuario"
+                                                        title="Eliminar usuario"
+                                                    >
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                            <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
+                                                            <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <button
+                                                    type="button"
+                                                    class="ms-btn ms-btn-muted ms-btn-icon"
+                                                    aria-label="No puedes eliminar tu propio usuario"
+                                                    title="No puedes eliminar tu propio usuario"
+                                                    disabled
+                                                >
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                        <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
+                                                        <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6">No hay usuarios registrados.</td>
+                                    <td colspan="7">No hay usuarios registrados.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -101,9 +149,14 @@
                     method="POST"
                     action="{{ route('users.store') }}"
                     class="mt-6 space-y-5"
+                    data-user-form
                     x-data="{ role: @js(old('rol', \App\Models\User::ROLE_ADMIN)) }"
                 >
                     @csrf
+
+                    @php
+                        $createDependencies = collect($dependenciesByProcess[(int) old('id_proceso')] ?? []);
+                    @endphp
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
@@ -160,6 +213,7 @@
                             <select
                                 id="create_proceso"
                                 name="id_proceso"
+                                data-user-process-select
                                 class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
                             >
                                 <option value="">Seleccione un proceso</option>
@@ -176,15 +230,16 @@
                             <select
                                 id="create_dependencia"
                                 name="id_dependencia"
+                                data-user-dependency-select
+                                data-selected="{{ old('id_dependencia') }}"
                                 class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                {{ $createDependencies->isEmpty() ? 'disabled' : '' }}
                             >
                                 <option value="">Seleccione una dependencia</option>
-                                @foreach ($dependenciesByProcess as $items)
-                                    @foreach ($items as $dependency)
-                                        <option value="{{ $dependency['id'] }}" @selected((string) old('id_dependencia') === (string) $dependency['id'])>
-                                            {{ $dependency['nombre'] }}
-                                        </option>
-                                    @endforeach
+                                @foreach ($createDependencies as $dependency)
+                                    <option value="{{ $dependency['id'] }}" @selected((string) old('id_dependencia') === (string) $dependency['id'])>
+                                        {{ $dependency['nombre'] }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -253,10 +308,15 @@
                         method="POST"
                         action="{{ route('users.update', $managedUser) }}"
                         class="mt-6 space-y-5"
+                        data-user-form
                         x-data="{ role: @js($editRole) }"
                     >
                         @csrf
                         @method('PUT')
+
+                        @php
+                            $editDependencies = collect($dependenciesByProcess[(int) $editProcessId] ?? []);
+                        @endphp
 
                         <div class="grid gap-4 md:grid-cols-2">
                             <div>
@@ -313,6 +373,7 @@
                                 <select
                                     id="edit_proceso_{{ $managedUser->id }}"
                                     name="id_proceso"
+                                    data-user-process-select
                                     class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
                                 >
                                     <option value="">Seleccione un proceso</option>
@@ -329,15 +390,16 @@
                                 <select
                                     id="edit_dependencia_{{ $managedUser->id }}"
                                     name="id_dependencia"
+                                    data-user-dependency-select
+                                    data-selected="{{ $editDependencyId }}"
                                     class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    {{ $editDependencies->isEmpty() ? 'disabled' : '' }}
                                 >
                                     <option value="">Seleccione una dependencia</option>
-                                    @foreach ($dependenciesByProcess as $items)
-                                        @foreach ($items as $dependency)
-                                            <option value="{{ $dependency['id'] }}" @selected((string) $editDependencyId === (string) $dependency['id'])>
-                                                {{ $dependency['nombre'] }}
-                                            </option>
-                                        @endforeach
+                                    @foreach ($editDependencies as $dependency)
+                                        <option value="{{ $dependency['id'] }}" @selected((string) $editDependencyId === (string) $dependency['id'])>
+                                            {{ $dependency['nombre'] }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>

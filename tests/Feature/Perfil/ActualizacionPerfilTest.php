@@ -14,50 +14,12 @@ class ActualizacionPerfilTest extends TestCase
     {
         $this->actingAs($user = User::factory()->create());
 
-        $this->get(route('profile.edit'))->assertOk();
-    }
-
-    public function test_profile_information_can_be_updated(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user);
-
-        $response = $this
-            ->from(route('profile.edit'))
-            ->patch(route('profile.update'), [
-                'nombre' => 'Test User',
-                'username' => 'test.user',
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
-
-        $user->refresh();
-
-        $this->assertEquals('Test User', $user->nombre);
-        $this->assertEquals('test.user', $user->username);
-    }
-
-    public function test_profile_information_accepts_the_existing_username(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user);
-
-        $response = $this
-            ->from(route('profile.edit'))
-            ->patch(route('profile.update'), [
-                'nombre' => 'Test User',
-                'username' => $user->username,
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
-
-        $this->assertSame($user->username, $user->refresh()->username);
+        $this->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Informacion del perfil')
+            ->assertSee('Estos datos son informativos y son administrados por el Super Administrador.')
+            ->assertSee('Si necesitas actualizar esta informacion, solicita el ajuste al Super Administrador.')
+            ->assertDontSee('Delete Account');
     }
 
     public function test_user_can_delete_their_account(): void
@@ -94,5 +56,16 @@ class ActualizacionPerfilTest extends TestCase
             ->assertSessionHasErrorsIn('userDeletion', ['password']);
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_dashboard_contains_a_direct_link_to_change_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Cambiar contrasena')
+            ->assertSee(route('profile.edit').'#cambiar-contrasena');
     }
 }

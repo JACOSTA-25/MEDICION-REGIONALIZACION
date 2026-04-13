@@ -91,6 +91,10 @@
                 </x-responsive-nav-link>
             @endif
 
+            <x-responsive-nav-link :href="route('survey.qr')" :active="request()->routeIs('survey.qr')">
+                {{ __('QR de encuesta') }}
+            </x-responsive-nav-link>
+
             @if ($user->puedeAccederModuloUsuarios())
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
                     {{ __('Usuarios') }}

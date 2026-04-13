@@ -23,6 +23,12 @@
             'route' => route('reports.individual'),
         ],
         [
+            'visible' => true,
+            'title' => 'QR de encuesta',
+            'description' => 'Modulo para compartir y descargar el codigo QR del formulario.',
+            'route' => route('survey.qr'),
+        ],
+        [
             'visible' => $user->puedeAccederModuloUsuarios(),
             'title' => 'Gestion de usuarios',
             'description' => 'Modulo de administracion de usuarios.',

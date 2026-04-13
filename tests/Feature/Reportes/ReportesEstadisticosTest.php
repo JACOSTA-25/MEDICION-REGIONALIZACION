@@ -148,42 +148,42 @@ class ReportesEstadisticosTest extends TestCase
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-            $serviceA->id_proceso,
-            $serviceA->id_dependencia,
-            $serviceA->id_servicio,
-            [5, 5, 5, 5, 5],
-            '2026-01-09 08:00:00'
-        );
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [5, 5, 5, 5, 5],
+                '2026-01-09 08:00:00'
+            );
 
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-            $serviceA->id_proceso,
-            $serviceA->id_dependencia,
-            $serviceA->id_servicio,
-            [4, 4, 4, 4, 4],
-            '2026-01-10 08:00:00'
-        );
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
 
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-            $serviceA->id_proceso,
-            $serviceA->id_dependencia,
-            $serviceA->id_servicio,
-            [3, 3, 3, 3, 3],
-            '2026-03-31 08:00:00'
-        );
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [3, 3, 3, 3, 3],
+                '2026-03-31 08:00:00'
+            );
 
             $this->storeResponse(
                 $estudiante->id_estamento,
                 $programa->id_programa,
-            $serviceA->id_proceso,
-            $serviceA->id_dependencia,
-            $serviceA->id_servicio,
-            [2, 2, 2, 2, 2],
-            '2026-04-01 08:00:00'
-        );
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [2, 2, 2, 2, 2],
+                '2026-04-01 08:00:00'
+            );
 
             $response = $this->actingAs($admin)
                 ->get(route('reports.general', ['trimestre' => 1]));
@@ -575,6 +575,80 @@ class ReportesEstadisticosTest extends TestCase
 
             $processResponse->assertOk();
             $processResponse->assertHeader('Content-Type', 'application/pdf');
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_admin_2_0_can_access_process_reports_module(): void
+    {
+        $admin20 = User::factory()->create(['rol' => User::ROLE_ADMIN_2_0]);
+
+        $this->actingAs($admin20)
+            ->get(route('reports.process'))
+            ->assertOk();
+    }
+
+    public function test_process_report_pdf_cannot_be_downloaded_when_selected_process_has_no_responses(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-01',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.process', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'export_pdf' => 1,
+                ]));
+
+            $response->assertOk();
+            $response->assertHeaderMissing('Content-Disposition');
+            $response->assertSee('No se puede descargar el PDF porque el proceso seleccionado no tiene respuestas en el periodo.');
+            $response->assertDontSee('Descargar PDF');
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_individual_report_pdf_cannot_be_downloaded_when_selected_dependency_has_no_responses(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-01',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.individual', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'export_pdf' => 1,
+                ]));
+
+            $response->assertOk();
+            $response->assertHeaderMissing('Content-Disposition');
+            $response->assertSee('No se puede descargar el PDF porque la dependencia seleccionada no tiene respuestas en el periodo.');
+            $response->assertDontSee('Descargar PDF');
         } finally {
             CarbonImmutable::setTestNow();
         }

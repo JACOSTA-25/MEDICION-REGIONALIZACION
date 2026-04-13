@@ -9,8 +9,8 @@ use App\Models\ReportingQuarter;
 use App\Models\User;
 use App\Services\Reportes\ServicioConclusionesIa;
 use App\Services\Reportes\ServicioImagenesGraficosPdf;
-use App\Services\Reportes\ServicioTrimestresReporte;
 use App\Services\Reportes\ServicioReportes;
+use App\Services\Reportes\ServicioTrimestresReporte;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -242,6 +242,7 @@ abstract class ControladorReporteAbstracto extends Controller
 
         $attempted = $this->filtersWereSubmitted($request, $showProcessSelect, $showDependencySelect);
         $filterError = null;
+        $pdfUnavailableReason = null;
         $report = null;
 
         if ($attempted) {
@@ -282,26 +283,32 @@ abstract class ControladorReporteAbstracto extends Controller
                     $selectedDependenciaId
                 );
 
+                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report);
+
                 if ($request->boolean('export_pdf')) {
-                    return $this->exportReport(
-                        $type,
-                        $definition['title'],
-                        $definition['description'],
-                        $report,
-                        $this->resolveSignature(
+                    if ($pdfUnavailableReason !== null) {
+                        $filterError = $pdfUnavailableReason;
+                    } else {
+                        return $this->exportReport(
                             $type,
-                            $selectedProcesoId,
-                            $selectedDependenciaId,
-                            $selectedProceso?->nombre,
-                            $selectedDependencia?->nombre
-                        ),
-                        $this->buildContextRows(
-                            $selectedQuarter,
-                            $selectedProceso?->nombre,
-                            $selectedDependencia?->nombre
-                        ),
-                        $this->sanitizeConclusion($request->query('generated_conclusion'))
-                    );
+                            $definition['title'],
+                            $definition['description'],
+                            $report,
+                            $this->resolveSignature(
+                                $type,
+                                $selectedProcesoId,
+                                $selectedDependenciaId,
+                                $selectedProceso?->nombre,
+                                $selectedDependencia?->nombre
+                            ),
+                            $this->buildContextRows(
+                                $selectedQuarter,
+                                $selectedProceso?->nombre,
+                                $selectedDependencia?->nombre
+                            ),
+                            $this->sanitizeConclusion($request->query('generated_conclusion'))
+                        );
+                    }
                 }
             }
         }
@@ -312,7 +319,7 @@ abstract class ControladorReporteAbstracto extends Controller
             : null;
         $pdfUrl = null;
 
-        if ($report && $routeName !== null) {
+        if ($report && $routeName !== null && $pdfUnavailableReason === null) {
             $pdfUrl = route($routeName, array_filter([
                 'trimestre' => $selectedQuarterNumber,
                 'id_proceso' => $selectedProcesoId,
@@ -327,6 +334,7 @@ abstract class ControladorReporteAbstracto extends Controller
             'filterError' => $filterError,
             'conclusionUrl' => $conclusionUrl,
             'pdfUrl' => $pdfUrl,
+            'pdfUnavailableReason' => $pdfUnavailableReason,
             'quarterYear' => $quarterYear,
             'quarters' => $quarters,
             'procesos' => $procesos,
@@ -361,8 +369,7 @@ abstract class ControladorReporteAbstracto extends Controller
         ?array $signature,
         array $contextRows,
         ?string $generatedConclusion = null
-    ): Response
-    {
+    ): Response {
         $html = view('reportes.exportar', [
             'chartImages' => $this->chartImageService->build($report),
             'contextRows' => $contextRows,
@@ -528,6 +535,25 @@ abstract class ControladorReporteAbstracto extends Controller
         return $parts !== []
             ? implode(' | ', $parts)
             : 'Selecciona un trimestre y genera el consolidado de satisfaccion.';
+    }
+
+    private function pdfUnavailableReason(string $type, array $report): ?string
+    {
+        if ($type === 'general') {
+            return null;
+        }
+
+        $surveyCount = (int) ($report['totals']['survey_count'] ?? 0);
+
+        if ($surveyCount > 0) {
+            return null;
+        }
+
+        return match ($type) {
+            'process' => 'No se puede descargar el PDF porque el proceso seleccionado no tiene respuestas en el periodo.',
+            'individual' => 'No se puede descargar el PDF porque la dependencia seleccionada no tiene respuestas en el periodo.',
+            default => null,
+        };
     }
 
     /**

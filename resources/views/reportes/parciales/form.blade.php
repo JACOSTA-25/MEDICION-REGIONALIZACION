@@ -123,6 +123,10 @@
                         <p class="ms-form-note ms-form-note-highlight">
                             Genera y confirma la conclusion para habilitar la descarga del PDF.
                         </p>
+                    @elseif (filled($pdfUnavailableReason ?? null))
+                        <p class="ms-form-note ms-form-note-highlight">
+                            {{ $pdfUnavailableReason }}
+                        </p>
                     @else
                         <p class="ms-form-note">
                             Clasificacion de satisfaccion: Mala (1-2), Intermedia (3) y Buena (4-5).

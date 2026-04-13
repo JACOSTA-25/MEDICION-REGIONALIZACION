@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\Panel\PanelController;
+use App\Http\Controllers\Encuesta\CodigoQrEncuestaController;
+use App\Http\Controllers\Encuesta\EncuestaController;
+use App\Http\Controllers\Estadisticas\DatosEstadisticasController;
+use App\Http\Controllers\Estadisticas\PaginaEstadisticasController;
 use App\Http\Controllers\Organizacion\DependenciaController;
 use App\Http\Controllers\Organizacion\ProcesoController;
 use App\Http\Controllers\Organizacion\ServicioController;
+use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Reportes\ReporteGeneralController;
 use App\Http\Controllers\Reportes\ReporteIndividualController;
 use App\Http\Controllers\Reportes\ReporteProcesoController;
-use App\Http\Controllers\Estadisticas\DatosEstadisticasController;
-use App\Http\Controllers\Estadisticas\PaginaEstadisticasController;
-use App\Http\Controllers\Encuesta\EncuestaController;
 use App\Http\Controllers\Usuarios\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,7 @@ Route::get('/encuesta/catalogos/servicios', [EncuestaController::class, 'servici
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PanelController::class, 'index'])->name('dashboard');
     Route::put('/dashboard/trimestres', [PanelController::class, 'updateQuarters'])->name('dashboard.quarters.update');
+    Route::get('/encuesta/qr', [CodigoQrEncuestaController::class, 'show'])->name('survey.qr');
 
     Route::prefix('reportes')->name('reports.')->group(function () {
         Route::get('general', [ReporteGeneralController::class, 'index'])
@@ -73,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::get('', [UsuarioController::class, 'index'])->name('index');
         Route::post('', [UsuarioController::class, 'store'])->name('store');
         Route::put('{user}', [UsuarioController::class, 'update'])->name('update');
+        Route::delete('{user}', [UsuarioController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('estructura-organizacional')

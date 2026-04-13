@@ -48,6 +48,13 @@
                 </li>
             @endif
 
+            <li>
+                <a href="{{ route('survey.qr') }}" class="{{ request()->routeIs('survey.qr') ? 'selected' : '' }}">
+                    <span class="icon"><img src="{{ asset('assets/icons/qr.svg') }}" alt="QR de encuesta"></span>
+                    <span>QR de encuesta</span>
+                </a>
+            </li>
+
             @if ($user->puedeAccederModuloUsuarios())
                 <li>
                     <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index') ? 'selected' : '' }}">

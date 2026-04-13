@@ -27,6 +27,16 @@ class PanelTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_authenticated_users_can_see_the_survey_qr_module_on_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('QR de encuesta');
+    }
+
     public function test_super_admin_can_update_reporting_quarters_from_dashboard(): void
     {
         CarbonImmutable::setTestNow('2026-03-14 09:00:00');
@@ -108,5 +118,18 @@ class PanelTest extends TestCase
         } finally {
             CarbonImmutable::setTestNow();
         }
+    }
+
+    public function test_admin_2_0_sees_general_and_process_reports_in_dashboard_navigation(): void
+    {
+        $admin20 = User::factory()->create(['rol' => User::ROLE_ADMIN_2_0]);
+
+        $response = $this->actingAs($admin20)
+            ->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Reporte general');
+        $response->assertSee('Reporte por proceso');
+        $response->assertDontSee('Reporte individual');
     }
 }

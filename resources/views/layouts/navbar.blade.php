@@ -29,6 +29,11 @@
                 {{ $user->rol }}
             </div>
 
+            <a href="{{ route('profile.edit') }}#cambiar-contrasena" class="item">
+                <img class="icon" src="{{ asset('assets/icons/password.svg') }}" alt="Cambiar contrasena">
+                Cambiar contrasena
+            </a>
+
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="submit">

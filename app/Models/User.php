@@ -178,7 +178,7 @@ class User extends Authenticatable
 
     public function puedeAccederReportesProceso(): bool
     {
-        return $this->isAdmin() || $this->isLiderProceso();
+        return $this->isAdmin() || $this->isAdmin20() || $this->isLiderProceso();
     }
 
     public function puedeAccederReportesIndividuales(): bool

@@ -5,38 +5,35 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __('Actualiza tu nombre visible y tu usuario.') }}
+            {{ __('Estos datos son informativos y son administrados por el Super Administrador.') }}
         </p>
     </header>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
-        @csrf
-        @method('patch')
-
+    <div class="mt-6 space-y-6">
         <div>
             <x-input-label for="nombre" :value="__('Nombre')" />
-            <x-text-input id="nombre" name="nombre" type="text" class="mt-1 block w-full" :value="old('nombre', $user->nombre)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('nombre')" />
+            <x-text-input
+                id="nombre"
+                type="text"
+                class="mt-1 block w-full bg-gray-100 text-gray-600"
+                :value="$user->nombre"
+                disabled
+            />
         </div>
 
         <div>
             <x-input-label for="username" :value="__('Usuario')" />
-            <x-text-input id="username" name="username" type="text" class="mt-1 block w-full" :value="old('username', $user->username)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('username')" />
+            <x-text-input
+                id="username"
+                type="text"
+                class="mt-1 block w-full bg-gray-100 text-gray-600"
+                :value="$user->username"
+                disabled
+            />
         </div>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Guardar') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Guardado.') }}</p>
-            @endif
-        </div>
-    </form>
+        <p class="text-sm text-gray-500">
+            Si necesitas actualizar esta informacion, solicita el ajuste al Super Administrador.
+        </p>
+    </div>
 </section>

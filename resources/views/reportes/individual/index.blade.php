@@ -19,6 +19,7 @@
         'conclusionUrl' => $conclusionUrl,
         'filterError' => $filterError,
         'pdfUrl' => $pdfUrl,
+        'pdfUnavailableReason' => $pdfUnavailableReason,
         'report' => $report,
     ])
 </x-app-layout>
