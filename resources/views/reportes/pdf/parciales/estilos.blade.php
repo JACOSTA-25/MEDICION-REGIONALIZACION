@@ -6,7 +6,6 @@
         --header-horizontal-shift: -6mm;
         --content-left: 64px;
         --content-right: 108px;
-        --content-narrow-right: 108px;
     }
 
     @page {
@@ -60,7 +59,6 @@
         color: #f3f4f6;
         font-family: Helvetica, Arial, sans-serif;
         font-size: 35px;
-        font-style: normal;
         font-weight: 700;
         letter-spacing: 0.5px;
         line-height: 1;
@@ -95,28 +93,12 @@
         position: relative;
         z-index: 2;
         margin-top: 4px;
-    }
-
-    .content-block {
-        margin-left: var(--content-left);
-        margin-right: var(--content-narrow-right);
-    }
-
-    .content-block-wide {
         margin-left: var(--content-left);
         margin-right: var(--content-right);
     }
 
-    .content-block-full {
-        margin-left: var(--content-left);
-        margin-right: var(--content-right);
-    }
-
-    h1,
     h2,
-    h3,
-    p,
-    ul {
+    p {
         margin: 0;
     }
 
@@ -136,13 +118,6 @@
         font-size: 12px;
         line-height: 1.5;
         text-align: justify;
-    }
-
-    .section-list {
-        margin: 6px 0 10px 18px;
-        padding: 0;
-        font-size: 12px;
-        line-height: 1.5;
     }
 
     .table-title {
@@ -182,8 +157,6 @@
     .compact-table th:last-child,
     .centered-table td:not(:first-child),
     .centered-table th:not(:first-child),
-    .summary-table td:last-child,
-    .summary-table th:last-child,
     .consolidated-table td,
     .consolidated-table th {
         text-align: center;
@@ -195,30 +168,10 @@
         margin-right: auto;
     }
 
-    .summary-table {
-        width: 66%;
-        margin: 24px auto 24px;
-    }
-
-    .summary-table td:first-child,
-    .summary-table th:first-child {
-        width: 42%;
-        text-align: left;
-    }
-
-    .summary-highlight {
-        font-weight: 700;
-        color: #0f172a;
-    }
-
     .chart-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
-    }
-
-    .chart-shell {
-        padding: 0;
     }
 
     .chart-image {
@@ -237,13 +190,6 @@
     .services-chart {
         width: 86%;
         margin: 18px auto 0;
-    }
-
-    .question-title {
-        margin: 0 0 8px;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
     }
 
     .question-result-table {
@@ -310,26 +256,12 @@
     }
 
     .question-inline-number {
-        color: #111827;
         font-weight: 700;
     }
 
     .question-chart-figure {
         width: 84%;
         margin: 0 auto;
-    }
-
-    .question-chart {
-        width: 76%;
-        margin: 12px auto 0;
-        position: relative;
-        left: 18px;
-    }
-
-    .question-chart .chart-image {
-        width: 94%;
-        margin-left: auto;
-        margin-right: auto;
     }
 
     .consolidated-table {
@@ -388,11 +320,6 @@
     .signature-scope {
         font-size: 12px;
         line-height: 1.5;
-    }
-
-    .services-page .content-block-wide {
-        margin-left: var(--content-left);
-        margin-right: var(--content-right);
     }
 
     .signature-name {
