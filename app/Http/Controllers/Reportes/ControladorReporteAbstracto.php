@@ -742,7 +742,7 @@ abstract class ControladorReporteAbstracto extends Controller
 
         return [
             'name' => (string) $leader->nombre,
-            'title' => 'Lider de la dependencia',
+            'title' => 'Lider de dependencia de',
             'scope' => mb_strtoupper($dependencyName, 'UTF-8'),
         ];
     }

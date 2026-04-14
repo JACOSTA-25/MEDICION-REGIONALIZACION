@@ -275,7 +275,7 @@ class ReportesEstadisticosTest extends TestCase
                 'reportType' => 'individual',
                 'signature' => [
                     'name' => $dependencyLeaderName,
-                    'title' => 'Lider de la dependencia',
+                    'title' => 'Lider de dependencia de',
                     'scope' => mb_strtoupper($dependencyName, 'UTF-8'),
                 ],
                 'title' => 'Reporte individual',
@@ -324,7 +324,7 @@ class ReportesEstadisticosTest extends TestCase
             $this->assertStringContainsString('Lider del proceso de', $processHtml);
             $this->assertStringContainsString(mb_strtoupper($processName, 'UTF-8'), $processHtml);
             $this->assertStringContainsString($dependencyLeaderName, $dependencyHtml);
-            $this->assertStringContainsString('Lider de la dependencia', $dependencyHtml);
+            $this->assertStringContainsString('Lider de dependencia de', $dependencyHtml);
             $this->assertStringContainsString(mb_strtoupper($dependencyName, 'UTF-8'), $dependencyHtml);
         } finally {
             CarbonImmutable::setTestNow();
