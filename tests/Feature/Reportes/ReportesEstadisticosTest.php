@@ -514,6 +514,7 @@ class ReportesEstadisticosTest extends TestCase
                 ->get(route('reports.general', [
                     'trimestre' => 1,
                     'export_pdf' => 1,
+                    'generated_conclusion' => 'Conclusion final validada para el reporte general.',
                 ]));
 
             $response->assertOk();
@@ -571,6 +572,7 @@ class ReportesEstadisticosTest extends TestCase
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'export_pdf' => 1,
+                    'generated_conclusion' => 'Conclusion final validada para el reporte por proceso.',
                 ]));
 
             $processResponse->assertOk();
@@ -586,6 +588,18 @@ class ReportesEstadisticosTest extends TestCase
 
         $this->actingAs($admin20)
             ->get(route('reports.process'))
+            ->assertOk();
+    }
+
+    public function test_process_leader_can_access_individual_reports_module(): void
+    {
+        $leaderProcess = User::factory()->create([
+            'rol' => User::ROLE_LIDER_PROCESO,
+            'id_proceso' => 10,
+        ]);
+
+        $this->actingAs($leaderProcess)
+            ->get(route('reports.individual'))
             ->assertOk();
     }
 
@@ -642,13 +656,260 @@ class ReportesEstadisticosTest extends TestCase
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$serviceA->id_servicio],
                     'export_pdf' => 1,
                 ]));
 
             $response->assertOk();
             $response->assertHeaderMissing('Content-Disposition');
-            $response->assertSee('No se puede descargar el PDF porque la dependencia seleccionada no tiene respuestas en el periodo.');
+            $response->assertSee('No se puede descargar el PDF porque los servicios seleccionados no tienen respuestas en el periodo.');
             $response->assertDontSee('Descargar PDF');
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_individual_report_filters_results_by_selected_services(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $secondaryService = Servicio::query()->create([
+                'id_dependencia' => $serviceA->id_dependencia,
+                'nombre' => 'Servicio complementario de prueba',
+                'activo' => true,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $secondaryService->id_servicio,
+                [5, 5, 5, 5, 5],
+                '2026-01-11 08:00:00'
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.individual', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$secondaryService->id_servicio],
+                ]));
+
+            $response->assertOk();
+            $response->assertSee('name="id_servicios[]"', false);
+            $response->assertSee('Servicio complementario de prueba');
+            $response->assertViewHas('selectedServiceIds', fn (array $serviceIds): bool => $serviceIds === [(int) $secondaryService->id_servicio]);
+            $response->assertViewHas('report', fn (array $report): bool => $report['totals']['survey_count'] === 1
+                && count($report['tables']['services']) === 1
+                && ($report['tables']['services'][0]['servicio'] ?? null) === 'Servicio complementario de prueba'
+                && ($report['tables']['scope_population']['rows'][0]['label'] ?? null) === 'Servicio complementario de prueba');
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_individual_report_services_endpoint_returns_services_for_selected_dependency(): void
+    {
+        [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+        $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+        $baseService = Servicio::query()->findOrFail($serviceA->id_servicio);
+
+        $extraService = Servicio::query()->create([
+            'id_dependencia' => $serviceA->id_dependencia,
+            'nombre' => 'Servicio JSON de prueba',
+            'activo' => true,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson(route('reports.individual.services', [
+                'id_dependencia' => $serviceA->id_dependencia,
+            ]));
+
+        $response->assertOk();
+        $response->assertJsonFragment([
+            'id' => $baseService->id_servicio,
+            'nombre' => $baseService->nombre,
+        ]);
+        $response->assertJsonFragment([
+            'id' => $extraService->id_servicio,
+            'nombre' => 'Servicio JSON de prueba',
+        ]);
+    }
+
+    public function test_individual_report_view_requires_confirmed_conclusion_even_without_observations(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.individual', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$serviceA->id_servicio],
+                ]));
+
+            $response->assertOk();
+            $response->assertSee('data-report-conclusion-shell', false);
+            $response->assertSee('data-report-pdf-button', false);
+            $response->assertSee('data-can-generate-conclusion="0"', false);
+            $response->assertSee('Genera y confirma la conclusion para habilitar la descarga del PDF.', false);
+            $response->assertSee(
+                'No se registraron observaciones recientes para este periodo. Redacta y confirma la conclusion manualmente para habilitar la descarga del PDF.',
+                false
+            );
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_individual_report_pdf_requires_confirmed_conclusion_before_downloading(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.individual', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$serviceA->id_servicio],
+                    'export_pdf' => 1,
+                ]));
+
+            $response->assertOk();
+            $response->assertHeaderMissing('Content-Disposition');
+            $response->assertSee('Debes generar o confirmar la conclusion antes de descargar el PDF.');
+            $response->assertSee('data-report-conclusion-shell', false);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_individual_report_pdf_can_be_downloaded_after_confirming_conclusion(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            User::factory()->create([
+                'nombre' => 'CARLOS PEREZ IGUARAN',
+                'rol' => User::ROLE_LIDER_DEPENDENCIA,
+                'id_proceso' => $serviceA->id_proceso,
+                'id_dependencia' => $serviceA->id_dependencia,
+            ]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.individual', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$serviceA->id_servicio],
+                    'export_pdf' => 1,
+                    'generated_conclusion' => 'Conclusion final validada para el reporte individual.',
+                ]));
+
+            $response->assertOk();
+            $response->assertHeader('Content-Type', 'application/pdf');
         } finally {
             CarbonImmutable::setTestNow();
         }

@@ -68,7 +68,11 @@
                                 <tr>
                                     <td class="ms-cell-name">{{ $service->nombre }}</td>
                                     <td>
-                                        {{ $service->estamentos->pluck('nombre')->sort()->join(', ') ?: 'Sin estamentos habilitados' }}
+                                        @if ($serviceEstamentosEnabled)
+                                            {{ $service->estamentos->pluck('nombre')->sort()->join(', ') ?: 'Sin estamentos habilitados' }}
+                                        @else
+                                            Configuracion no disponible en esta base de datos
+                                        @endif
                                     </td>
                                     <td>{{ $service->respuestas_totales }}</td>
                                     <td>{{ $service->activo ? 'Activo' : 'Inactivo' }}</td>
@@ -160,7 +164,9 @@
                     @csrf
                     <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
                     <input type="hidden" name="redirect_dependencia" value="{{ $selectedDependency->id_dependencia }}">
-                    <input type="hidden" name="sync_estamentos" value="1">
+                    @if ($serviceEstamentosEnabled)
+                        <input type="hidden" name="sync_estamentos" value="1">
+                    @endif
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div class="md:col-span-2">
@@ -208,31 +214,39 @@
                             <label for="create_service_active" class="text-sm font-semibold text-slate-700">Servicio activo</label>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <span class="block text-sm font-semibold text-slate-700">Estamentos autorizados</span>
-                            <p class="mt-1 text-sm text-slate-500">Por defecto un servicio nuevo queda habilitado para todos y aqui puedes ajustarlo.</p>
+                        @if ($serviceEstamentosEnabled)
+                            <div class="md:col-span-2">
+                                <span class="block text-sm font-semibold text-slate-700">Estamentos autorizados</span>
+                                <p class="mt-1 text-sm text-slate-500">Por defecto un servicio nuevo queda habilitado para todos y aqui puedes ajustarlo.</p>
 
-                            @php
-                                $createSelectedEstamentos = collect(old('id_estamentos', $allEstamentoIds))
-                                    ->map(fn ($id) => (int) $id)
-                                    ->all();
-                            @endphp
+                                @php
+                                    $createSelectedEstamentos = collect(old('id_estamentos', $allEstamentoIds))
+                                        ->map(fn ($id) => (int) $id)
+                                        ->all();
+                                @endphp
 
-                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                                @foreach ($estamentos as $estamento)
-                                    <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
-                                        <input
-                                            type="checkbox"
-                                            name="id_estamentos[]"
-                                            value="{{ $estamento->id_estamento }}"
-                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-700"
-                                            @checked(in_array((int) $estamento->id_estamento, $createSelectedEstamentos, true))
-                                        >
-                                        <span>{{ $estamento->nombre }}</span>
-                                    </label>
-                                @endforeach
+                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                    @foreach ($estamentos as $estamento)
+                                        <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                name="id_estamentos[]"
+                                                value="{{ $estamento->id_estamento }}"
+                                                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-700"
+                                                @checked(in_array((int) $estamento->id_estamento, $createSelectedEstamentos, true))
+                                            >
+                                            <span>{{ $estamento->nombre }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="md:col-span-2">
+                                <div class="ms-inline-alert ms-inline-alert-soft">
+                                    La configuracion de estamentos no esta disponible en esta base de datos. Ejecuta la migracion pendiente para habilitarla.
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="ms-form-actions">
@@ -249,9 +263,11 @@
                 $editServiceName = $isEditingService ? old('nombre', $service->nombre) : $service->nombre;
                 $editServiceDependency = $isEditingService ? old('id_dependencia', $service->id_dependencia) : $service->id_dependencia;
                 $editServiceActive = $isEditingService ? (bool) old('activo', $service->activo) : (bool) $service->activo;
-                $editServiceEstamentos = $isEditingService
-                    ? collect(old('id_estamentos', $service->estamentos->pluck('id_estamento')->all()))->map(fn ($id) => (int) $id)->all()
-                    : $service->estamentos->pluck('id_estamento')->map(fn ($id) => (int) $id)->all();
+                $editServiceEstamentos = $serviceEstamentosEnabled
+                    ? ($isEditingService
+                        ? collect(old('id_estamentos', $service->estamentos->pluck('id_estamento')->all()))->map(fn ($id) => (int) $id)->all()
+                        : $service->estamentos->pluck('id_estamento')->map(fn ($id) => (int) $id)->all())
+                    : [];
             @endphp
 
             <div
@@ -287,7 +303,9 @@
                         @method('PUT')
                         <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
                         <input type="hidden" name="redirect_dependencia" value="{{ $selectedDependency->id_dependencia }}">
-                        <input type="hidden" name="sync_estamentos" value="1">
+                        @if ($serviceEstamentosEnabled)
+                            <input type="hidden" name="sync_estamentos" value="1">
+                        @endif
 
                         <div class="grid gap-4 md:grid-cols-2">
                             <div class="md:col-span-2">
@@ -336,25 +354,33 @@
                                 <label for="edit_service_active_{{ $service->id_servicio }}" class="text-sm font-semibold text-slate-700">Servicio activo</label>
                             </div>
 
-                            <div class="md:col-span-2">
-                                <span class="block text-sm font-semibold text-slate-700">Estamentos autorizados</span>
-                                <p class="mt-1 text-sm text-slate-500">Selecciona los estamentos que pueden recibir este servicio.</p>
+                            @if ($serviceEstamentosEnabled)
+                                <div class="md:col-span-2">
+                                    <span class="block text-sm font-semibold text-slate-700">Estamentos autorizados</span>
+                                    <p class="mt-1 text-sm text-slate-500">Selecciona los estamentos que pueden recibir este servicio.</p>
 
-                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                                    @foreach ($estamentos as $estamento)
-                                        <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
-                                            <input
-                                                type="checkbox"
-                                                name="id_estamentos[]"
-                                                value="{{ $estamento->id_estamento }}"
-                                                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-700"
-                                                @checked(in_array((int) $estamento->id_estamento, $editServiceEstamentos, true))
-                                            >
-                                            <span>{{ $estamento->nombre }}</span>
-                                        </label>
-                                    @endforeach
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        @foreach ($estamentos as $estamento)
+                                            <label class="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+                                                <input
+                                                    type="checkbox"
+                                                    name="id_estamentos[]"
+                                                    value="{{ $estamento->id_estamento }}"
+                                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-700"
+                                                    @checked(in_array((int) $estamento->id_estamento, $editServiceEstamentos, true))
+                                                >
+                                                <span>{{ $estamento->nombre }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
+                            @else
+                                <div class="md:col-span-2">
+                                    <div class="ms-inline-alert ms-inline-alert-soft">
+                                        La configuracion de estamentos no esta disponible en esta base de datos. Ejecuta la migracion pendiente para habilitarla.
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="ms-form-actions">

@@ -183,6 +183,6 @@ class User extends Authenticatable
 
     public function puedeAccederReportesIndividuales(): bool
     {
-        return $this->isAdmin() || $this->isLiderDependencia();
+        return $this->isAdmin() || $this->isLiderProceso() || $this->isLiderDependencia();
     }
 }

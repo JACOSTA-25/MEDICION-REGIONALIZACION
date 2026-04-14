@@ -5,6 +5,7 @@ namespace App\Services\Reportes;
 use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\Respuesta;
+use App\Models\Servicio;
 use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -161,14 +162,21 @@ class ServicioReportes
      *     observations: array<int, string>
      * }
      */
-    public function generate(string $type, string $from, string $to, ?int $processId = null, ?int $dependencyId = null): array
+    public function generate(
+        string $type,
+        string $from,
+        string $to,
+        ?int $processId = null,
+        ?int $dependencyId = null,
+        array $serviceIds = []
+    ): array
     {
-        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId);
+        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds);
 
         $totalSurveys = (clone $baseQuery)->count('respuesta.id_respuesta');
         $totalAnswers = $totalSurveys * count(self::QUESTION_NUMBERS);
 
-        $scopePopulation = $this->getScopePopulationTable($type, $from, $to, $processId, $dependencyId);
+        $scopePopulation = $this->getScopePopulationTable($type, $from, $to, $processId, $dependencyId, $serviceIds);
         $populationByProgram = $this->getPopulationByProgram($baseQuery, $totalSurveys);
         $populationByEstamento = $this->getPopulationByEstamento($baseQuery, $totalSurveys);
         $servicesStats = $this->getServicesStats($baseQuery, $totalSurveys);
@@ -185,6 +193,11 @@ class ServicioReportes
             'type' => $type,
             'from' => $from,
             'to' => $to,
+            'filters' => [
+                'process_id' => $processId,
+                'dependency_id' => $dependencyId,
+                'service_ids' => array_values($serviceIds),
+            ],
             'totals' => [
                 'survey_count' => $totalSurveys,
                 'answer_count' => $totalAnswers,
@@ -521,9 +534,10 @@ class ServicioReportes
         string $from,
         string $to,
         ?int $processId,
-        ?int $dependencyId
+        ?int $dependencyId,
+        array $serviceIds = []
     ): array {
-        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId);
+        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds);
 
         $definition = match ($type) {
             'process' => [
@@ -537,16 +551,26 @@ class ServicioReportes
                     : collect(),
                 'fallback' => 'Dependencia sin catalogar',
             ],
-            'individual' => [
-                'field' => 'id_dependencia',
-                'header' => 'Total encuestados de la dependencia',
-                'items' => $dependencyId !== null
-                    ? Dependencia::query()
-                        ->where('id_dependencia', $dependencyId)
-                        ->get(['id_dependencia as id', 'nombre'])
-                    : collect(),
-                'fallback' => 'Dependencia sin catalogar',
-            ],
+            'individual' => $serviceIds !== []
+                ? [
+                    'field' => 'id_servicio',
+                    'header' => 'Total encuestados del servicio',
+                    'items' => Servicio::query()
+                        ->whereIn('id_servicio', $serviceIds)
+                        ->orderBy('nombre')
+                        ->get(['id_servicio as id', 'nombre']),
+                    'fallback' => 'Servicio sin catalogar',
+                ]
+                : [
+                    'field' => 'id_dependencia',
+                    'header' => 'Total encuestados de la dependencia',
+                    'items' => $dependencyId !== null
+                        ? Dependencia::query()
+                            ->where('id_dependencia', $dependencyId)
+                            ->get(['id_dependencia as id', 'nombre'])
+                        : collect(),
+                    'fallback' => 'Dependencia sin catalogar',
+                ],
             default => [
                 'field' => 'id_proceso',
                 'header' => 'Total encuestados del proceso',
@@ -684,13 +708,20 @@ class ServicioReportes
         ];
     }
 
-    private function filteredQuery(string $from, string $to, ?int $processId, ?int $dependencyId): Builder
+    private function filteredQuery(
+        string $from,
+        string $to,
+        ?int $processId,
+        ?int $dependencyId,
+        array $serviceIds = []
+    ): Builder
     {
         return Respuesta::query()
             ->whereDate('fecha_respuesta', '>=', $from)
             ->whereDate('fecha_respuesta', '<=', $to)
             ->when($processId !== null, fn (Builder $query) => $query->where('respuesta.id_proceso', $processId))
-            ->when($dependencyId !== null, fn (Builder $query) => $query->where('respuesta.id_dependencia', $dependencyId));
+            ->when($dependencyId !== null, fn (Builder $query) => $query->where('respuesta.id_dependencia', $dependencyId))
+            ->when($serviceIds !== [], fn (Builder $query) => $query->whereIn('respuesta.id_servicio', $serviceIds));
     }
 
     /**

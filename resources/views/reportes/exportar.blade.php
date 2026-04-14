@@ -42,6 +42,7 @@
             $periodLabel = null;
             $processName = null;
             $dependencyName = null;
+            $selectedServicesLabel = null;
 
             foreach (($contextRows ?? []) as $contextRow) {
                 if (($contextRow['label'] ?? '') === 'Trimestre') {
@@ -58,6 +59,10 @@
 
                 if (($contextRow['label'] ?? '') === 'Dependencia') {
                     $dependencyName = $contextRow['value'] ?? null;
+                }
+
+                if (($contextRow['label'] ?? '') === 'Servicios') {
+                    $selectedServicesLabel = $contextRow['value'] ?? null;
                 }
             }
 
@@ -93,12 +98,16 @@
             $scopeNameUpper = mb_strtoupper((string) $scopeName, 'UTF-8');
             $scopeSentence = match ($reportType) {
                 'process' => 'el proceso '.$scopeName,
-                'individual' => 'la dependencia '.$scopeName,
+                'individual' => filled($selectedServicesLabel)
+                    ? 'la dependencia '.$scopeName.' en los servicios seleccionados'
+                    : 'la dependencia '.$scopeName,
                 default => 'los procesos evaluados',
             };
             $scopeInstitutional = match ($reportType) {
                 'process' => 'del proceso '.$scopeName,
-                'individual' => 'de la dependencia '.$scopeName,
+                'individual' => filled($selectedServicesLabel)
+                    ? 'en los servicios seleccionados de la dependencia '.$scopeName
+                    : 'de la dependencia '.$scopeName,
                 default => 'de los procesos evaluados',
             };
             $scopeIndicatorTitle = match ($reportType) {

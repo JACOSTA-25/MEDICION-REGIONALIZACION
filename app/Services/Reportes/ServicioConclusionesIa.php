@@ -35,7 +35,8 @@ class ServicioConclusionesIa
      *      quarter?: string,
      *      period?: string,
      *      process?: string|null,
-     *      dependency?: string|null
+     *      dependency?: string|null,
+     *      services?: string|null
      * }  $context
      */
     public function generate(string $type, array $report, array $context = []): string
@@ -149,7 +150,8 @@ class ServicioConclusionesIa
      *      quarter?: string,
      *      period?: string,
      *      process?: string|null,
-     *      dependency?: string|null
+     *      dependency?: string|null,
+     *      services?: string|null
      * }  $context
      * @param  array{
      *     totals?: array{survey_count?: int},
@@ -186,6 +188,7 @@ class ServicioConclusionesIa
             filled($context['period'] ?? null) ? 'Periodo: '.$context['period'] : null,
             filled($context['process'] ?? null) ? 'Proceso: '.$context['process'] : null,
             filled($context['dependency'] ?? null) ? 'Dependencia: '.$context['dependency'] : null,
+            filled($context['services'] ?? null) ? 'Servicios seleccionados: '.$context['services'] : null,
             'Encuestas del periodo: '.(int) ($report['totals']['survey_count'] ?? 0),
             'Indicador global de satisfaccion: '.$this->formatPercentage($report['indicators']['global']['satisfaction_percentage'] ?? 0).'%',
             'Porcentaje de respuestas neutras: '.$this->formatPercentage($report['indicators']['global']['neutral_answer_percentage'] ?? 0).'%',

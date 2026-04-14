@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\ReportingQuarter;
+use App\Models\Servicio;
 use App\Models\User;
 use App\Services\Reportes\ServicioConclusionesIa;
 use App\Services\Reportes\ServicioImagenesGraficosPdf;
@@ -57,6 +58,7 @@ abstract class ControladorReporteAbstracto extends Controller
         $selectedTo = $selectedQuarter?->end_date?->toDateString() ?? '';
         $selectedProcesoId = $this->normalizeId($request->input('id_proceso'));
         $selectedDependenciaId = $this->normalizeId($request->input('id_dependencia'));
+        $requestedServiceIds = $this->normalizeIds($request->input('id_servicios'));
 
         $forcedProcesoId = match (true) {
             $showProcessSelect && $user?->isLiderProceso() && $user->id_proceso => (int) $user->id_proceso,
@@ -106,11 +108,19 @@ abstract class ControladorReporteAbstracto extends Controller
         $selectedDependencia = $showDependencySelect
             ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
             : null;
+        $servicios = $showDependencySelect
+            ? $this->servicesForDependencia($selectedDependenciaId)
+            : collect();
+        $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
+        $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
+        $selectedServiceNames = $this->selectedServiceNames($servicios, $selectedServiceIds);
 
         $validator = Validator::make($request->all(), [
             'trimestre' => ['required', 'integer', 'between:1,4'],
             'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
             'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
+            'id_servicios' => $showDependencySelect ? ['nullable', 'array'] : ['nullable'],
+            'id_servicios.*' => $showDependencySelect ? ['integer'] : ['nullable'],
         ]);
 
         $validator->after(function ($validator) use (
@@ -118,7 +128,11 @@ abstract class ControladorReporteAbstracto extends Controller
             $showProcessSelect,
             $showDependencySelect,
             $selectedProceso,
-            $selectedDependencia
+            $selectedDependencia,
+            $type,
+            $servicios,
+            $selectedServiceIds,
+            $invalidSelectedServiceIds
         ): void {
             if (! $selectedQuarter) {
                 $validator->errors()->add('trimestre', 'Selecciona un trimestre valido para generar el reporte.');
@@ -130,6 +144,14 @@ abstract class ControladorReporteAbstracto extends Controller
 
             if ($showDependencySelect && ! $selectedDependencia) {
                 $validator->errors()->add('id_dependencia', 'Selecciona una dependencia valida para generar el reporte.');
+            }
+
+            if ($showDependencySelect && $invalidSelectedServiceIds !== []) {
+                $validator->errors()->add('id_servicios', 'Selecciona servicios validos para generar el reporte.');
+            }
+
+            if ($this->requiresServiceSelection($type, $servicios) && $selectedServiceIds === []) {
+                $validator->errors()->add('id_servicios', 'Selecciona uno o varios servicios para generar el reporte individual.');
             }
         });
 
@@ -144,7 +166,8 @@ abstract class ControladorReporteAbstracto extends Controller
             $selectedFrom,
             $selectedTo,
             $selectedProcesoId,
-            $selectedDependenciaId
+            $selectedDependenciaId,
+            $selectedServiceIds
         );
 
         if (($report['observations'] ?? []) === []) {
@@ -159,6 +182,7 @@ abstract class ControladorReporteAbstracto extends Controller
                 'period' => $selectedQuarter?->periodLabel(),
                 'process' => $selectedProceso?->nombre,
                 'quarter' => $selectedQuarter?->label(),
+                'services' => $selectedServiceNames !== [] ? implode(', ', $selectedServiceNames) : null,
                 'title' => $definition['title'],
             ]);
         } catch (\RuntimeException $exception) {
@@ -190,6 +214,7 @@ abstract class ControladorReporteAbstracto extends Controller
         $selectedTo = $selectedQuarter?->end_date?->toDateString() ?? '';
         $selectedProcesoId = $this->normalizeId($request->query('id_proceso'));
         $selectedDependenciaId = $this->normalizeId($request->query('id_dependencia'));
+        $requestedServiceIds = $this->normalizeIds($request->query('id_servicios'));
 
         $forcedProcesoId = match (true) {
             $showProcessSelect && $user?->isLiderProceso() && $user->id_proceso => (int) $user->id_proceso,
@@ -239,17 +264,26 @@ abstract class ControladorReporteAbstracto extends Controller
         $selectedDependencia = $showDependencySelect
             ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
             : null;
+        $servicios = $showDependencySelect
+            ? $this->servicesForDependencia($selectedDependenciaId)
+            : collect();
+        $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
+        $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
+        $selectedServiceNames = $this->selectedServiceNames($servicios, $selectedServiceIds);
 
         $attempted = $this->filtersWereSubmitted($request, $showProcessSelect, $showDependencySelect);
         $filterError = null;
         $pdfUnavailableReason = null;
         $report = null;
+        $requiresConclusionConfirmation = false;
 
         if ($attempted) {
             $validator = Validator::make($request->query(), [
                 'trimestre' => ['required', 'integer', 'between:1,4'],
                 'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
                 'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
+                'id_servicios' => $showDependencySelect ? ['nullable', 'array'] : ['nullable'],
+                'id_servicios.*' => $showDependencySelect ? ['integer'] : ['nullable'],
             ]);
 
             $validator->after(function ($validator) use (
@@ -257,7 +291,11 @@ abstract class ControladorReporteAbstracto extends Controller
                 $showProcessSelect,
                 $showDependencySelect,
                 $selectedProceso,
-                $selectedDependencia
+                $selectedDependencia,
+                $type,
+                $servicios,
+                $selectedServiceIds,
+                $invalidSelectedServiceIds
             ): void {
                 if (! $selectedQuarter) {
                     $validator->errors()->add('trimestre', 'Selecciona un trimestre valido para generar el reporte.');
@@ -270,6 +308,14 @@ abstract class ControladorReporteAbstracto extends Controller
                 if ($showDependencySelect && ! $selectedDependencia) {
                     $validator->errors()->add('id_dependencia', 'Selecciona una dependencia valida para generar el reporte.');
                 }
+
+                if ($showDependencySelect && $invalidSelectedServiceIds !== []) {
+                    $validator->errors()->add('id_servicios', 'Selecciona servicios validos para generar el reporte.');
+                }
+
+                if ($this->requiresServiceSelection($type, $servicios) && $selectedServiceIds === []) {
+                    $validator->errors()->add('id_servicios', 'Selecciona uno o varios servicios para generar el reporte individual.');
+                }
             });
 
             if ($validator->fails()) {
@@ -280,14 +326,19 @@ abstract class ControladorReporteAbstracto extends Controller
                     $selectedFrom,
                     $selectedTo,
                     $selectedProcesoId,
-                    $selectedDependenciaId
+                    $selectedDependenciaId,
+                    $selectedServiceIds
                 );
 
-                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report);
+                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedServiceIds);
+                $requiresConclusionConfirmation = $this->requiresConclusionConfirmation($report);
+                $generatedConclusion = $this->sanitizeConclusion($request->query('generated_conclusion'));
 
                 if ($request->boolean('export_pdf')) {
                     if ($pdfUnavailableReason !== null) {
                         $filterError = $pdfUnavailableReason;
+                    } elseif ($requiresConclusionConfirmation && $generatedConclusion === null) {
+                        $filterError = 'Debes generar o confirmar la conclusion antes de descargar el PDF.';
                     } else {
                         return $this->exportReport(
                             $type,
@@ -304,9 +355,10 @@ abstract class ControladorReporteAbstracto extends Controller
                             $this->buildContextRows(
                                 $selectedQuarter,
                                 $selectedProceso?->nombre,
-                                $selectedDependencia?->nombre
+                                $selectedDependencia?->nombre,
+                                $selectedServiceNames
                             ),
-                            $this->sanitizeConclusion($request->query('generated_conclusion'))
+                            $generatedConclusion
                         );
                     }
                 }
@@ -324,6 +376,7 @@ abstract class ControladorReporteAbstracto extends Controller
                 'trimestre' => $selectedQuarterNumber,
                 'id_proceso' => $selectedProcesoId,
                 'id_dependencia' => $selectedDependenciaId,
+                'id_servicios' => $selectedServiceIds !== [] ? $selectedServiceIds : null,
                 'export_pdf' => 1,
             ], static fn ($value): bool => $value !== null && $value !== ''));
         }
@@ -339,17 +392,21 @@ abstract class ControladorReporteAbstracto extends Controller
             'quarters' => $quarters,
             'procesos' => $procesos,
             'report' => $report,
+            'requiresConclusionConfirmation' => $requiresConclusionConfirmation,
             'selectedDependenciaId' => $selectedDependenciaId,
             'selectedDependencyLocked' => $forcedDependenciaId !== null,
             'selectedProcessLocked' => $forcedProcesoId !== null,
             'selectedProcesoId' => $selectedProcesoId,
             'selectedQuarterNumber' => $selectedQuarterNumber,
             'selectedQuarterPeriod' => $selectedQuarter?->periodLabel() ?? '',
+            'selectedServiceIds' => $selectedServiceIds,
             'selectionSummary' => $this->selectionSummary(
                 $selectedQuarter,
                 $selectedProceso?->nombre,
-                $selectedDependencia?->nombre
+                $selectedDependencia?->nombre,
+                $selectedServiceNames
             ),
+            'servicios' => $servicios,
             'showDependencySelect' => $showDependencySelect,
             'showProcessSelect' => $showProcessSelect,
             'summary' => $definition['summary'],
@@ -458,7 +515,12 @@ abstract class ControladorReporteAbstracto extends Controller
     /**
      * @return array<int, array{label: string, value: string}>
      */
-    private function buildContextRows(?ReportingQuarter $quarter, ?string $processName, ?string $dependencyName): array
+    private function buildContextRows(
+        ?ReportingQuarter $quarter,
+        ?string $processName,
+        ?string $dependencyName,
+        array $serviceNames = []
+    ): array
     {
         return array_values(array_filter([
             $quarter ? [
@@ -476,6 +538,10 @@ abstract class ControladorReporteAbstracto extends Controller
             $dependencyName ? [
                 'label' => 'Dependencia',
                 'value' => $dependencyName,
+            ] : null,
+            $serviceNames !== [] ? [
+                'label' => 'Servicios',
+                'value' => implode(', ', $serviceNames),
             ] : null,
         ]));
     }
@@ -515,7 +581,27 @@ abstract class ControladorReporteAbstracto extends Controller
             ->get(['id_dependencia', 'nombre']);
     }
 
-    private function selectionSummary(?ReportingQuarter $quarter, ?string $processName, ?string $dependencyName): string
+    /**
+     * @return Collection<int, Servicio>
+     */
+    private function servicesForDependencia(?int $dependenciaId): Collection
+    {
+        if ($dependenciaId === null) {
+            return collect();
+        }
+
+        return Servicio::query()
+            ->where('id_dependencia', $dependenciaId)
+            ->orderBy('nombre')
+            ->get(['id_servicio', 'nombre', 'activo']);
+    }
+
+    private function selectionSummary(
+        ?ReportingQuarter $quarter,
+        ?string $processName,
+        ?string $dependencyName,
+        array $serviceNames = []
+    ): string
     {
         $parts = [];
 
@@ -532,12 +618,16 @@ abstract class ControladorReporteAbstracto extends Controller
             $parts[] = 'Dependencia: '.$dependencyName;
         }
 
+        if ($serviceNames !== []) {
+            $parts[] = 'Servicios: '.implode(', ', $serviceNames);
+        }
+
         return $parts !== []
             ? implode(' | ', $parts)
             : 'Selecciona un trimestre y genera el consolidado de satisfaccion.';
     }
 
-    private function pdfUnavailableReason(string $type, array $report): ?string
+    private function pdfUnavailableReason(string $type, array $report, array $selectedServiceIds = []): ?string
     {
         if ($type === 'general') {
             return null;
@@ -551,9 +641,20 @@ abstract class ControladorReporteAbstracto extends Controller
 
         return match ($type) {
             'process' => 'No se puede descargar el PDF porque el proceso seleccionado no tiene respuestas en el periodo.',
-            'individual' => 'No se puede descargar el PDF porque la dependencia seleccionada no tiene respuestas en el periodo.',
+            'individual' => $selectedServiceIds !== []
+                ? 'No se puede descargar el PDF porque los servicios seleccionados no tienen respuestas en el periodo.'
+                : 'No se puede descargar el PDF porque la dependencia seleccionada no tiene respuestas en el periodo.',
             default => null,
         };
+    }
+
+    private function requiresConclusionConfirmation(?array $report): bool
+    {
+        if ($report === null) {
+            return false;
+        }
+
+        return (int) ($report['totals']['survey_count'] ?? 0) > 0;
     }
 
     /**
@@ -638,6 +739,25 @@ abstract class ControladorReporteAbstracto extends Controller
         return $normalized > 0 ? $normalized : null;
     }
 
+    /**
+     * @return array<int, int>
+     */
+    private function normalizeIds(mixed $value): array
+    {
+        $values = is_array($value) ? $value : [$value];
+        $normalized = [];
+
+        foreach ($values as $item) {
+            $id = $this->normalizeId($item);
+
+            if ($id !== null) {
+                $normalized[] = $id;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
     private function normalizeQuarter(mixed $value): ?int
     {
         if (! is_numeric($value)) {
@@ -658,5 +778,73 @@ abstract class ControladorReporteAbstracto extends Controller
         $normalized = trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    /**
+     * @param  array<int, int>  $selectedServiceIds
+     * @return array<int, int>
+     */
+    private function invalidSelectedServiceIds(array $selectedServiceIds, Collection $services): array
+    {
+        if ($selectedServiceIds === [] || $services->isEmpty()) {
+            return [];
+        }
+
+        $validIds = $services
+            ->pluck('id_servicio')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        return array_values(array_diff($selectedServiceIds, $validIds));
+    }
+
+    /**
+     * @param  array<int, int>  $selectedServiceIds
+     * @return array<int, int>
+     */
+    private function resolveSelectedServiceIds(array $selectedServiceIds, Collection $services): array
+    {
+        if ($services->isEmpty()) {
+            return [];
+        }
+
+        $validIds = $services
+            ->pluck('id_servicio')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        $resolved = array_values(array_intersect($selectedServiceIds, $validIds));
+
+        if ($resolved === [] && count($validIds) === 1) {
+            return [(int) $validIds[0]];
+        }
+
+        return $resolved;
+    }
+
+    private function requiresServiceSelection(string $type, Collection $services): bool
+    {
+        return $type === 'individual' && $services->count() > 1;
+    }
+
+    /**
+     * @param  array<int, int>  $selectedServiceIds
+     * @return array<int, string>
+     */
+    private function selectedServiceNames(Collection $services, array $selectedServiceIds): array
+    {
+        if ($selectedServiceIds === []) {
+            return [];
+        }
+
+        $selectedLookup = array_flip($selectedServiceIds);
+
+        return $services
+            ->filter(static fn (Servicio $servicio): bool => isset($selectedLookup[(int) $servicio->id_servicio]))
+            ->pluck('nombre')
+            ->map(static fn (mixed $name): string => trim((string) $name))
+            ->filter(static fn (string $name): bool => $name !== '')
+            ->values()
+            ->all();
     }
 }

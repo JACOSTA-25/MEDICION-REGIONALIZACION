@@ -132,4 +132,19 @@ class PanelTest extends TestCase
         $response->assertSee('Reporte por proceso');
         $response->assertDontSee('Reporte individual');
     }
+
+    public function test_process_leader_sees_individual_report_in_dashboard_navigation(): void
+    {
+        $leaderProcess = User::factory()->create([
+            'rol' => User::ROLE_LIDER_PROCESO,
+            'id_proceso' => 10,
+        ]);
+
+        $response = $this->actingAs($leaderProcess)
+            ->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Reporte por proceso');
+        $response->assertSee('Reporte individual');
+    }
 }

@@ -12,6 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator as ValidationValidator;
@@ -30,14 +31,26 @@ class ServicioController extends Controller
             'proceso:id_proceso,nombre,activo',
         ]);
 
-        $services = Servicio::query()
+        $serviceEstamentosEnabled = $this->serviceEstamentosEnabled();
+
+        $servicesQuery = Servicio::query()
             ->where('id_dependencia', $dependencia->id_dependencia)
-            ->with('estamentos:id_estamento,nombre')
             ->withCount([
                 'respuestas as respuestas_totales',
             ])
-            ->orderBy('nombre')
-            ->get(['id_servicio', 'id_dependencia', 'nombre', 'activo']);
+            ->orderBy('nombre');
+
+        if ($serviceEstamentosEnabled) {
+            $servicesQuery->with('estamentos:id_estamento,nombre');
+        }
+
+        $services = $servicesQuery
+            ->get(['id_servicio', 'id_dependencia', 'nombre', 'activo'])
+            ->each(function (Servicio $service) use ($serviceEstamentosEnabled): void {
+                if (! $serviceEstamentosEnabled) {
+                    $service->setRelation('estamentos', collect());
+                }
+            });
 
         $dependencies = Dependencia::query()
             ->where('id_proceso', $dependencia->id_proceso)
@@ -48,6 +61,7 @@ class ServicioController extends Controller
             'activeDependencies' => $dependencies->where('activo', true)->values(),
             'dependencies' => $dependencies,
             'estamentos' => Estamento::query()->orderBy('nombre')->get(['id_estamento', 'nombre']),
+            'serviceEstamentosEnabled' => $serviceEstamentosEnabled,
             'selectedDependency' => $dependencia,
             'selectedProcess' => $dependencia->proceso,
             'services' => $services,
@@ -75,7 +89,7 @@ class ServicioController extends Controller
 
         DB::transaction(function () use ($request, $payload, $estamentoIds, &$createdServiceDependencyId): void {
             $service = Servicio::query()->create($payload);
-            $service->estamentos()->sync($estamentoIds);
+            $this->syncEstamentosIfAvailable($service, $estamentoIds);
             $createdServiceDependencyId = (int) $service->id_dependencia;
 
             $this->auditService->record(
@@ -111,7 +125,7 @@ class ServicioController extends Controller
 
             $servicio->fill($payload);
             $servicio->save();
-            $servicio->estamentos()->sync($estamentoIds);
+            $this->syncEstamentosIfAvailable($servicio, $estamentoIds);
 
             $this->auditService->record(
                 $request,
@@ -270,7 +284,11 @@ class ServicioController extends Controller
      */
     private function snapshot(Servicio $service): array
     {
-        $service->loadMissing('estamentos:id_estamento,nombre');
+        if ($this->serviceEstamentosEnabled()) {
+            $service->loadMissing('estamentos:id_estamento,nombre');
+        } else {
+            $service->setRelation('estamentos', collect());
+        }
 
         return [
             'id_servicio' => (int) $service->id_servicio,
@@ -293,6 +311,10 @@ class ServicioController extends Controller
      */
     private function resolveEstamentoIds(Request $request, ?Servicio $service = null): array
     {
+        if (! $this->serviceEstamentosEnabled()) {
+            return [];
+        }
+
         if ($request->boolean('sync_estamentos')) {
             return collect($request->input('id_estamentos', []))
                 ->filter(fn ($id): bool => is_numeric($id) && (int) $id > 0)
@@ -315,5 +337,24 @@ class ServicioController extends Controller
             ->pluck('id_estamento')
             ->map(fn ($id): int => (int) $id)
             ->all();
+    }
+
+    /**
+     * @param  list<int>  $estamentoIds
+     */
+    private function syncEstamentosIfAvailable(Servicio $service, array $estamentoIds): void
+    {
+        if (! $this->serviceEstamentosEnabled()) {
+            $service->setRelation('estamentos', collect());
+
+            return;
+        }
+
+        $service->estamentos()->sync($estamentoIds);
+    }
+
+    private function serviceEstamentosEnabled(): bool
+    {
+        return Schema::hasTable('servicio_estamento');
     }
 }

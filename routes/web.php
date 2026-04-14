@@ -47,6 +47,9 @@ Route::middleware('auth')->group(function () {
         Route::get('individual', [ReporteIndividualController::class, 'index'])
             ->middleware('module.access:individual_reports')
             ->name('individual');
+        Route::get('individual/servicios', [ReporteIndividualController::class, 'services'])
+            ->middleware('module.access:individual_reports')
+            ->name('individual.services');
         Route::post('individual/conclusion', [ReporteIndividualController::class, 'generateConclusion'])
             ->middleware('module.access:individual_reports')
             ->name('individual.conclusion');

@@ -1,6 +1,7 @@
 <div class="ms-content-shell">
     @php
-        $requiresAiConclusion = ! empty($report) && ($report['observations'] ?? []) !== [] && filled($pdfUrl ?? null);
+        $hasObservations = ! empty($report) && ($report['observations'] ?? []) !== [];
+        $showConclusionConfirmation = ($requiresConclusionConfirmation ?? false) && filled($pdfUrl ?? null);
     @endphp
 
     <x-generals.top-bar
@@ -23,6 +24,7 @@
                     data-report-filter-form
                     @if ($showDependencySelect)
                         data-dependencias-endpoint="{{ route('survey.catalogs.dependencias') }}"
+                        data-servicios-endpoint="{{ route('reports.individual.services') }}"
                     @endif
                 >
                     <div class="ms-report-fields">
@@ -87,6 +89,39 @@
                                     <input type="hidden" name="id_dependencia" value="{{ $selectedDependenciaId }}">
                                 @endif
                             </div>
+
+                            <div
+                                class="ms-field ms-field-services"
+                                data-services-shell
+                                data-selected-services='@json($selectedServiceIds ?? [])'
+                            >
+                                <div class="ms-field-heading">
+                                    <span class="block text-sm font-semibold text-slate-700">Servicios</span>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        Selecciona uno o varios servicios para construir el reporte individual de la dependencia.
+                                    </p>
+                                </div>
+
+                                <div class="mt-3 grid gap-3 sm:grid-cols-2" data-service-checkbox-list>
+                                    @if (blank($selectedDependenciaId))
+                                        <p class="col-span-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">Selecciona una dependencia para listar sus servicios.</p>
+                                    @elseif (collect($servicios ?? [])->isEmpty())
+                                        <p class="col-span-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">La dependencia seleccionada no tiene servicios configurados.</p>
+                                    @else
+                                        @foreach ($servicios as $servicio)
+                                            <label class="ms-service-choice">
+                                                <input
+                                                    type="checkbox"
+                                                    name="id_servicios[]"
+                                                    value="{{ $servicio->id_servicio }}"
+                                                    @checked(in_array((int) $servicio->id_servicio, $selectedServiceIds ?? [], true))
+                                                >
+                                                <span class="ms-service-choice-copy">{{ $servicio->nombre }}</span>
+                                            </label>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
                         @endif
                     </div>
 
@@ -96,7 +131,7 @@
                         </button>
 
                         @if ($pdfUrl)
-                            @if ($requiresAiConclusion)
+                            @if ($showConclusionConfirmation)
                                 <button
                                     type="button"
                                     class="ms-btn ms-btn-secondary"
@@ -119,7 +154,7 @@
                         <div class="ms-inline-alert">
                             {{ $filterError }}
                         </div>
-                    @elseif ($requiresAiConclusion)
+                    @elseif ($showConclusionConfirmation)
                         <p class="ms-form-note ms-form-note-highlight">
                             Genera y confirma la conclusion para habilitar la descarga del PDF.
                         </p>
@@ -358,53 +393,74 @@
                     </div>
                 </details>
 
-                @if ($report['observations'] !== [])
+                @if ($hasObservations || $showConclusionConfirmation)
                     <details class="ms-report-card ms-report-card-collapsible">
                         <summary class="ms-report-card-summary">
                             <span class="ms-report-card-summary-copy">
-                                <span class="ms-report-card-summary-title">Observaciones recientes</span>
-                                <span class="ms-report-card-summary-description">Se muestran hasta diez comentarios del periodo consultado.</span>
+                                <span class="ms-report-card-summary-title">
+                                    {{ $hasObservations ? 'Observaciones recientes' : 'Conclusion del reporte' }}
+                                </span>
+                                <span class="ms-report-card-summary-description">
+                                    {{ $hasObservations ? 'Se muestran hasta diez comentarios del periodo consultado.' : 'No hay observaciones recientes, pero puedes redactar y confirmar la conclusion manualmente.' }}
+                                </span>
                             </span>
                             <span class="ms-report-card-summary-indicator" aria-hidden="true"></span>
                         </summary>
 
                         <div class="ms-report-card-body">
-                            <div class="ms-observations-list">
-                                @foreach ($report['observations'] as $observation)
-                                    <p>{{ $observation }}</p>
-                                @endforeach
-                            </div>
+                            @if ($hasObservations)
+                                <div class="ms-observations-list">
+                                    @foreach ($report['observations'] as $observation)
+                                        <p>{{ $observation }}</p>
+                                    @endforeach
+                                </div>
+                            @elseif ($showConclusionConfirmation)
+                                <div class="ms-inline-alert ms-inline-alert-soft">
+                                    No se registraron observaciones recientes para este periodo. Redacta y confirma la conclusion manualmente para habilitar la descarga del PDF.
+                                </div>
+                            @endif
 
-                            <div
-                                class="ms-report-conclusion-shell"
-                                data-report-conclusion-shell
-                                data-conclusion-url="{{ $conclusionUrl }}"
-                            >
-                                <div class="ms-report-conclusion-head">
-                                    <div>
-                                        <h3>Conclusion editable para el PDF</h3>
-                                        <p>La IA analizara estas observaciones y podras editar el resultado antes de descargar el reporte.</p>
+                            @if ($showConclusionConfirmation)
+                                <div
+                                    class="ms-report-conclusion-shell"
+                                    data-report-conclusion-shell
+                                    data-conclusion-url="{{ $conclusionUrl }}"
+                                    data-can-generate-conclusion="{{ $hasObservations ? '1' : '0' }}"
+                                >
+                                    <div class="ms-report-conclusion-head">
+                                        <div>
+                                            <h3>Conclusion editable para el PDF</h3>
+                                            <p>
+                                                {{ $hasObservations
+                                                    ? 'La IA analizara estas observaciones y podras editar el resultado antes de descargar el reporte.'
+                                                    : 'Como no hay observaciones recientes, puedes escribir la conclusion manualmente y confirmarla para habilitar el PDF.' }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <textarea
+                                        class="ms-report-conclusion-textarea"
+                                        rows="6"
+                                        maxlength="1200"
+                                        placeholder="{{ $hasObservations
+                                            ? 'La conclusion generada por IA aparecera aqui. Si la editas, vuelve a oprimir Concluir para habilitar el PDF con la version final.'
+                                            : 'Escribe aqui la conclusion final. Cuando la tengas lista, oprime Concluir para habilitar el PDF.' }}"
+                                        data-report-conclusion-textarea
+                                    ></textarea>
+
+                                    <div class="ms-report-conclusion-actions">
+                                        <p class="ms-report-conclusion-status" data-report-conclusion-status>
+                                            {{ $hasObservations
+                                                ? 'Genera la conclusion y confirmala para habilitar el PDF.'
+                                                : 'Escribe y confirma la conclusion para habilitar el PDF.' }}
+                                        </p>
+
+                                        <button type="button" class="ms-btn ms-btn-primary" data-report-conclude-button>
+                                            Concluir
+                                        </button>
                                     </div>
                                 </div>
-
-                                <textarea
-                                    class="ms-report-conclusion-textarea"
-                                    rows="6"
-                                    maxlength="1200"
-                                    placeholder="La conclusion generada por IA aparecera aqui. Si la editas, vuelve a oprimir Concluir para habilitar el PDF con la version final."
-                                    data-report-conclusion-textarea
-                                ></textarea>
-
-                                <div class="ms-report-conclusion-actions">
-                                    <p class="ms-report-conclusion-status" data-report-conclusion-status>
-                                        Genera la conclusion y confirmala para habilitar el PDF.
-                                    </p>
-
-                                    <button type="button" class="ms-btn ms-btn-primary" data-report-conclude-button>
-                                        Concluir
-                                    </button>
-                                </div>
-                            </div>
+                            @endif
                         </div>
                     </details>
                 @endif

@@ -9,6 +9,7 @@ use App\Models\Servicio;
 use App\Models\User;
 use Database\Seeders\EstamentoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class GestionEstructuraOrganizacionalTest extends TestCase
@@ -383,5 +384,37 @@ class GestionEstructuraOrganizacionalTest extends TestCase
         $response->assertSee('Servicios de '.$selectedDependency->nombre);
         $response->assertSee('Servicio Visible');
         $response->assertDontSee('Servicio Oculto');
+    }
+
+    public function test_services_view_still_loads_when_servicio_estamento_table_is_missing(): void
+    {
+        $this->seed(EstamentoSeeder::class);
+
+        $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+        $process = Proceso::query()->create([
+            'nombre' => 'Proceso Beta Hosting',
+            'activo' => true,
+        ]);
+        $dependency = Dependencia::query()->create([
+            'id_proceso' => $process->id_proceso,
+            'nombre' => 'Dependencia Beta Hosting',
+            'activo' => true,
+        ]);
+
+        Servicio::query()->create([
+            'id_dependencia' => $dependency->id_dependencia,
+            'nombre' => 'Servicio Beta',
+            'activo' => true,
+        ]);
+
+        Schema::dropIfExists('servicio_estamento');
+
+        $response = $this->actingAs($admin)
+            ->get(route('process-dependency.dependencies.services', $dependency));
+
+        $response->assertOk();
+        $response->assertSee('Servicio Beta');
+        $response->assertSee('Configuracion no disponible en esta base de datos');
+        $response->assertSee('La configuracion de estamentos no esta disponible en esta base de datos. Ejecuta la migracion pendiente para habilitarla.');
     }
 }
