@@ -319,6 +319,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await loadServices();
             });
+
+            if (dependencySelect.value) {
+                loadServices().catch((error) => {
+                    console.error(error);
+                });
+            }
         }
 
         if (conclusionTextarea && concludeButton) {
