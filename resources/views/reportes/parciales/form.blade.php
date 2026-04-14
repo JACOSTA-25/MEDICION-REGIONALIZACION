@@ -25,6 +25,7 @@
                     @if ($showDependencySelect)
                         data-dependencias-endpoint="{{ route('survey.catalogs.dependencias') }}"
                         data-servicios-endpoint="{{ route('reports.individual.services') }}"
+                        data-service-filter-process-id="{{ $serviceFilterProcessId ?? '' }}"
                     @endif
                 >
                     <div class="ms-report-fields">
@@ -94,6 +95,9 @@
                                 class="ms-field ms-field-services"
                                 data-services-shell
                                 data-selected-services='@json($selectedServiceIds ?? [])'
+                                @if (! ($serviceSelectionEnabled ?? false))
+                                    hidden
+                                @endif
                             >
                                 <div class="ms-field-heading">
                                     <span class="block text-sm font-semibold text-slate-700">Servicios</span>

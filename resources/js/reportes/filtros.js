@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dependencySelect = shell.querySelector('[data-dependency-select]');
         const servicesShell = shell.querySelector('[data-services-shell]');
         const servicesList = servicesShell?.querySelector('[data-service-checkbox-list]');
+        const serviceFilterProcessId = form?.dataset.serviceFilterProcessId ?? '';
         const pdfButton = shell.querySelector('[data-report-pdf-button]');
         const conclusionShell = document.querySelector('[data-report-conclusion-shell]');
         const conclusionTextarea = conclusionShell?.querySelector('[data-report-conclusion-textarea]');
@@ -71,6 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const serviceSelectionEnabled = () => {
+            if (!servicesShell || serviceFilterProcessId === '') {
+                return false;
+            }
+
+            if (!processSelect) {
+                return true;
+            }
+
+            return String(processSelect.value) === serviceFilterProcessId;
+        };
+
         const resetServicesList = (message) => {
             if (!servicesList) {
                 return;
@@ -82,6 +95,21 @@ document.addEventListener('DOMContentLoaded', () => {
             emptyState.className = 'col-span-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500';
             emptyState.textContent = message;
             servicesList.append(emptyState);
+        };
+
+        const syncServicesVisibility = () => {
+            if (!servicesShell) {
+                return;
+            }
+
+            const enabled = serviceSelectionEnabled();
+            servicesShell.hidden = !enabled;
+            servicesShell.setAttribute('aria-hidden', enabled ? 'false' : 'true');
+
+            if (!enabled) {
+                servicesShell.dataset.selectedServices = '[]';
+                resetServicesList('Selecciona una dependencia para listar sus servicios.');
+            }
         };
 
         const renderServices = (services, selectedServiceIds = []) => {
@@ -132,6 +160,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (!serviceSelectionEnabled()) {
+                syncServicesVisibility();
+                return;
+            }
+
             if (!dependencySelect.value) {
                 resetServicesList('Selecciona una dependencia para listar sus servicios.');
                 return;
@@ -168,12 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadDependencies = async () => {
             if (!processSelect.value) {
                 resetDependencySelect();
-                resetServicesList('Selecciona una dependencia para listar sus servicios.');
+                syncServicesVisibility();
                 return;
             }
 
             resetDependencySelect();
-            resetServicesList('Selecciona una dependencia para listar sus servicios.');
+            syncServicesVisibility();
 
             try {
                 const endpoint = form.dataset.dependenciasEndpoint;
@@ -212,7 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error(error);
                 resetDependencySelect();
-                resetServicesList('No fue posible cargar los servicios de la dependencia.');
+                if (serviceSelectionEnabled()) {
+                    resetServicesList('No fue posible cargar los servicios de la dependencia.');
+                }
             }
         };
 
@@ -308,6 +343,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     servicesShell.dataset.selectedServices = '[]';
                 }
                 await loadDependencies();
+
+                if (serviceSelectionEnabled() && dependencySelect.value) {
+                    await loadServices();
+                }
             });
         }
 
@@ -320,7 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadServices();
             });
 
-            if (dependencySelect.value) {
+            syncServicesVisibility();
+
+            if (dependencySelect.value && serviceSelectionEnabled()) {
                 loadServices().catch((error) => {
                     console.error(error);
                 });

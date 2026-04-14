@@ -30,6 +30,7 @@ class ReporteIndividualController extends ControladorReporteAbstracto
         }
 
         $dependency = Dependencia::query()
+            ->with('proceso:id_proceso,nombre')
             ->findOrFail((int) $validator->validated()['id_dependencia']);
         $user = $request->user();
 
@@ -43,6 +44,10 @@ class ReporteIndividualController extends ControladorReporteAbstracto
             && (int) $user->id_proceso !== (int) $dependency->id_proceso
         ) {
             abort(Response::HTTP_FORBIDDEN);
+        }
+
+        if (! $this->isIndividualServiceFilterProcess($dependency->proceso?->nombre)) {
+            return response()->json([]);
         }
 
         $services = Servicio::query()

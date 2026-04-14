@@ -22,6 +22,8 @@ use Illuminate\Support\Str;
 
 abstract class ControladorReporteAbstracto extends Controller
 {
+    protected const INDIVIDUAL_SERVICE_FILTER_PROCESS = 'Gestion Bienestar Social Universitario';
+
     public function __construct(
         protected readonly ServicioReportes $reportService,
         protected readonly ServicioConclusionesIa $aiConclusionService,
@@ -108,7 +110,8 @@ abstract class ControladorReporteAbstracto extends Controller
         $selectedDependencia = $showDependencySelect
             ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
             : null;
-        $servicios = $showDependencySelect
+        $serviceSelectionEnabled = $this->serviceSelectionEnabled($type, $selectedProceso);
+        $servicios = $showDependencySelect && $serviceSelectionEnabled
             ? $this->servicesForDependencia($selectedDependenciaId)
             : collect();
         $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
@@ -119,8 +122,8 @@ abstract class ControladorReporteAbstracto extends Controller
             'trimestre' => ['required', 'integer', 'between:1,4'],
             'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
             'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
-            'id_servicios' => $showDependencySelect ? ['nullable', 'array'] : ['nullable'],
-            'id_servicios.*' => $showDependencySelect ? ['integer'] : ['nullable'],
+            'id_servicios' => $showDependencySelect && $serviceSelectionEnabled ? ['nullable', 'array'] : ['nullable'],
+            'id_servicios.*' => $showDependencySelect && $serviceSelectionEnabled ? ['integer'] : ['nullable'],
         ]);
 
         $validator->after(function ($validator) use (
@@ -264,12 +267,14 @@ abstract class ControladorReporteAbstracto extends Controller
         $selectedDependencia = $showDependencySelect
             ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
             : null;
-        $servicios = $showDependencySelect
+        $serviceSelectionEnabled = $this->serviceSelectionEnabled($type, $selectedProceso);
+        $servicios = $showDependencySelect && $serviceSelectionEnabled
             ? $this->servicesForDependencia($selectedDependenciaId)
             : collect();
         $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
         $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
         $selectedServiceNames = $this->selectedServiceNames($servicios, $selectedServiceIds);
+        $serviceFilterProcessId = $this->serviceFilterProcessId($procesos);
 
         $attempted = $this->filtersWereSubmitted($request, $showProcessSelect, $showDependencySelect);
         $filterError = null;
@@ -282,8 +287,8 @@ abstract class ControladorReporteAbstracto extends Controller
                 'trimestre' => ['required', 'integer', 'between:1,4'],
                 'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
                 'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
-                'id_servicios' => $showDependencySelect ? ['nullable', 'array'] : ['nullable'],
-                'id_servicios.*' => $showDependencySelect ? ['integer'] : ['nullable'],
+                'id_servicios' => $showDependencySelect && $serviceSelectionEnabled ? ['nullable', 'array'] : ['nullable'],
+                'id_servicios.*' => $showDependencySelect && $serviceSelectionEnabled ? ['integer'] : ['nullable'],
             ]);
 
             $validator->after(function ($validator) use (
@@ -376,7 +381,7 @@ abstract class ControladorReporteAbstracto extends Controller
                 'trimestre' => $selectedQuarterNumber,
                 'id_proceso' => $selectedProcesoId,
                 'id_dependencia' => $selectedDependenciaId,
-                'id_servicios' => $selectedServiceIds !== [] ? $selectedServiceIds : null,
+                'id_servicios' => $serviceSelectionEnabled && $selectedServiceIds !== [] ? $selectedServiceIds : null,
                 'export_pdf' => 1,
             ], static fn ($value): bool => $value !== null && $value !== ''));
         }
@@ -400,6 +405,8 @@ abstract class ControladorReporteAbstracto extends Controller
             'selectedQuarterNumber' => $selectedQuarterNumber,
             'selectedQuarterPeriod' => $selectedQuarter?->periodLabel() ?? '',
             'selectedServiceIds' => $selectedServiceIds,
+            'serviceFilterProcessId' => $serviceFilterProcessId,
+            'serviceSelectionEnabled' => $serviceSelectionEnabled,
             'selectionSummary' => $this->selectionSummary(
                 $selectedQuarter,
                 $selectedProceso?->nombre,
@@ -409,7 +416,7 @@ abstract class ControladorReporteAbstracto extends Controller
             'servicios' => $servicios,
             'showDependencySelect' => $showDependencySelect,
             'showProcessSelect' => $showProcessSelect,
-            'summary' => $definition['summary'],
+            'summary' => $this->summaryForView($definition, $serviceSelectionEnabled),
             'title' => $definition['title'],
         ]);
     }
@@ -625,6 +632,18 @@ abstract class ControladorReporteAbstracto extends Controller
         return $parts !== []
             ? implode(' | ', $parts)
             : 'Selecciona un trimestre y genera el consolidado de satisfaccion.';
+    }
+
+    /**
+     * @param  array{type: string, summary: string}  $definition
+     */
+    private function summaryForView(array $definition, bool $serviceSelectionEnabled): string
+    {
+        if ($definition['type'] !== 'individual' || $serviceSelectionEnabled) {
+            return $definition['summary'];
+        }
+
+        return 'Selecciona trimestre, proceso y dependencia para calcular el detalle individual.';
     }
 
     private function pdfUnavailableReason(string $type, array $report, array $selectedServiceIds = []): ?string
@@ -846,5 +865,30 @@ abstract class ControladorReporteAbstracto extends Controller
             ->filter(static fn (string $name): bool => $name !== '')
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  Collection<int, Proceso>  $procesos
+     */
+    protected function serviceFilterProcessId(Collection $procesos): ?int
+    {
+        $process = $procesos->first(
+            fn (Proceso $proceso): bool => $this->isIndividualServiceFilterProcess($proceso->nombre)
+        );
+
+        return $process instanceof Proceso ? (int) $process->id_proceso : null;
+    }
+
+    protected function serviceSelectionEnabled(string $type, ?Proceso $selectedProceso): bool
+    {
+        return $type === 'individual'
+            && $selectedProceso instanceof Proceso
+            && $this->isIndividualServiceFilterProcess($selectedProceso->nombre);
+    }
+
+    protected function isIndividualServiceFilterProcess(?string $processName): bool
+    {
+        return trim(mb_strtolower((string) $processName, 'UTF-8'))
+            === trim(mb_strtolower(self::INDIVIDUAL_SERVICE_FILTER_PROCESS, 'UTF-8'));
     }
 }

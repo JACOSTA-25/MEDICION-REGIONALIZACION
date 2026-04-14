@@ -4,6 +4,7 @@ namespace Tests\Feature\Reportes;
 
 use App\Models\Dependencia;
 use App\Models\Estamento;
+use App\Models\Proceso;
 use App\Models\Programa;
 use App\Models\ReportingQuarter;
 use App\Models\Respuesta;
@@ -735,6 +736,72 @@ class ReportesEstadisticosTest extends TestCase
         }
     }
 
+    public function test_individual_report_keeps_dependency_scope_for_processes_without_service_filter(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [, $serviceB] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $secondaryService = Servicio::query()->create([
+                'id_dependencia' => $serviceB->id_dependencia,
+                'nombre' => 'Servicio alterno proceso sin filtro',
+                'activo' => true,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceB->id_proceso,
+                $serviceB->id_dependencia,
+                $serviceB->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceB->id_proceso,
+                $serviceB->id_dependencia,
+                $secondaryService->id_servicio,
+                [5, 5, 5, 5, 5],
+                '2026-01-11 08:00:00'
+            );
+
+            $dependencyName = Dependencia::query()->findOrFail($serviceB->id_dependencia)->nombre;
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.individual', [
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceB->id_proceso,
+                    'id_dependencia' => $serviceB->id_dependencia,
+                ]));
+
+            $response->assertOk();
+            $response->assertDontSee('name="id_servicios[]"', false);
+            $response->assertViewHas('serviceSelectionEnabled', false);
+            $response->assertViewHas('selectedServiceIds', fn (array $serviceIds): bool => $serviceIds === []);
+            $response->assertViewHas('report', fn (array $report): bool => $report['totals']['survey_count'] === 2
+                && count($report['tables']['services']) === 2
+                && ($report['tables']['scope_population']['rows'][0]['label'] ?? null) === $dependencyName);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
     public function test_individual_report_services_endpoint_returns_services_for_selected_dependency(): void
     {
         [$serviceA] = $this->sampleServicesInDifferentProcesses();
@@ -762,6 +829,27 @@ class ReportesEstadisticosTest extends TestCase
             'id' => $extraService->id_servicio,
             'nombre' => 'Servicio JSON de prueba',
         ]);
+    }
+
+    public function test_individual_report_services_endpoint_returns_empty_for_other_processes(): void
+    {
+        [, $serviceB] = $this->sampleServicesInDifferentProcesses();
+
+        $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+        Servicio::query()->create([
+            'id_dependencia' => $serviceB->id_dependencia,
+            'nombre' => 'Servicio JSON no visible',
+            'activo' => true,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->getJson(route('reports.individual.services', [
+                'id_dependencia' => $serviceB->id_dependencia,
+            ]));
+
+        $response->assertOk();
+        $response->assertExactJson([]);
     }
 
     public function test_individual_report_view_requires_confirmed_conclusion_even_without_observations(): void
@@ -920,7 +1008,14 @@ class ReportesEstadisticosTest extends TestCase
      */
     private function sampleServicesInDifferentProcesses(): array
     {
-        $dependencyA = Dependencia::query()->orderBy('id_dependencia')->firstOrFail();
+        $targetProcessId = Proceso::query()
+            ->where('nombre', 'Gestion Bienestar Social Universitario')
+            ->value('id_proceso');
+
+        $dependencyA = Dependencia::query()
+            ->where('id_proceso', $targetProcessId)
+            ->orderBy('id_dependencia')
+            ->firstOrFail();
         $dependencyB = Dependencia::query()
             ->where('id_proceso', '!=', $dependencyA->id_proceso)
             ->orderBy('id_dependencia')
