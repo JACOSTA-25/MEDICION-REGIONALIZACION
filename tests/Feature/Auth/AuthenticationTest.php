@@ -34,12 +34,17 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $response = $this->from('/login')->post('/login', [
             'username' => $user->username,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('login');
+
+        $this->get('/login')
+            ->assertSee('Usuario o contrasena invalida.');
     }
 
     public function test_users_can_logout(): void

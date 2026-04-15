@@ -15,13 +15,13 @@
     </head>
     <body class="min-h-screen antialiased text-white">
         <div class="relative min-h-screen overflow-hidden flex items-center justify-center">
-            <div class="absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/fondo-uniguajira.jpeg') }}')"></div>
+            <div class="absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/fondo-uniguajira.png') }}')"></div>
 
             <div class="absolute -z-10 -top-24 -left-16 h-80 w-80 rounded-full bg-[#a3333d]/35 blur-3xl"></div>
             <div class="absolute -z-10 bottom-0 right-0 h-72 w-72 rounded-full bg-[#ad3728]/35 blur-3xl"></div>
             <div class="absolute -z-10 top-1/3 right-1/3 h-56 w-56 rounded-[35%_65%_55%_45%/45%_35%_65%_55%] bg-[#7f1f28]/40 blur-2xl"></div>
 
-            <main class="relative flex items-center justify-center p-6 sm:p-10">
+            <main class="relative flex items-center justify-center p-6 sm:p-10 lg:ml-auto lg:mr-[8vw] xl:mr-[10vw]">
                 <div class="absolute inset-0 -z-10 bg-black/35"></div>
 
                 <div class="w-full max-w-md rounded-xl border border-white/15 bg-black/65 p-6 shadow-2xl backdrop-blur-sm sm:p-8">

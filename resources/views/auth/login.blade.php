@@ -1,4 +1,21 @@
 <x-guest-layout>
+    @if ($errors->has('login'))
+        <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-6" x-cloak>
+            <div class="w-full max-w-sm rounded-2xl border border-white/15 bg-[#101010]/88 p-6 text-center shadow-2xl backdrop-blur-md">
+                <h2 class="text-xl font-semibold text-white">Acceso no valido</h2>
+                <p class="mt-3 text-sm leading-6 text-white/80">{{ $errors->first('login') }}</p>
+
+                <button
+                    type="button"
+                    class="mt-5 inline-flex items-center justify-center rounded-xl bg-[#00a9ad] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#008d90] focus:outline-none focus:ring-2 focus:ring-[#00a9ad] focus:ring-offset-2 focus:ring-offset-transparent"
+                    @click="open = false"
+                >
+                    Entendido
+                </button>
+            </div>
+        </div>
+    @endif
+
     <div class="flex flex-col gap-6">
         <div class="space-y-1 text-center">
             <h1 class="text-2xl font-semibold tracking-tight text-white">Iniciar sesion</h1>
@@ -21,7 +38,7 @@
                     required
                     autofocus
                     autocomplete="username"
-                    placeholder="Ej: JACOSTA"
+                    placeholder="Ej: admisionesmaicao"
                 />
                 <x-input-error :messages="$errors->get('username')" class="mt-2 text-red-300" />
             </div>
@@ -45,7 +62,7 @@
                 <span>{{ __('Recordarme') }}</span>
             </label>
 
-            <x-primary-button class="w-full justify-center !bg-[#ad3728] !text-white hover:!bg-[#8f291f] focus:!bg-[#8f291f] active:!bg-[#7d2119]">
+            <x-primary-button class="w-full justify-center !bg-[#00a9ad] !text-white hover:!bg-[#008d90] focus:!bg-[#008d90] active:!bg-[#00777a] focus:!ring-[#00a9ad]">
                 {{ __('Iniciar sesion') }}
             </x-primary-button>
         </form>
