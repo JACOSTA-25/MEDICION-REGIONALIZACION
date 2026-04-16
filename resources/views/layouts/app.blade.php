@@ -7,10 +7,17 @@
 
         <title>{{ config('app.name', 'Medicion de Servicios') }}</title>
 
+        @php
+            $navbarCssPath = public_path('assets/css/components/navbar.css');
+            $sidebarCssPath = public_path('assets/css/components/sidebar.css');
+            $navbarCssVersion = file_exists($navbarCssPath) ? filemtime($navbarCssPath) : time();
+            $sidebarCssVersion = file_exists($sidebarCssPath) ? filemtime($sidebarCssPath) : time();
+        @endphp
+
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;700&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="{{ asset('assets/css/components/navbar.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/components/sidebar.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/css/components/navbar.css').'?v='.$navbarCssVersion }}">
+        <link rel="stylesheet" href="{{ asset('assets/css/components/sidebar.css').'?v='.$sidebarCssVersion }}">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.js'])
