@@ -22,14 +22,14 @@
     <body class="min-h-screen bg-slate-950 text-slate-900">
         <div class="relative min-h-screen overflow-hidden">
             <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/fondo-uniguajira.jpeg') }}')"></div>
-            <div class="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/75 to-red-950/70"></div>
-            <div class="absolute -left-20 top-20 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl"></div>
-            <div class="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-red-500/20 blur-3xl"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/75 to-[#003c40]/72"></div>
+            <div class="absolute -left-20 top-20 h-72 w-72 rounded-full bg-[#7de7ea]/18 blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-[#00a9ad]/20 blur-3xl"></div>
 
             <main class="relative mx-auto flex min-h-screen max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
                 <div class="grid w-full gap-8 lg:grid-cols-[1.1fr_1.4fr]">
                     <section class="rounded-3xl border border-white/10 bg-white/10 p-8 text-white shadow-2xl backdrop-blur">
-                        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-amber-200">Universidad de La Guajira</p>
+                        <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[#c8f6f7]">Universidad de La Guajira</p>
                         <h1 class="mt-4 text-4xl font-black tracking-tight sm:text-5xl">Encuesta de satisfaccion del servicio</h1>
                         <p class="mt-4 text-base leading-7 text-slate-200">
                             Comparte tu experiencia con el servicio recibido. La informacion se registra de forma anonima
@@ -38,11 +38,11 @@
 
                         <div class="mt-8 grid gap-4 sm:grid-cols-2">
                             <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-200">Escala</p>
+                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-[#c8f6f7]">Escala</p>
                                 <p class="mt-2 text-sm text-slate-100">1=Deficiente | 2=Malo | 3=Regular | 4=Bueno | 5=Excelente</p>
                             </div>
                             <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-amber-200">Cobertura</p>
+                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-[#c8f6f7]">Cobertura</p>
                                 <p class="mt-2 text-sm text-slate-100">Selecciona el proceso, la dependencia y el servicio para calificar la atencion recibida.</p>
                             </div>
                         </div>
@@ -50,7 +50,7 @@
 
                     <section class="rounded-3xl border border-white/20 bg-white p-6 shadow-2xl sm:p-8 lg:p-10">
                         @if ($directAccessNotice)
-                            <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-900">
+                            <div class="mb-6 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-4 text-[#0b5d60]">
                                 <p class="text-sm font-semibold">Acceso por enlace unico</p>
                                 <p class="mt-1 text-sm">{{ $directAccessNotice }}</p>
                             </div>
@@ -64,7 +64,7 @@
                         @endif
 
                         @if ($errors->any())
-                            <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700">
+                            <div class="mb-6 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-4 text-[#0b5d60]">
                                 <p class="text-sm font-semibold">Revisa la informacion del formulario.</p>
                                 <ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
                                     @foreach ($errors->all() as $error)
@@ -83,7 +83,7 @@
                                     <select
                                         id="id_estamento"
                                         name="id_estamento"
-                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#00a9ad] focus:ring-2 focus:ring-[#9fecee]"
                                         required
                                     >
                                         <option value="">Seleccione un estamento</option>
@@ -98,7 +98,7 @@
                                         @endforeach
                                     </select>
                                     @error('id_estamento')
-                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                     @enderror
                                 </div>
 
@@ -107,7 +107,7 @@
                                     <select
                                         id="id_programa"
                                         name="id_programa"
-                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#00a9ad] focus:ring-2 focus:ring-[#9fecee]"
                                         {{ $showProgram ? '' : 'disabled' }}
                                         {{ $showProgram ? 'required' : '' }}
                                     >
@@ -119,7 +119,7 @@
                                         @endforeach
                                     </select>
                                     @error('id_programa')
-                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                     @enderror
                                 </div>
 
@@ -128,7 +128,7 @@
                                     <select
                                         id="id_proceso"
                                         name="id_proceso"
-                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#00a9ad] focus:ring-2 focus:ring-[#9fecee]"
                                         required
                                     >
                                         <option value="">Seleccione un proceso</option>
@@ -139,7 +139,7 @@
                                         @endforeach
                                     </select>
                                     @error('id_proceso')
-                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                     @enderror
                                 </div>
 
@@ -148,7 +148,7 @@
                                     <select
                                         id="id_dependencia"
                                         name="id_dependencia"
-                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#00a9ad] focus:ring-2 focus:ring-[#9fecee] disabled:cursor-not-allowed disabled:bg-slate-100"
                                         {{ $dependencias->isEmpty() ? 'disabled' : '' }}
                                         required
                                     >
@@ -160,7 +160,7 @@
                                         @endforeach
                                     </select>
                                     @error('id_dependencia')
-                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                     @enderror
                                 </div>
 
@@ -169,7 +169,7 @@
                                     <select
                                         id="id_servicio"
                                         name="id_servicio"
-                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#00a9ad] focus:ring-2 focus:ring-[#9fecee] disabled:cursor-not-allowed disabled:bg-slate-100"
                                         {{ $servicios->isEmpty() ? 'disabled' : '' }}
                                         required
                                     >
@@ -181,7 +181,7 @@
                                         @endforeach
                                     </select>
                                     @error('id_servicio')
-                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -200,12 +200,12 @@
 
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             @foreach (range(1, 5) as $valor)
-                                                <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-amber-500 hover:bg-amber-50">
+                                                <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#00a9ad] hover:bg-[#e6f8f8]">
                                                     <input
                                                         type="radio"
                                                         name="pregunta{{ $numero }}"
                                                         value="{{ $valor }}"
-                                                        class="h-4 w-4 border-slate-300 text-amber-600 focus:ring-amber-500"
+                                                        class="h-4 w-4 border-slate-300 text-[#00a9ad] focus:ring-[#00a9ad]"
                                                         @checked((string) old('pregunta'.$numero) === (string) $valor)
                                                         required
                                                     >
@@ -215,7 +215,7 @@
                                         </div>
 
                                         @error('pregunta'.$numero)
-                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                            <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                         @enderror
                                     </fieldset>
                                 @endforeach
@@ -227,11 +227,11 @@
                                         name="observaciones"
                                         rows="4"
                                         maxlength="1000"
-                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#00a9ad] focus:ring-2 focus:ring-[#9fecee]"
                                         placeholder="Escribe aqui cualquier comentario adicional sobre el servicio recibido."
                                     >{{ old('observaciones') }}</textarea>
                                     @error('observaciones')
-                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        <p class="mt-2 text-sm text-[#0b5d60]">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -240,7 +240,7 @@
                                 <p class="text-sm text-slate-500">Tu respuesta ayudara a mejorar la calidad del servicio.</p>
                                 <button
                                     type="submit"
-                                    class="inline-flex items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-950 transition hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2"
+                                    class="inline-flex items-center justify-center rounded-full bg-[#00a9ad] px-6 py-3 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#008d90] focus:outline-none focus:ring-2 focus:ring-[#8de4e6] focus:ring-offset-2"
                                 >
                                     Enviar respuesta
                                 </button>

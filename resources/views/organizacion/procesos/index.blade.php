@@ -58,7 +58,7 @@
                             @forelse ($processes as $process)
                                 <tr class="ms-process-row" data-href="{{ route('process-dependency.processes.dependencies', $process) }}">
                                     <td>
-                                        <a href="{{ route('process-dependency.processes.dependencies', $process) }}" class="font-semibold text-slate-700 hover:text-red-700">
+                                        <a href="{{ route('process-dependency.processes.dependencies', $process) }}" class="font-semibold text-slate-700 hover:text-[#00a9ad]">
                                             {{ $process->nombre }}
                                         </a>
                                     </td>
@@ -143,7 +143,7 @@
                 </div>
 
                 @if ($createProcessErrors->any())
-                    <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                         <ul class="list-disc space-y-1 pl-5">
                             @foreach ($createProcessErrors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -175,7 +175,7 @@
                                 name="activo"
                                 type="checkbox"
                                 value="1"
-                                class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                 @checked(old('activo', true))
                             >
                             <label for="create_process_active" class="text-sm font-semibold text-slate-700">Proceso activo</label>
@@ -216,7 +216,7 @@
                     </div>
 
                     @if ($isEditingProcess && $updateProcessErrors->any())
-                        <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                             <ul class="list-disc space-y-1 pl-5">
                                 @foreach ($updateProcessErrors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -249,7 +249,7 @@
                                     name="activo"
                                     type="checkbox"
                                     value="1"
-                                    class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                    class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                     @checked($editProcessActive)
                                 >
                                 <label for="edit_process_active_{{ $process->id_proceso }}" class="text-sm font-semibold text-slate-700">Proceso activo</label>

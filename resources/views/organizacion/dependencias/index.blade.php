@@ -64,7 +64,7 @@
                             @forelse ($dependencies as $dependency)
                                 <tr class="ms-process-row" data-href="{{ route('process-dependency.dependencies.services', $dependency) }}">
                                     <td>
-                                        <a href="{{ route('process-dependency.dependencies.services', $dependency) }}" class="font-semibold text-slate-700 hover:text-red-700">
+                                        <a href="{{ route('process-dependency.dependencies.services', $dependency) }}" class="font-semibold text-slate-700 hover:text-[#00a9ad]">
                                             {{ $dependency->nombre }}
                                         </a>
                                     </td>
@@ -145,7 +145,7 @@
                 </div>
 
                 @if ($createDependencyErrors->any())
-                    <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                         <ul class="list-disc space-y-1 pl-5">
                             @foreach ($createDependencyErrors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -198,7 +198,7 @@
                                 name="activo"
                                 type="checkbox"
                                 value="1"
-                                class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                 @checked(old('activo', true))
                             >
                             <label for="create_dependency_active" class="text-sm font-semibold text-slate-700">Dependencia activa</label>
@@ -240,7 +240,7 @@
                     </div>
 
                     @if ($isEditingDependency && $updateDependencyErrors->any())
-                        <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                             <ul class="list-disc space-y-1 pl-5">
                                 @foreach ($updateDependencyErrors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -295,7 +295,7 @@
                                     name="activo"
                                     type="checkbox"
                                     value="1"
-                                    class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                    class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                     @checked($editDependencyActive)
                                 >
                                 <label for="edit_dependency_active_{{ $dependency->id_dependencia }}" class="text-sm font-semibold text-slate-700">Dependencia activa</label>

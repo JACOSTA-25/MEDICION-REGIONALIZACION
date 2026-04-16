@@ -1,8 +1,8 @@
 :root {
-    --menu-color: #f8cccc;
+    --menu-color: #e7fcfc;
     --background-hover: #f7f9fa;
-    --navbar-border-color: #ad3728;
-    --navbar-background-color: #ce4634;
+    --navbar-border-color: #008d90;
+    --navbar-background-color: #00a9ad;
 }
 
 .ms-header {

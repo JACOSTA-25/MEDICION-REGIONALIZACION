@@ -151,7 +151,7 @@
                 </div>
 
                 @if ($createServiceErrors->any())
-                    <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                         <ul class="list-disc space-y-1 pl-5">
                             @foreach ($createServiceErrors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -208,7 +208,7 @@
                                 name="activo"
                                 type="checkbox"
                                 value="1"
-                                class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                 @checked(old('activo', true))
                             >
                             <label for="create_service_active" class="text-sm font-semibold text-slate-700">Servicio activo</label>
@@ -232,7 +232,7 @@
                                                 type="checkbox"
                                                 name="id_estamentos[]"
                                                 value="{{ $estamento->id_estamento }}"
-                                                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-700"
+                                                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                                 @checked(in_array((int) $estamento->id_estamento, $createSelectedEstamentos, true))
                                             >
                                             <span>{{ $estamento->nombre }}</span>
@@ -289,7 +289,7 @@
                     </div>
 
                     @if ($isEditingService && $updateServiceErrors->any())
-                        <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                             <ul class="list-disc space-y-1 pl-5">
                                 @foreach ($updateServiceErrors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -348,7 +348,7 @@
                                     name="activo"
                                     type="checkbox"
                                     value="1"
-                                    class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                    class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                     @checked($editServiceActive)
                                 >
                                 <label for="edit_service_active_{{ $service->id_servicio }}" class="text-sm font-semibold text-slate-700">Servicio activo</label>
@@ -366,7 +366,7 @@
                                                     type="checkbox"
                                                     name="id_estamentos[]"
                                                     value="{{ $estamento->id_estamento }}"
-                                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-700"
+                                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                                     @checked(in_array((int) $estamento->id_estamento, $editServiceEstamentos, true))
                                                 >
                                                 <span>{{ $estamento->nombre }}</span>

@@ -31,7 +31,7 @@
                 <x-input-label for="username" :value="__('Usuario')" class="text-white/90" />
                 <x-text-input
                     id="username"
-                    class="mt-1 block w-full border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-[#f16d58] focus:ring-[#f16d58]"
+                    class="mt-1 block w-full border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-[#00a9ad] focus:ring-[#00a9ad]"
                     type="text"
                     name="username"
                     :value="old('username')"
@@ -40,25 +40,25 @@
                     autocomplete="username"
                     placeholder="Ej: admisionesmaicao"
                 />
-                <x-input-error :messages="$errors->get('username')" class="mt-2 text-red-300" />
+                <x-input-error :messages="$errors->get('username')" class="mt-2 text-[#9fecee]" />
             </div>
 
             <div>
                 <x-input-label for="password" :value="__('Contrasena')" class="text-white/90" />
                 <x-text-input
                     id="password"
-                    class="mt-1 block w-full border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-[#f16d58] focus:ring-[#f16d58]"
+                    class="mt-1 block w-full border-white/20 bg-white/10 text-white placeholder:text-white/50 focus:border-[#00a9ad] focus:ring-[#00a9ad]"
                     type="password"
                     name="password"
                     required
                     autocomplete="current-password"
                     placeholder="Ingresa tu contrasena"
                 />
-                <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-300" />
+                <x-input-error :messages="$errors->get('password')" class="mt-2 text-[#9fecee]" />
             </div>
 
             <label for="remember_me" class="inline-flex items-center gap-2 text-sm text-white/80">
-                <input id="remember_me" type="checkbox" class="rounded border-white/30 bg-white/10 text-[#f16d58] focus:ring-[#f16d58]" name="remember">
+                <input id="remember_me" type="checkbox" class="rounded border-white/30 bg-white/10 text-[#00a9ad] focus:ring-[#00a9ad]" name="remember">
                 <span>{{ __('Recordarme') }}</span>
             </label>
 

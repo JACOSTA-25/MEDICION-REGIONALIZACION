@@ -136,7 +136,7 @@
                 </div>
 
                 @if ($createErrors->any())
-                    <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                         <ul class="list-disc space-y-1 pl-5">
                             @foreach ($createErrors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -250,7 +250,7 @@
                                 name="activo"
                                 type="checkbox"
                                 value="1"
-                                class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                 @checked(old('activo', true))
                             >
                             <label for="create_activo" class="text-sm font-semibold text-slate-700">Usuario activo</label>
@@ -295,7 +295,7 @@
                     </div>
 
                     @if ($isEditingUser && $updateErrors->any())
-                        <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <div class="mt-4 rounded-2xl border border-[#8ddcdf] bg-[#e6f8f8] px-4 py-3 text-sm text-[#0b5d60]">
                             <ul class="list-disc space-y-1 pl-5">
                                 @foreach ($updateErrors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -410,7 +410,7 @@
                                     name="activo"
                                     type="checkbox"
                                     value="1"
-                                    class="h-4 w-4 rounded border-slate-300 text-red-700"
+                                    class="h-4 w-4 rounded border-slate-300 text-[#00a9ad]"
                                     @checked($editActive)
                                 >
                                 <label for="edit_activo_{{ $managedUser->id }}" class="text-sm font-semibold text-slate-700">Usuario activo</label>
