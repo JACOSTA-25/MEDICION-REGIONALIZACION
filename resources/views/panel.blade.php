@@ -1,6 +1,15 @@
 @php
     $user = auth()->user();
-    $surveyLink = route('survey.create');
+    $sedeService = app(\App\Services\Sedes\ServicioSedes::class);
+    $selectedScopeSedeId = $sedeService->resolveForRequest($user, request());
+    $selectedScopeSede = $selectedScopeSedeId !== null
+        ? $sedeService->active()->firstWhere('id_sede', $selectedScopeSedeId)
+        : null;
+    $surveyLink = $selectedScopeSede?->slug
+        ? route('survey.create', ['sede' => $selectedScopeSede->slug])
+        : ($user?->id_sede && $user->sede?->slug
+            ? route('survey.create', ['sede' => $user->sede->slug])
+            : route('survey.create'));
     $quarterErrors = $errors->getBag('updateQuarters');
 
     $modules = [
@@ -33,6 +42,12 @@
             'title' => 'Gestion de usuarios',
             'description' => 'Modulo de administracion de usuarios.',
             'route' => route('users.index'),
+        ],
+        [
+            'visible' => $user->puedeAccederModuloProgramas(),
+            'title' => 'Gestion de programas',
+            'description' => 'Modulo para administrar los programas por sede.',
+            'route' => route('programs.index'),
         ],
         [
             'visible' => $user->puedeAccederModuloEstructuraOrganizacional(),
@@ -106,9 +121,9 @@
 
                 <section class="ms-report-card">
                     <div class="ms-report-card-header">
-                        <h2>Trimestres {{ $quarterYear }}</h2>
+                        <h2>Trimestres {{ $quarterYear }} - {{ $quarterScopeLabel }}</h2>
                         <p>
-                            El sistema genera los reportes usando el trimestre seleccionado. Aqui se definen las fechas que usara cada uno.
+                            El sistema genera los reportes usando el trimestre seleccionado para el alcance activo. Aqui se definen las fechas que usara cada uno.
                         </p>
                     </div>
 
@@ -193,7 +208,7 @@
                             </div>
 
                             <p class="ms-form-note">
-                                Solo el Super Administrador puede actualizar estos periodos. Cada trimestre debe mantenerse dentro de su rango natural: enero-marzo, abril-junio, julio-septiembre y octubre-diciembre.
+                                El Super Administrador puede actualizar el alcance global o la sede seleccionada. El Administrador de sede solo puede actualizar su propia sede. Cada trimestre debe mantenerse dentro de su rango natural: enero-marzo, abril-junio, julio-septiembre y octubre-diciembre.
                             </p>
                         </form>
                     @else
@@ -217,7 +232,7 @@
                         </div>
 
                         <p class="ms-form-note">
-                            Esta configuracion es administrada por el Super Administrador desde esta misma pantalla.
+                            Esta configuracion es administrada por el Super Administrador o por el Administrador de la sede correspondiente desde esta misma pantalla.
                         </p>
                     @endif
                 </section>

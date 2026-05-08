@@ -8,25 +8,30 @@ use App\Http\Controllers\Organizacion\DependenciaController;
 use App\Http\Controllers\Organizacion\ProcesoController;
 use App\Http\Controllers\Organizacion\ServicioController;
 use App\Http\Controllers\Panel\PanelController;
+use App\Http\Controllers\Programas\ProgramaController;
 use App\Http\Controllers\Reportes\ReporteGeneralController;
 use App\Http\Controllers\Reportes\ReporteIndividualController;
 use App\Http\Controllers\Reportes\ReporteProcesoController;
+use App\Http\Controllers\Sedes\ContextoSedeController;
 use App\Http\Controllers\Usuarios\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
-Route::get('/encuesta', [EncuestaController::class, 'create'])->name('survey.create');
+Route::get('/encuesta/catalogos/dependencias', [EncuestaController::class, 'dependencias'])->name('survey.catalogs.dependencias');
+Route::get('/encuesta/catalogos/servicios', [EncuestaController::class, 'servicios'])->name('survey.catalogs.servicios');
 Route::get('/encuesta/acceso', [EncuestaController::class, 'access'])
     ->middleware('signed')
     ->name('survey.access');
 Route::post('/encuesta', [EncuestaController::class, 'store'])->name('survey.store');
-Route::get('/encuesta/catalogos/dependencias', [EncuestaController::class, 'dependencias'])->name('survey.catalogs.dependencias');
-Route::get('/encuesta/catalogos/servicios', [EncuestaController::class, 'servicios'])->name('survey.catalogs.servicios');
+Route::get('/encuesta/{sede?}', [EncuestaController::class, 'create'])
+    ->where('sede', 'maicao|fonseca|villanueva|regionalizacion')
+    ->name('survey.create');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [PanelController::class, 'index'])->name('dashboard');
     Route::put('/dashboard/trimestres', [PanelController::class, 'updateQuarters'])->name('dashboard.quarters.update');
+    Route::post('/contexto/sede', [ContextoSedeController::class, 'update'])->name('sedes.scope.update');
     Route::get('/encuesta/qr', [CodigoQrEncuestaController::class, 'show'])->name('survey.qr');
 
     Route::prefix('reportes')->name('reports.')->group(function () {
@@ -79,6 +84,13 @@ Route::middleware('auth')->group(function () {
         Route::post('', [UsuarioController::class, 'store'])->name('store');
         Route::put('{user}', [UsuarioController::class, 'update'])->name('update');
         Route::delete('{user}', [UsuarioController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('programas')->name('programs.')->middleware('module.access:programs')->group(function () {
+        Route::get('', [ProgramaController::class, 'index'])->name('index');
+        Route::post('', [ProgramaController::class, 'store'])->name('store');
+        Route::put('{programa}', [ProgramaController::class, 'update'])->name('update');
+        Route::delete('{programa}', [ProgramaController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('estructura-organizacional')

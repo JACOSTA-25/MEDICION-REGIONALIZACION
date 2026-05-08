@@ -6,6 +6,7 @@ use App\Models\Dependencia;
 use App\Models\Estamento;
 use App\Models\Proceso;
 use App\Models\Programa;
+use App\Models\Sede;
 use App\Models\Servicio;
 use Database\Seeders\EstamentoSeeder;
 use Database\Seeders\EstructuraOrganizacionalSeeder;
@@ -31,11 +32,13 @@ class EnvioEncuestaTest extends TestCase
     public function test_guest_can_submit_a_valid_public_survey_response(): void
     {
         $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
 
         $response = $this->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $this->assertDatabaseHas('respuesta', [
+            'id_sede' => $payload['id_sede'],
             'id_estamento' => $payload['id_estamento'],
             'id_programa' => $payload['id_programa'],
             'id_proceso' => $payload['id_proceso'],
@@ -49,11 +52,12 @@ class EnvioEncuestaTest extends TestCase
     public function test_program_is_required_for_estamentos_that_need_it(): void
     {
         $payload = $this->validPayloadForEstamento('Docente');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
         $payload['id_programa'] = null;
 
-        $response = $this->from(route('survey.create'))->post(route('survey.store'), $payload);
+        $response = $this->from($surveyRoute)->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $response->assertSessionHasErrors('id_programa');
         $this->assertDatabaseCount('respuesta', 0);
     }
@@ -61,18 +65,23 @@ class EnvioEncuestaTest extends TestCase
     public function test_dependencia_must_belong_to_the_selected_process(): void
     {
         $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
 
-        $otroProceso = Proceso::query()->create(['nombre' => 'Proceso temporal de prueba']);
+        $otroProceso = Proceso::query()->create([
+            'id_sede' => $payload['id_sede'],
+            'nombre' => 'Proceso temporal de prueba',
+        ]);
         $dependenciaAjena = Dependencia::query()->create([
+            'id_sede' => $payload['id_sede'],
             'id_proceso' => $otroProceso->id_proceso,
             'nombre' => 'Archivo Central',
         ]);
 
         $payload['id_dependencia'] = $dependenciaAjena->id_dependencia;
 
-        $response = $this->from(route('survey.create'))->post(route('survey.store'), $payload);
+        $response = $this->from($surveyRoute)->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $response->assertSessionHasErrors('id_dependencia');
         $this->assertDatabaseCount('respuesta', 0);
     }
@@ -80,21 +89,24 @@ class EnvioEncuestaTest extends TestCase
     public function test_servicio_must_belong_to_the_selected_dependencia(): void
     {
         $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
 
         $otraDependencia = Dependencia::query()->create([
+            'id_sede' => $payload['id_sede'],
             'id_proceso' => $payload['id_proceso'],
             'nombre' => 'Bienestar Universitario',
         ]);
         $servicioAjeno = Servicio::query()->create([
+            'id_sede' => $payload['id_sede'],
             'id_dependencia' => $otraDependencia->id_dependencia,
             'nombre' => 'Atencion Psicosocial',
         ]);
 
         $payload['id_servicio'] = $servicioAjeno->id_servicio;
 
-        $response = $this->from(route('survey.create'))->post(route('survey.store'), $payload);
+        $response = $this->from($surveyRoute)->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $response->assertSessionHasErrors('id_servicio');
         $this->assertDatabaseCount('respuesta', 0);
     }
@@ -102,14 +114,15 @@ class EnvioEncuestaTest extends TestCase
     public function test_servicio_must_be_allowed_for_the_selected_estamento(): void
     {
         $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
         $servicio = Servicio::query()->findOrFail($payload['id_servicio']);
         $docente = Estamento::query()->where('nombre', 'Docente')->firstOrFail();
 
         $servicio->estamentos()->sync([$docente->id_estamento]);
 
-        $response = $this->from(route('survey.create'))->post(route('survey.store'), $payload);
+        $response = $this->from($surveyRoute)->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $response->assertSessionHasErrors('id_servicio');
         $this->assertDatabaseCount('respuesta', 0);
     }
@@ -117,11 +130,12 @@ class EnvioEncuestaTest extends TestCase
     public function test_questions_must_remain_within_the_defined_range(): void
     {
         $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
         $payload['pregunta4'] = 6;
 
-        $response = $this->from(route('survey.create'))->post(route('survey.store'), $payload);
+        $response = $this->from($surveyRoute)->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $response->assertSessionHasErrors('pregunta4');
         $this->assertDatabaseCount('respuesta', 0);
     }
@@ -129,12 +143,14 @@ class EnvioEncuestaTest extends TestCase
     public function test_program_is_forced_to_null_when_estamento_does_not_require_it(): void
     {
         $payload = $this->validPayloadForEstamento('Administrativo');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
         $payload['id_programa'] = Programa::query()->firstOrFail()->id_programa;
 
         $response = $this->post(route('survey.store'), $payload);
 
-        $response->assertRedirect(route('survey.create'));
+        $response->assertRedirect($surveyRoute);
         $this->assertDatabaseHas('respuesta', [
+            'id_sede' => $payload['id_sede'],
             'id_estamento' => $payload['id_estamento'],
             'id_programa' => null,
             'id_proceso' => $payload['id_proceso'],
@@ -150,6 +166,7 @@ class EnvioEncuestaTest extends TestCase
         $proceso = Proceso::query()->findOrFail($dependencia->id_proceso);
 
         return [
+            'id_sede' => $dependencia->id_sede,
             'id_dependencia' => $dependencia->id_dependencia,
             'id_estamento' => $estamento->id_estamento,
             'id_programa' => in_array($nombreEstamento, ['Docente', 'Egresado', 'Estudiante'], true)
@@ -164,5 +181,12 @@ class EnvioEncuestaTest extends TestCase
             'pregunta4' => 5,
             'pregunta5' => 4,
         ];
+    }
+
+    private function surveyRouteForPayload(array $payload): string
+    {
+        $sede = Sede::query()->findOrFail($payload['id_sede']);
+
+        return route('survey.create', ['sede' => $sede->slug]);
     }
 }

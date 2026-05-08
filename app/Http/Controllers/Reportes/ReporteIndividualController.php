@@ -34,6 +34,10 @@ class ReporteIndividualController extends ControladorReporteAbstracto
             ->findOrFail((int) $validator->validated()['id_dependencia']);
         $user = $request->user();
 
+        if ($user && ! $user->hasGlobalSedeAccess() && $user->id_sede && (int) $user->id_sede !== (int) $dependency->id_sede) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
         if ($user?->isLiderDependencia() && (int) $user->id_dependencia !== (int) $dependency->id_dependencia) {
             abort(Response::HTTP_FORBIDDEN);
         }

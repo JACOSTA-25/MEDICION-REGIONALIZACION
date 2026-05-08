@@ -168,15 +168,16 @@ class ServicioReportes
         string $to,
         ?int $processId = null,
         ?int $dependencyId = null,
-        array $serviceIds = []
+        array $serviceIds = [],
+        ?int $sedeId = null,
     ): array
     {
-        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds);
+        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds, $sedeId);
 
         $totalSurveys = (clone $baseQuery)->count('respuesta.id_respuesta');
         $totalAnswers = $totalSurveys * count(self::QUESTION_NUMBERS);
 
-        $scopePopulation = $this->getScopePopulationTable($type, $from, $to, $processId, $dependencyId, $serviceIds);
+        $scopePopulation = $this->getScopePopulationTable($type, $from, $to, $processId, $dependencyId, $serviceIds, $sedeId);
         $populationByProgram = $this->getPopulationByProgram($baseQuery, $totalSurveys);
         $populationByEstamento = $this->getPopulationByEstamento($baseQuery, $totalSurveys);
         $servicesStats = $this->getServicesStats($baseQuery, $totalSurveys);
@@ -194,6 +195,7 @@ class ServicioReportes
             'from' => $from,
             'to' => $to,
             'filters' => [
+                'sede_id' => $sedeId,
                 'process_id' => $processId,
                 'dependency_id' => $dependencyId,
                 'service_ids' => array_values($serviceIds),
@@ -535,9 +537,10 @@ class ServicioReportes
         string $to,
         ?int $processId,
         ?int $dependencyId,
-        array $serviceIds = []
+        array $serviceIds = [],
+        ?int $sedeId = null,
     ): array {
-        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds);
+        $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds, $sedeId);
 
         $definition = match ($type) {
             'process' => [
@@ -545,6 +548,7 @@ class ServicioReportes
                 'header' => 'Total encuestados del proceso',
                 'items' => $processId !== null
                     ? Dependencia::query()
+                        ->forSede($sedeId)
                         ->where('id_proceso', $processId)
                         ->orderBy('nombre')
                         ->get(['id_dependencia as id', 'nombre'])
@@ -556,6 +560,7 @@ class ServicioReportes
                     'field' => 'id_servicio',
                     'header' => 'Total encuestados del servicio',
                     'items' => Servicio::query()
+                        ->forSede($sedeId)
                         ->whereIn('id_servicio', $serviceIds)
                         ->orderBy('nombre')
                         ->get(['id_servicio as id', 'nombre']),
@@ -566,6 +571,7 @@ class ServicioReportes
                     'header' => 'Total encuestados de la dependencia',
                     'items' => $dependencyId !== null
                         ? Dependencia::query()
+                            ->forSede($sedeId)
                             ->where('id_dependencia', $dependencyId)
                             ->get(['id_dependencia as id', 'nombre'])
                         : collect(),
@@ -575,6 +581,7 @@ class ServicioReportes
                 'field' => 'id_proceso',
                 'header' => 'Total encuestados del proceso',
                 'items' => Proceso::query()
+                    ->forSede($sedeId)
                     ->orderBy('nombre')
                     ->get(['id_proceso as id', 'nombre']),
                 'fallback' => 'Proceso sin catalogar',
@@ -713,10 +720,12 @@ class ServicioReportes
         string $to,
         ?int $processId,
         ?int $dependencyId,
-        array $serviceIds = []
+        array $serviceIds = [],
+        ?int $sedeId = null,
     ): Builder
     {
         return Respuesta::query()
+            ->when($sedeId !== null, fn (Builder $query) => $query->where('respuesta.id_sede', $sedeId))
             ->whereDate('fecha_respuesta', '>=', $from)
             ->whereDate('fecha_respuesta', '<=', $to)
             ->when($processId !== null, fn (Builder $query) => $query->where('respuesta.id_proceso', $processId))

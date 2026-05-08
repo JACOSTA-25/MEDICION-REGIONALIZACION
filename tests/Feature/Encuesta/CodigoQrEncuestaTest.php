@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Encuesta;
 
+use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,12 +28,17 @@ class CodigoQrEncuestaTest extends TestCase
 
         foreach ($roles as $role) {
             $user = User::factory()->create(['rol' => $role]);
+            $expectedSede = in_array($role, [User::ROLE_ADMIN, User::ROLE_ADMIN_2_0], true)
+                ? Sede::query()->findOrFail(Sede::ID_MAICAO)
+                : Sede::query()->findOrFail($user->id_sede);
+            $expectedSurveyUrl = route('survey.create', ['sede' => $expectedSede->slug]);
 
             $this->actingAs($user)
                 ->get(route('survey.qr'))
                 ->assertOk()
                 ->assertSee('QR de encuesta')
-                ->assertSee('https://medicion.desarrollougmaicao.com/encuesta')
+                ->assertSee($expectedSede->nombre)
+                ->assertSee($expectedSurveyUrl)
                 ->assertSee('Descargar QR')
                 ->assertSee('Compartir por Correo')
                 ->assertSee('Compartir por WhatsApp');

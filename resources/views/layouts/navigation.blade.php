@@ -101,6 +101,12 @@
                 </x-responsive-nav-link>
             @endif
 
+            @if ($user->puedeAccederModuloProgramas())
+                <x-responsive-nav-link :href="route('programs.index')" :active="request()->routeIs('programs.*')">
+                    {{ __('Programas') }}
+                </x-responsive-nav-link>
+            @endif
+
             @if ($user->puedeAccederModuloEstructuraOrganizacional())
                 <x-responsive-nav-link :href="route('process-dependency.index')" :active="request()->routeIs('process-dependency.*')">
                     {{ __('Procesos y dependencias') }}

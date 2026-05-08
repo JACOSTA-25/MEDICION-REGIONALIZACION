@@ -27,6 +27,7 @@ class EnsureModuleAccess
             'general_reports' => $user->puedeAccederReportesGenerales(),
             'process_reports' => $user->puedeAccederReportesProceso(),
             'individual_reports' => $user->puedeAccederReportesIndividuales(),
+            'programs' => $user->puedeAccederModuloProgramas(),
             'users' => $user->puedeAccederModuloUsuarios(),
             'process_dependency' => $user->puedeAccederModuloEstructuraOrganizacional(),
             default => false,

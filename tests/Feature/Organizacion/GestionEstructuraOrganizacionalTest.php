@@ -5,6 +5,7 @@ namespace Tests\Feature\Organizacion;
 use App\Models\Dependencia;
 use App\Models\Estamento;
 use App\Models\Proceso;
+use App\Models\Sede;
 use App\Models\Servicio;
 use App\Models\User;
 use Database\Seeders\EstamentoSeeder;
@@ -23,10 +24,11 @@ class GestionEstructuraOrganizacionalTest extends TestCase
         config(['logging.default' => 'null']);
     }
 
-    public function test_only_admin_and_admin_2_0_can_access_the_module(): void
+    public function test_admin_admin_2_0_and_admin_sede_can_access_the_module(): void
     {
         $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
         $admin20 = User::factory()->create(['rol' => User::ROLE_ADMIN_2_0]);
+        $adminSede = User::factory()->create(['rol' => User::ROLE_ADMIN_SEDE, 'id_sede' => Sede::ID_MAICAO]);
         $leaderProcess = User::factory()->create(['rol' => User::ROLE_LIDER_PROCESO]);
         $leaderDependency = User::factory()->create(['rol' => User::ROLE_LIDER_DEPENDENCIA]);
 
@@ -35,6 +37,10 @@ class GestionEstructuraOrganizacionalTest extends TestCase
             ->assertOk();
 
         $this->actingAs($admin20)
+            ->get(route('process-dependency.index'))
+            ->assertOk();
+
+        $this->actingAs($adminSede)
             ->get(route('process-dependency.index'))
             ->assertOk();
 
@@ -72,6 +78,7 @@ class GestionEstructuraOrganizacionalTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('process-dependency.processes.store'), [
+                'id_sede' => Sede::ID_MAICAO,
                 'nombre' => 'Gestion de Archivo',
                 'activo' => '1',
             ])
@@ -81,6 +88,7 @@ class GestionEstructuraOrganizacionalTest extends TestCase
 
         $this->assertDatabaseHas('proceso', [
             'id_proceso' => $process->id_proceso,
+            'id_sede' => Sede::ID_MAICAO,
             'nombre' => 'Gestion de Archivo',
             'activo' => true,
         ]);
@@ -165,7 +173,7 @@ class GestionEstructuraOrganizacionalTest extends TestCase
 
     public function test_dependency_activation_is_blocked_when_parent_process_is_inactive(): void
     {
-        $admin = User::factory()->create(['rol' => User::ROLE_ADMIN_2_0]);
+        $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
         $process = Proceso::query()->create([
             'nombre' => 'Gestion Academica',
             'activo' => false,

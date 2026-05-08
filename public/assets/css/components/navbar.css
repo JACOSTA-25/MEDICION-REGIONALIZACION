@@ -83,6 +83,42 @@
     position: relative;
 }
 
+.ms-sede-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #fff;
+}
+
+.ms-sede-switcher label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgb(231 252 252 / 92%);
+}
+
+.ms-sede-switcher select {
+    min-width: 13rem;
+    border: 1px solid rgb(255 255 255 / 28%);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 14%);
+    color: #fff;
+    padding: 0.55rem 2.5rem 0.55rem 0.95rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    outline: none;
+}
+
+.ms-sede-switcher select option {
+    color: #0f172a;
+}
+
+.ms-sede-switcher select:focus {
+    border-color: rgb(255 255 255 / 50%);
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 16%);
+}
+
 .ms-user-btn {
     border: 0;
     background: transparent;
@@ -144,6 +180,25 @@
 }
 
 @media (max-width: 640px) {
+    .ms-header {
+        padding-right: 1rem;
+    }
+
+    .ms-sede-switcher {
+        max-width: 11.5rem;
+    }
+
+    .ms-sede-switcher label {
+        display: none;
+    }
+
+    .ms-sede-switcher select {
+        min-width: 0;
+        width: 100%;
+        font-size: 0.82rem;
+        padding-right: 2rem;
+    }
+
     .ms-user-name {
         display: none;
     }

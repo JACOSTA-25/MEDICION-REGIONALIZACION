@@ -254,6 +254,12 @@ export default function AppEstadisticas({ endpoint, level }) {
                 [field]: value === '' ? '' : value,
             };
 
+            if (field === 'id_sede') {
+                next.id_proceso = '';
+                next.id_dependencia = '';
+                next.id_servicio = '';
+            }
+
             if (field === 'id_proceso') {
                 next.id_dependencia = '';
                 next.id_servicio = '';

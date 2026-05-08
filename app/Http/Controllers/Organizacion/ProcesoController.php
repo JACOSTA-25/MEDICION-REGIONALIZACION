@@ -8,6 +8,7 @@ use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\Servicio;
 use App\Services\Organizacion\ServicioAuditoriaCatalogo;
+use App\Services\Sedes\ServicioSedes;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,26 +23,35 @@ class ProcesoController extends Controller
 
     public function __construct(
         private readonly ServicioAuditoriaCatalogo $auditService,
+        private readonly ServicioSedes $sedeService,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $selectedSedeId = $this->selectedSedeId($request);
         $processes = Proceso::query()
+            ->forSede($selectedSedeId)
             ->withCount([
                 'dependencias as dependencias_totales',
                 'respuestas as respuestas_totales',
                 'users as usuarios_totales',
             ])
+            ->with('sede:id_sede,nombre')
             ->orderBy('nombre')
-            ->get(['id_proceso', 'nombre', 'activo']);
+            ->get(['id_proceso', 'id_sede', 'nombre', 'activo']);
 
         return view('organizacion.procesos.index', [
+            'canManageCatalogs' => $request->user()?->puedeModificarModuloEstructuraOrganizacional() ?? false,
             'processes' => $processes,
+            'selectedSedeId' => $selectedSedeId,
+            'sedes' => $this->sedeService->visibleTo($request->user()),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+
         $validator = $this->validator($request);
 
         if ($validator->fails()) {
@@ -75,6 +85,9 @@ class ProcesoController extends Controller
 
     public function update(Request $request, Proceso $proceso): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $proceso->id_sede), 403);
+
         $validator = $this->validator($request, $proceso);
 
         if ($validator->fails()) {
@@ -114,6 +127,9 @@ class ProcesoController extends Controller
 
     public function deactivate(Request $request, Proceso $proceso): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $proceso->id_sede), 403);
+
         if (! $proceso->activo) {
             return redirect()
                 ->route('process-dependency.index')
@@ -152,6 +168,9 @@ class ProcesoController extends Controller
 
     public function activate(Request $request, Proceso $proceso): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $proceso->id_sede), 403);
+
         if ($proceso->activo) {
             return redirect()
                 ->route('process-dependency.index')
@@ -159,6 +178,7 @@ class ProcesoController extends Controller
         }
 
         $activeNameConflict = Proceso::query()
+            ->where('id_sede', $proceso->id_sede)
             ->where('activo', true)
             ->where('nombre', $proceso->nombre)
             ->where('id_proceso', '!=', $proceso->id_proceso)
@@ -195,27 +215,45 @@ class ProcesoController extends Controller
     private function validator(Request $request, ?Proceso $process = null): ValidationValidator
     {
         $targetActive = $this->targetActiveValue($request, $process?->activo ?? true);
+        $targetSedeId = $this->resolvedSedeId($request, $process);
         $payload = ['nombre' => trim((string) $request->input('nombre'))] + $request->all();
 
-        return Validator::make($payload, [
+        $validator = Validator::make($payload, [
+            'id_sede' => ['nullable', 'integer', Rule::exists('sede', 'id_sede')->where(fn ($query) => $query->where('activo', true))],
             'nombre' => [
                 'required',
                 'string',
                 'max:150',
                 Rule::unique('proceso', 'nombre')
-                    ->where(fn ($query) => $query->where('activo', $targetActive))
+                    ->where(fn ($query) => $query
+                        ->where('id_sede', $targetSedeId)
+                        ->where('activo', $targetActive))
                     ->ignore($process?->id_proceso, 'id_proceso'),
             ],
             'activo' => ['nullable', 'boolean'],
         ]);
+
+        $validator->after(function (ValidationValidator $validator) use ($request, $targetSedeId): void {
+            if ($targetSedeId === null) {
+                $validator->errors()->add('id_sede', 'Debes seleccionar una sede valida para el proceso.');
+                return;
+            }
+
+            if (! $this->sedeService->canAccess($request->user(), $targetSedeId)) {
+                $validator->errors()->add('id_sede', 'No puedes administrar procesos fuera de tu alcance.');
+            }
+        });
+
+        return $validator;
     }
 
     /**
-     * @return array{nombre: string, activo: bool}
+     * @return array{id_sede: int, nombre: string, activo: bool}
      */
     private function payload(Request $request, ?Proceso $process = null): array
     {
         return [
+            'id_sede' => $this->resolvedSedeId($request, $process),
             'nombre' => trim((string) $request->input('nombre')),
             'activo' => $this->targetActiveValue($request, $process?->activo ?? true),
         ];
@@ -228,6 +266,7 @@ class ProcesoController extends Controller
     {
         return [
             'id_proceso' => (int) $process->id_proceso,
+            'id_sede' => (int) $process->id_sede,
             'nombre' => (string) $process->nombre,
             'activo' => (bool) $process->activo,
         ];
@@ -257,5 +296,31 @@ class ProcesoController extends Controller
                 'activo' => false,
                 'updated_at' => now(),
             ]);
+    }
+
+    private function resolvedSedeId(Request $request, ?Proceso $process = null): ?int
+    {
+        if ($request->user()?->isAdminSede()) {
+            return $request->user()?->id_sede ? (int) $request->user()->id_sede : null;
+        }
+
+        $input = $request->input('id_sede');
+
+        if ($input !== null) {
+            return $this->sedeService->normalizeId($input);
+        }
+
+        return $process?->id_sede ? (int) $process->id_sede : null;
+    }
+
+    private function selectedSedeId(Request $request): ?int
+    {
+        return $this->sedeService->resolveForRequest(
+            $request->user(),
+            $request,
+            'id_sede',
+            true,
+            true
+        );
     }
 }

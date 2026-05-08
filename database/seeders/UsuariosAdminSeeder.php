@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Dependencia;
 use App\Models\Proceso;
+use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +21,7 @@ class UsuariosAdminSeeder extends Seeder
 
         $users = [
             [
-                'username' => env('SEED_ADMIN_USERNAME', 'JACOSTA'),
+                'username' => env('SEED_ADMIN_USERNAME', 'jacosta'),
                 'nombre' => env('SEED_ADMIN_NOMBRE', 'Ing. Javier Acosta Alfaro'),
                 'password' => env('SEED_ADMIN_PASSWORD', 'ingjavier'),
                 'rol' => User::ROLE_ADMIN,
@@ -40,6 +41,7 @@ class UsuariosAdminSeeder extends Seeder
                 'nombre' => env('SEED_LP_NOMBRE', 'Lider de Proceso Demo'),
                 'password' => env('SEED_LP_PASSWORD', 'liderproceso'),
                 'rol' => User::ROLE_LIDER_PROCESO,
+                'id_sede' => Sede::ID_MAICAO,
                 'id_proceso' => $proceso?->id_proceso,
                 'id_dependencia' => null,
             ],
@@ -48,6 +50,7 @@ class UsuariosAdminSeeder extends Seeder
                 'nombre' => env('SEED_LD_NOMBRE', 'Lider de Dependencia Demo'),
                 'password' => env('SEED_LD_PASSWORD', 'liderdependencia'),
                 'rol' => User::ROLE_LIDER_DEPENDENCIA,
+                'id_sede' => Sede::ID_MAICAO,
                 'id_proceso' => $dependencia?->id_proceso,
                 'id_dependencia' => $dependencia?->id_dependencia,
             ],
@@ -60,6 +63,7 @@ class UsuariosAdminSeeder extends Seeder
                     'nombre' => $userData['nombre'],
                     'password_hash' => Hash::make($userData['password']),
                     'rol' => $userData['rol'],
+                    'id_sede' => $userData['id_sede'] ?? null,
                     'id_proceso' => $userData['id_proceso'],
                     'id_dependencia' => $userData['id_dependencia'],
                     'activo' => true,

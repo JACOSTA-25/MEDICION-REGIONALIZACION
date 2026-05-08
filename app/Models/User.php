@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToSede;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use BelongsToSede, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     public const ROLE_ADMIN = 'ADMIN';
 
@@ -22,6 +23,8 @@ class User extends Authenticatable
     public const ROLE_LIDER_DEPENDENCIA = 'LIDER_DEPENDENCIA';
 
     public const ROLE_ADMIN_2_0 = 'ADMIN_2_0';
+
+    public const ROLE_ADMIN_SEDE = 'ADMIN_SEDE';
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +36,7 @@ class User extends Authenticatable
         'nombre',
         'password_hash',
         'rol',
+        'id_sede',
         'id_proceso',
         'id_dependencia',
         'activo',
@@ -59,6 +63,7 @@ class User extends Authenticatable
     {
         return [
             'password_hash' => 'hashed',
+            'id_sede' => 'integer',
             'activo' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
@@ -102,9 +107,19 @@ class User extends Authenticatable
         return $this->belongsTo(Dependencia::class, 'id_dependencia', 'id_dependencia');
     }
 
+    public function sede(): BelongsTo
+    {
+        return $this->belongsTo(Sede::class, 'id_sede', 'id_sede');
+    }
+
     public function isAdmin(): bool
     {
         return $this->rol === self::ROLE_ADMIN;
+    }
+
+    public function isAdminSede(): bool
+    {
+        return $this->rol === self::ROLE_ADMIN_SEDE;
     }
 
     public function isLiderProceso(): bool
@@ -127,25 +142,51 @@ class User extends Authenticatable
         ], true);
     }
 
+    public function hasGlobalSedeAccess(): bool
+    {
+        return $this->isAdmin() || $this->isAdmin20();
+    }
+
     public function puedeAccederModuloUsuarios(): bool
     {
-        return $this->isAdmin();
+        return $this->isAdmin() || $this->isAdminSede();
+    }
+
+    public function puedeAccederModuloProgramas(): bool
+    {
+        return $this->isAdmin() || $this->isAdmin20() || $this->isAdminSede();
+    }
+
+    public function puedeGestionarProgramas(): bool
+    {
+        return $this->isAdmin() || $this->isAdminSede();
+    }
+
+    public function puedeGestionarUsuarios(): bool
+    {
+        return $this->isAdmin() || $this->isAdminSede();
     }
 
     public function puedeGestionarTrimestresReporte(): bool
     {
-        return $this->isAdmin();
+        return $this->isAdmin() || $this->isAdminSede();
     }
 
     public function puedeAccederModuloEstructuraOrganizacional(): bool
     {
-        return $this->isAdmin() || $this->isAdmin20();
+        return $this->isAdmin() || $this->isAdmin20() || $this->isAdminSede();
+    }
+
+    public function puedeModificarModuloEstructuraOrganizacional(): bool
+    {
+        return $this->isAdmin() || $this->isAdminSede();
     }
 
     public function puedeAccederModuloEstadisticas(): bool
     {
         return $this->isAdmin()
             || $this->isAdmin20()
+            || $this->isAdminSede()
             || $this->isLiderProceso()
             || $this->isLiderDependencia();
     }
@@ -154,6 +195,7 @@ class User extends Authenticatable
     {
         return $this->isAdmin()
             || $this->isAdmin20()
+            || $this->isAdminSede()
             || $this->isLiderProceso();
     }
 
@@ -161,6 +203,7 @@ class User extends Authenticatable
     {
         return $this->isAdmin()
             || $this->isAdmin20()
+            || $this->isAdminSede()
             || $this->isLiderProceso();
     }
 
@@ -168,21 +211,36 @@ class User extends Authenticatable
     {
         return $this->isAdmin()
             || $this->isAdmin20()
+            || $this->isAdminSede()
             || $this->isLiderDependencia();
     }
 
     public function puedeAccederReportesGenerales(): bool
     {
-        return $this->isAdmin() || $this->isAdmin20();
+        return $this->isAdmin() || $this->isAdmin20() || $this->isAdminSede();
+    }
+
+    public function puedeAccederConsolidadoUniversitario(): bool
+    {
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || ($this->isAdminSede() && (int) $this->id_sede === Sede::ID_REGIONALIZACION);
     }
 
     public function puedeAccederReportesProceso(): bool
     {
-        return $this->isAdmin() || $this->isAdmin20() || $this->isLiderProceso();
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || $this->isAdminSede()
+            || $this->isLiderProceso();
     }
 
     public function puedeAccederReportesIndividuales(): bool
     {
-        return $this->isAdmin() || $this->isLiderProceso() || $this->isLiderDependencia();
+        return $this->isAdmin()
+            || $this->isAdmin20()
+            || $this->isAdminSede()
+            || $this->isLiderProceso()
+            || $this->isLiderDependencia();
     }
 }

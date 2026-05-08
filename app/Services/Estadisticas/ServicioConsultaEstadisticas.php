@@ -9,6 +9,7 @@ use App\Models\Proceso;
 use App\Models\Servicio;
 use App\Models\User;
 use App\Services\Reportes\ServicioTrimestresReporte;
+use App\Services\Sedes\ServicioSedes;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
@@ -29,19 +30,24 @@ class ServicioConsultaEstadisticas
     public function __construct(
         private readonly ServicioTrimestresReporte $reportingQuarterService,
         private readonly ServicioAlcanceEstadisticas $scopeService,
+        private readonly ServicioSedes $sedeService,
     ) {}
 
     /**
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
-    public function buildPayload(User $user, string $level, array $input): array
+    public function buildPayload(User $user, string $level, array $input, ?int $defaultSedeId = null): array
     {
-        $years = $this->availableYears();
+        $selectedSedeId = array_key_exists('id_sede', $input)
+            ? $this->sedeService->resolveForUser($user, $input['id_sede'] ?? null)
+            : $defaultSedeId;
+        $years = $this->availableYears($selectedSedeId);
         $selectedYear = $this->resolveYear($input['year'] ?? null, $years);
-        $quarterOptions = $this->reportingQuarterService->forYear($selectedYear);
+        $quarterOptions = $this->reportingQuarterService->forYear($selectedYear, $selectedSedeId);
         $selectedQuarter = $this->resolveQuarter($selectedYear, $input['quarter'] ?? null, $quarterOptions);
         $selectedFilters = [
+            'id_sede' => $selectedSedeId,
             'year' => $selectedYear,
             'quarter' => $selectedQuarter,
             'id_estamento' => $this->normalizeId($input['id_estamento'] ?? null),
@@ -54,16 +60,20 @@ class ServicioConsultaEstadisticas
 
         $selectedFilters = $this->applyRoleScope($user, $level, $selectedFilters);
 
-        $processes = $this->processOptions($user);
+        $sedes = $this->sedeOptions($user);
+        $selectedFilters['id_sede'] = $this->sanitizeSelection($selectedFilters['id_sede'], $sedes);
+        $selectedFilters['id_sede'] ??= $defaultSedeId ?? $this->sedeService->resolveForUser($user, null);
+
+        $processes = $this->processOptions($user, $selectedFilters['id_sede']);
         $selectedFilters['id_proceso'] = $this->sanitizeSelection($selectedFilters['id_proceso'], $processes);
 
-        $dependencies = $this->dependencyOptions($user, $selectedFilters['id_proceso']);
+        $dependencies = $this->dependencyOptions($user, $selectedFilters['id_sede'], $selectedFilters['id_proceso']);
         $selectedFilters['id_dependencia'] = $this->sanitizeSelection($selectedFilters['id_dependencia'], $dependencies);
 
-        $services = $this->serviceOptions($user, $selectedFilters['id_proceso'], $selectedFilters['id_dependencia']);
+        $services = $this->serviceOptions($user, $selectedFilters['id_sede'], $selectedFilters['id_proceso'], $selectedFilters['id_dependencia']);
         $selectedFilters['id_servicio'] = $this->sanitizeSelection($selectedFilters['id_servicio'], $services);
 
-        $quarter = $this->reportingQuarterService->findForYear($selectedYear, $selectedQuarter);
+        $quarter = $this->reportingQuarterService->findForYear($selectedYear, $selectedQuarter, $selectedFilters['id_sede']);
         $baseQuery = $this->baseQuery($quarter->start_date, $quarter->end_date, $selectedFilters);
         $entityRows = $this->entityRows(clone $baseQuery, $level);
         $qualifiedRows = $entityRows->filter(
@@ -74,10 +84,12 @@ class ServicioConsultaEstadisticas
             'filters' => [
                 'selected' => $selectedFilters,
                 'locks' => [
+                    'sede' => ! $user->hasGlobalSedeAccess(),
                     'process' => $this->isProcessLocked($user),
                     'dependency' => $this->isDependencyLocked($user),
                 ],
                 'visibility' => [
+                    'sede' => $user->hasGlobalSedeAccess(),
                     'process' => true,
                     'dependency' => in_array($level, ['dependencies', 'services'], true),
                     'service' => $level === 'services',
@@ -92,8 +104,9 @@ class ServicioConsultaEstadisticas
                         'label' => $quarterOption->label(),
                         'period' => $quarterOption->periodLabel(),
                     ])->values()->all(),
+                    'sedes' => $sedes,
                     'estamentos' => $this->estamentoOptions(),
-                    'programas' => $this->programaOptions(),
+                    'programas' => $this->programaOptions($selectedFilters['id_sede']),
                     'procesos' => $processes,
                     'dependencias' => $dependencies,
                     'servicios' => $services,
@@ -116,7 +129,7 @@ class ServicioConsultaEstadisticas
     /**
      * @return Collection<int, int>
      */
-    private function availableYears(): Collection
+    private function availableYears(?int $sedeId): Collection
     {
         $currentYear = $this->reportingQuarterService->currentYear();
         $yearExpression = DB::connection()->getDriverName() === 'sqlite'
@@ -124,6 +137,7 @@ class ServicioConsultaEstadisticas
             : 'YEAR(fecha_respuesta)';
 
         $years = DB::table('respuesta')
+            ->when($sedeId !== null, fn (Builder $query) => $query->where('id_sede', $sedeId))
             ->selectRaw($yearExpression.' as year')
             ->distinct()
             ->orderByDesc('year')
@@ -202,6 +216,10 @@ class ServicioConsultaEstadisticas
      */
     private function applyRoleScope(User $user, string $level, array $filters): array
     {
+        if (! $user->hasGlobalSedeAccess() && $user->id_sede) {
+            $filters['id_sede'] = (int) $user->id_sede;
+        }
+
         if ($user->isLiderProceso() && $user->id_proceso) {
             $filters['id_proceso'] = (int) $user->id_proceso;
         }
@@ -224,9 +242,11 @@ class ServicioConsultaEstadisticas
     /**
      * @return array<int, array{id: int, name: string}>
      */
-    private function processOptions(User $user): array
+    private function processOptions(User $user, ?int $sedeId): array
     {
-        $query = Proceso::query()->orderBy('nombre');
+        $query = Proceso::query()
+            ->forSede($sedeId)
+            ->orderBy('nombre');
 
         if (($user->isLiderProceso() || $user->isLiderDependencia()) && $user->id_proceso) {
             $query->where('id_proceso', (int) $user->id_proceso);
@@ -245,9 +265,11 @@ class ServicioConsultaEstadisticas
     /**
      * @return array<int, array{id: int, name: string}>
      */
-    private function dependencyOptions(User $user, ?int $processId): array
+    private function dependencyOptions(User $user, ?int $sedeId, ?int $processId): array
     {
-        $query = Dependencia::query()->orderBy('nombre');
+        $query = Dependencia::query()
+            ->forSede($sedeId)
+            ->orderBy('nombre');
 
         if ($processId !== null) {
             $query->where('id_proceso', $processId);
@@ -272,11 +294,12 @@ class ServicioConsultaEstadisticas
     /**
      * @return array<int, array{id: int, name: string}>
      */
-    private function serviceOptions(User $user, ?int $processId, ?int $dependencyId): array
+    private function serviceOptions(User $user, ?int $sedeId, ?int $processId, ?int $dependencyId): array
     {
         $query = Servicio::query()
             ->select('servicio.id_servicio', 'servicio.nombre')
             ->join('dependencia', 'dependencia.id_dependencia', '=', 'servicio.id_dependencia')
+            ->when($sedeId !== null, fn ($builder) => $builder->where('servicio.id_sede', $sedeId))
             ->orderBy('servicio.nombre');
 
         if ($dependencyId !== null) {
@@ -320,14 +343,29 @@ class ServicioConsultaEstadisticas
     /**
      * @return array<int, array{id: int, name: string}>
      */
-    private function programaOptions(): array
+    private function programaOptions(?int $sedeId): array
     {
         return Programa::query()
+            ->forSede($sedeId)
             ->orderBy('nombre')
             ->get(['id_programa', 'nombre'])
             ->map(fn (Programa $item): array => [
                 'id' => (int) $item->id_programa,
                 'name' => (string) $item->nombre,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{id: int, name: string}>
+     */
+    private function sedeOptions(User $user): array
+    {
+        return $this->sedeService->visibleTo($user)
+            ->map(fn ($sede): array => [
+                'id' => (int) $sede->id_sede,
+                'name' => (string) $sede->nombre,
             ])
             ->values()
             ->all();
@@ -356,6 +394,7 @@ class ServicioConsultaEstadisticas
         return DB::table('respuesta')
             ->whereDate('fecha_respuesta', '>=', $from->toDateString())
             ->whereDate('fecha_respuesta', '<=', $to->toDateString())
+            ->when($filters['id_sede'] !== null, fn (Builder $query) => $query->where('respuesta.id_sede', $filters['id_sede']))
             ->when($filters['id_estamento'] !== null, fn (Builder $query) => $query->where('respuesta.id_estamento', $filters['id_estamento']))
             ->when($filters['id_programa'] !== null, fn (Builder $query) => $query->where('respuesta.id_programa', $filters['id_programa']))
             ->when($filters['id_proceso'] !== null, fn (Builder $query) => $query->where('respuesta.id_proceso', $filters['id_proceso']))

@@ -1,4 +1,5 @@
 @php
+    $currentUser = auth()->user();
     $createDependencyErrors = $errors->getBag('createDependency');
     $updateDependencyErrors = $errors->getBag('updateDependency');
     $openEditDependency = session('open_edit_dependency');
@@ -42,11 +43,13 @@
                     <p>Mantiene las mismas operaciones de creacion, edicion y control de estado.</p>
                 </div>
 
-                <div class="ms-form-actions" style="margin-top: 1rem;">
-                    <button type="button" class="ms-btn ms-btn-primary" x-on:click="createDependencyOpen = true">
-                        Crear dependencia
-                    </button>
-                </div>
+                @if ($canManageCatalogs)
+                    <div class="ms-form-actions" style="margin-top: 1rem;">
+                        <button type="button" class="ms-btn ms-btn-primary" x-on:click="createDependencyOpen = true">
+                            Crear dependencia
+                        </button>
+                    </div>
+                @endif
 
                 <div class="ms-table-shell ms-table-shell-compact">
                     <table class="ms-data-table ms-data-table-compact">
@@ -57,7 +60,9 @@
                                 <th>Usuarios</th>
                                 <th>Respuestas</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
+                                @if ($canManageCatalogs)
+                                    <th>Acciones</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -72,52 +77,54 @@
                                     <td>{{ $dependency->usuarios_totales }}</td>
                                     <td>{{ $dependency->respuestas_totales }}</td>
                                     <td>{{ $dependency->activo ? 'Activo' : 'Inactivo' }}</td>
-                                    <td>
-                                        <div class="ms-inline-actions">
-                                            <button
-                                                type="button"
-                                                class="ms-btn ms-btn-secondary ms-btn-icon"
-                                                aria-label="Editar dependencia"
-                                                title="Editar dependencia"
-                                                x-on:click="editDependencyId = {{ $dependency->id_dependencia }}"
-                                            >
-                                                <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
-                                                    <path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25Z" fill="currentColor"/>
-                                                    <path d="M19.71 7.04a1.003 1.003 0 0 0 0-1.42l-1.34-1.34a1.003 1.003 0 0 0-1.42 0l-1.05 1.05 2.75 2.75 1.06-1.04Z" fill="currentColor"/>
-                                                </svg>
-                                            </button>
+                                    @if ($canManageCatalogs)
+                                        <td>
+                                            <div class="ms-inline-actions">
+                                                <button
+                                                    type="button"
+                                                    class="ms-btn ms-btn-secondary ms-btn-icon"
+                                                    aria-label="Editar dependencia"
+                                                    title="Editar dependencia"
+                                                    x-on:click="editDependencyId = {{ $dependency->id_dependencia }}"
+                                                >
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                        <path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25Z" fill="currentColor"/>
+                                                        <path d="M19.71 7.04a1.003 1.003 0 0 0 0-1.42l-1.34-1.34a1.003 1.003 0 0 0-1.42 0l-1.05 1.05 2.75 2.75 1.06-1.04Z" fill="currentColor"/>
+                                                    </svg>
+                                                </button>
 
-                                            @if ($dependency->activo)
-                                                <form method="POST" action="{{ route('process-dependency.dependencies.deactivate', $dependency) }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
-                                                    <button type="submit" class="ms-btn ms-btn-muted ms-btn-icon" aria-label="Inactivar dependencia" title="Inactivar dependencia">
-                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
-                                                            <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
-                                                            <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <form method="POST" action="{{ route('process-dependency.dependencies.activate', $dependency) }}">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
-                                                    <button type="submit" class="ms-btn ms-btn-primary ms-btn-icon" aria-label="Activar dependencia" title="Activar dependencia">
-                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
-                                                            <path d="M12 2 3 6v6c0 5 3.84 9.74 9 11 5.16-1.26 9-6 9-11V6l-9-4Z" fill="currentColor"/>
-                                                            <path d="m10.5 14.5-2.5-2.5-1.5 1.5 4 4 7-7-1.5-1.5-5.5 5.5Z" fill="#fff"/>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
+                                                @if ($dependency->activo)
+                                                    <form method="POST" action="{{ route('process-dependency.dependencies.deactivate', $dependency) }}">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
+                                                        <button type="submit" class="ms-btn ms-btn-muted ms-btn-icon" aria-label="Inactivar dependencia" title="Inactivar dependencia">
+                                                            <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                                <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
+                                                                <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form method="POST" action="{{ route('process-dependency.dependencies.activate', $dependency) }}">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
+                                                        <button type="submit" class="ms-btn ms-btn-primary ms-btn-icon" aria-label="Activar dependencia" title="Activar dependencia">
+                                                            <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                                <path d="M12 2 3 6v6c0 5 3.84 9.74 9 11 5.16-1.26 9-6 9-11V6l-9-4Z" fill="currentColor"/>
+                                                                <path d="m10.5 14.5-2.5-2.5-1.5 1.5 4 4 7-7-1.5-1.5-5.5 5.5Z" fill="#fff"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6">No hay dependencias registradas para este proceso.</td>
+                                    <td colspan="{{ $canManageCatalogs ? '6' : '5' }}">No hay dependencias registradas para este proceso.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -126,6 +133,7 @@
             </section>
         </div>
 
+        @if ($canManageCatalogs)
         <div
             x-show="createDependencyOpen"
             x-on:click.self="createDependencyOpen = false"
@@ -212,7 +220,9 @@
                 </form>
             </div>
         </div>
+        @endif
 
+        @if ($canManageCatalogs)
         @foreach ($dependencies as $dependency)
             @php
                 $isEditingDependency = (int) $openEditDependency === (int) $dependency->id_dependencia;
@@ -310,6 +320,7 @@
                 </div>
             </div>
         @endforeach
+        @endif
     </div>
 
     <script>

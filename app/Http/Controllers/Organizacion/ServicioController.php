@@ -8,6 +8,7 @@ use App\Models\Dependencia;
 use App\Models\Estamento;
 use App\Models\Servicio;
 use App\Services\Organizacion\ServicioAuditoriaCatalogo;
+use App\Services\Sedes\ServicioSedes;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,10 +24,13 @@ class ServicioController extends Controller
 
     public function __construct(
         private readonly ServicioAuditoriaCatalogo $auditService,
+        private readonly ServicioSedes $sedeService,
     ) {}
 
-    public function index(Dependencia $dependencia): View
+    public function index(Request $request, Dependencia $dependencia): View
     {
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $dependencia->id_sede), 403);
+
         $dependencia->load([
             'proceso:id_proceso,nombre,activo',
         ]);
@@ -59,6 +63,7 @@ class ServicioController extends Controller
 
         return view('organizacion.servicios.index', [
             'activeDependencies' => $dependencies->where('activo', true)->values(),
+            'canManageCatalogs' => $request->user()?->puedeModificarModuloEstructuraOrganizacional() ?? false,
             'dependencies' => $dependencies,
             'estamentos' => Estamento::query()->orderBy('nombre')->get(['id_estamento', 'nombre']),
             'serviceEstamentosEnabled' => $serviceEstamentosEnabled,
@@ -70,6 +75,8 @@ class ServicioController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+
         $validator = $this->validator($request);
 
         if ($validator->fails()) {
@@ -109,6 +116,9 @@ class ServicioController extends Controller
 
     public function update(Request $request, Servicio $servicio): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $servicio->id_sede), 403);
+
         $validator = $this->validator($request, $servicio);
 
         if ($validator->fails()) {
@@ -144,6 +154,9 @@ class ServicioController extends Controller
 
     public function deactivate(Request $request, Servicio $servicio): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $servicio->id_sede), 403);
+
         if (! $servicio->activo) {
             return $this->serviceRedirect($request, (int) $servicio->id_dependencia)
                 ->with('catalog_status', 'El servicio ya estaba inactivo.');
@@ -172,6 +185,9 @@ class ServicioController extends Controller
 
     public function activate(Request $request, Servicio $servicio): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $servicio->id_sede), 403);
+
         if ($servicio->activo) {
             return $this->serviceRedirect($request, (int) $servicio->id_dependencia)
                 ->with('catalog_status', 'El servicio ya estaba activo.');
@@ -249,6 +265,10 @@ class ServicioController extends Controller
                 return;
             }
 
+            if (! $this->sedeService->canAccess(request()->user(), (int) $dependency->id_sede)) {
+                $validator->errors()->add('id_dependencia', 'No puedes asociar servicios a una dependencia fuera de tu sede.');
+            }
+
             $isChangingDependency = ! $service || (int) $service->id_dependencia !== $targetDependencyId;
 
             if (! $dependency->activo && $isChangingDependency) {
@@ -272,7 +292,10 @@ class ServicioController extends Controller
      */
     private function payload(Request $request, ?Servicio $service = null): array
     {
+        $dependency = Dependencia::query()->find((int) $request->input('id_dependencia'));
+
         return [
+            'id_sede' => $dependency?->id_sede,
             'id_dependencia' => (int) $request->input('id_dependencia'),
             'nombre' => trim((string) $request->input('nombre')),
             'activo' => $this->targetActiveValue($request, $service?->activo ?? true),
@@ -292,6 +315,7 @@ class ServicioController extends Controller
 
         return [
             'id_servicio' => (int) $service->id_servicio,
+            'id_sede' => (int) $service->id_sede,
             'id_dependencia' => (int) $service->id_dependencia,
             'nombre' => (string) $service->nombre,
             'activo' => (bool) $service->activo,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToSede;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 
 class Servicio extends Model
 {
-    use HasFactory;
+    use BelongsToSede, HasFactory;
 
     protected $table = 'servicio';
 
@@ -22,6 +23,7 @@ class Servicio extends Model
     public $incrementing = true;
 
     protected $fillable = [
+        'id_sede',
         'id_dependencia',
         'nombre',
         'activo',

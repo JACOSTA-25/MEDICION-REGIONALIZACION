@@ -8,6 +8,7 @@ use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\Servicio;
 use App\Services\Organizacion\ServicioAuditoriaCatalogo;
+use App\Services\Sedes\ServicioSedes;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,10 +23,13 @@ class DependenciaController extends Controller
 
     public function __construct(
         private readonly ServicioAuditoriaCatalogo $auditService,
+        private readonly ServicioSedes $sedeService,
     ) {}
 
-    public function index(Proceso $proceso): View
+    public function index(Request $request, Proceso $proceso): View
     {
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $proceso->id_sede), 403);
+
         $dependencies = Dependencia::query()
             ->where('id_proceso', $proceso->id_proceso)
             ->withCount([
@@ -37,11 +41,13 @@ class DependenciaController extends Controller
             ->get(['id_dependencia', 'id_proceso', 'nombre', 'activo']);
 
         $processes = Proceso::query()
+            ->forSede((int) $proceso->id_sede)
             ->orderBy('nombre')
             ->get(['id_proceso', 'nombre', 'activo']);
 
         return view('organizacion.dependencias.index', [
             'activeProcesses' => $processes->where('activo', true)->values(),
+            'canManageCatalogs' => $request->user()?->puedeModificarModuloEstructuraOrganizacional() ?? false,
             'dependencies' => $dependencies,
             'processes' => $processes,
             'selectedProcess' => $proceso,
@@ -50,6 +56,8 @@ class DependenciaController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+
         $validator = $this->validator($request);
 
         if ($validator->fails()) {
@@ -86,6 +94,9 @@ class DependenciaController extends Controller
 
     public function update(Request $request, Dependencia $dependencia): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $dependencia->id_sede), 403);
+
         $validator = $this->validator($request, $dependencia);
 
         if ($validator->fails()) {
@@ -123,6 +134,9 @@ class DependenciaController extends Controller
 
     public function deactivate(Request $request, Dependencia $dependencia): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $dependencia->id_sede), 403);
+
         if (! $dependencia->activo) {
             return $this->dependencyRedirect($request, (int) $dependencia->id_proceso)
                 ->with('catalog_status', 'La dependencia ya estaba inactiva.');
@@ -152,6 +166,9 @@ class DependenciaController extends Controller
 
     public function activate(Request $request, Dependencia $dependencia): RedirectResponse
     {
+        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($this->sedeService->canAccess($request->user(), (int) $dependencia->id_sede), 403);
+
         if ($dependencia->activo) {
             return $this->dependencyRedirect($request, (int) $dependencia->id_proceso)
                 ->with('catalog_status', 'La dependencia ya estaba activa.');
@@ -225,6 +242,10 @@ class DependenciaController extends Controller
                 return;
             }
 
+            if (! $this->sedeService->canAccess(request()->user(), (int) $process->id_sede)) {
+                $validator->errors()->add('id_proceso', 'No puedes asociar dependencias a procesos fuera de tu sede.');
+            }
+
             if (! $process->activo && (! $dependency || (int) $dependency->id_proceso !== $targetProcessId)) {
                 $validator->errors()->add('id_proceso', 'Solo puedes asociar dependencias a procesos activos.');
             }
@@ -238,7 +259,10 @@ class DependenciaController extends Controller
      */
     private function payload(Request $request, ?Dependencia $dependency = null): array
     {
+        $process = Proceso::query()->find((int) $request->input('id_proceso'));
+
         return [
+            'id_sede' => $process?->id_sede,
             'id_proceso' => (int) $request->input('id_proceso'),
             'nombre' => trim((string) $request->input('nombre')),
             'activo' => $this->targetActiveValue($request, $dependency?->activo ?? true),
@@ -252,6 +276,7 @@ class DependenciaController extends Controller
     {
         return [
             'id_dependencia' => (int) $dependency->id_dependencia,
+            'id_sede' => (int) $dependency->id_sede,
             'id_proceso' => (int) $dependency->id_proceso,
             'nombre' => (string) $dependency->nombre,
             'activo' => (bool) $dependency->activo,

@@ -4,7 +4,9 @@ namespace Tests\Feature\Usuarios;
 
 use App\Models\Dependencia;
 use App\Models\Proceso;
+use App\Models\Sede;
 use App\Models\User;
+use App\Services\Sedes\ServicioSedes;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -92,5 +94,26 @@ class GestionUsuariosTest extends TestCase
         $this->assertNotEmpty($matches);
         $this->assertStringContainsString('Dependencia Proceso A', $matches[1]);
         $this->assertStringNotContainsString('Dependencia Proceso B', $matches[1]);
+    }
+
+    public function test_users_index_uses_the_global_sede_scope_stored_in_session(): void
+    {
+        $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+        $maicaoUser = User::factory()->create([
+            'nombre' => 'Usuario Maicao',
+            'id_sede' => Sede::ID_MAICAO,
+        ]);
+        $fonsecaUser = User::factory()->create([
+            'nombre' => 'Usuario Fonseca',
+            'id_sede' => Sede::ID_FONSECA,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withSession([ServicioSedes::SESSION_SCOPE_KEY => Sede::ID_FONSECA])
+            ->get(route('users.index'));
+
+        $response->assertOk();
+        $response->assertSee($fonsecaUser->nombre);
+        $response->assertDontSee($maicaoUser->nombre);
     }
 }

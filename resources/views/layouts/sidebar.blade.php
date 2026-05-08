@@ -64,6 +64,15 @@
                 </li>
             @endif
 
+            @if ($user->puedeAccederModuloProgramas())
+                <li>
+                    <a href="{{ route('programs.index') }}" class="{{ request()->routeIs('programs.*') ? 'selected' : '' }}">
+                        <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Programas"></span>
+                        <span>Programas</span>
+                    </a>
+                </li>
+            @endif
+
             @if ($user->puedeAccederModuloEstructuraOrganizacional())
                 <li>
                     <a href="{{ route('process-dependency.index') }}" class="{{ request()->routeIs('process-dependency.*') ? 'selected' : '' }}">

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Dependencia;
 use App\Models\Proceso;
+use App\Models\Sede;
 use App\Models\Servicio;
 use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Seeder;
@@ -18,13 +19,17 @@ class EstructuraOrganizacionalSeeder extends Seeder
         foreach (DatosReferenciaLegado::organizationalStructure() as $estructura) {
             $proceso = Proceso::query()->updateOrCreate(
                 ['id_proceso' => $estructura['id_proceso']],
-                ['nombre' => $estructura['nombre']]
+                [
+                    'id_sede' => Sede::ID_MAICAO,
+                    'nombre' => $estructura['nombre'],
+                ]
             );
 
             foreach ($estructura['dependencias'] as $dataDependencia) {
                 $dependencia = Dependencia::query()->updateOrCreate(
                     ['id_dependencia' => $dataDependencia['id_dependencia']],
                     [
+                        'id_sede' => Sede::ID_MAICAO,
                         'id_proceso' => $proceso->id_proceso,
                         'nombre' => $dataDependencia['nombre'],
                     ]
@@ -34,6 +39,7 @@ class EstructuraOrganizacionalSeeder extends Seeder
                     Servicio::query()->updateOrCreate(
                         ['id_servicio' => $servicio['id_servicio']],
                         [
+                            'id_sede' => Sede::ID_MAICAO,
                             'id_dependencia' => $dependencia->id_dependencia,
                             'nombre' => $servicio['nombre'],
                         ]

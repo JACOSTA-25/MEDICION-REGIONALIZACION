@@ -29,6 +29,22 @@
                     @endif
                 >
                     <div class="ms-report-fields">
+                        @if ($showSedeSelect)
+                            <div class="ms-field">
+                                <label for="id_sede">Sede</label>
+                                <select id="id_sede" name="id_sede" data-sede-select>
+                                    <option value="">Todas las sedes</option>
+                                    @foreach ($sedes as $sede)
+                                        <option value="{{ $sede->id_sede }}" @selected((string) $selectedSedeId === (string) $sede->id_sede)>
+                                            {{ $sede->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @elseif ($selectedSedeId)
+                            <input type="hidden" name="id_sede" value="{{ $selectedSedeId }}">
+                        @endif
+
                         <div class="ms-field">
                             <label for="trimestre">Trimestre</label>
                             <select id="trimestre" name="trimestre">

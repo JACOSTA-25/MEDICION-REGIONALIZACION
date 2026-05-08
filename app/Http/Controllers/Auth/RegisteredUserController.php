@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -39,7 +40,8 @@ class RegisteredUserController extends Controller
             'nombre' => $request->string('nombre')->toString(),
             'username' => $request->string('username')->toString(),
             'password_hash' => Hash::make($request->string('password')->toString()),
-            'rol' => User::ROLE_LIDER_PROCESO,
+            'rol' => User::ROLE_ADMIN_SEDE,
+            'id_sede' => Sede::ID_MAICAO,
             'activo' => true,
         ]);
 

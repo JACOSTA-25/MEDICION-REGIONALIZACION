@@ -46,11 +46,13 @@
                     <p>Mantiene las operaciones de creacion, edicion y control de estado para cada servicio.</p>
                 </div>
 
-                <div class="ms-form-actions" style="margin-top: 1rem;">
-                    <button type="button" class="ms-btn ms-btn-primary" x-on:click="createServiceOpen = true">
-                        Crear servicio
-                    </button>
-                </div>
+                @if ($canManageCatalogs)
+                    <div class="ms-form-actions" style="margin-top: 1rem;">
+                        <button type="button" class="ms-btn ms-btn-primary" x-on:click="createServiceOpen = true">
+                            Crear servicio
+                        </button>
+                    </div>
+                @endif
 
                 <div class="ms-table-shell ms-table-shell-compact">
                     <table class="ms-data-table ms-data-table-compact">
@@ -60,7 +62,9 @@
                                 <th>Estamentos habilitados</th>
                                 <th>Respuestas</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
+                                @if ($canManageCatalogs)
+                                    <th>Acciones</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -76,54 +80,56 @@
                                     </td>
                                     <td>{{ $service->respuestas_totales }}</td>
                                     <td>{{ $service->activo ? 'Activo' : 'Inactivo' }}</td>
-                                    <td>
-                                        <div class="ms-inline-actions">
-                                            <button
-                                                type="button"
-                                                class="ms-btn ms-btn-secondary ms-btn-icon"
-                                                aria-label="Editar servicio"
-                                                title="Editar servicio"
-                                                x-on:click="editServiceId = {{ $service->id_servicio }}"
-                                            >
-                                                <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
-                                                    <path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25Z" fill="currentColor"/>
-                                                    <path d="M19.71 7.04a1.003 1.003 0 0 0 0-1.42l-1.34-1.34a1.003 1.003 0 0 0-1.42 0l-1.05 1.05 2.75 2.75 1.06-1.04Z" fill="currentColor"/>
-                                                </svg>
-                                            </button>
+                                    @if ($canManageCatalogs)
+                                        <td>
+                                            <div class="ms-inline-actions">
+                                                <button
+                                                    type="button"
+                                                    class="ms-btn ms-btn-secondary ms-btn-icon"
+                                                    aria-label="Editar servicio"
+                                                    title="Editar servicio"
+                                                    x-on:click="editServiceId = {{ $service->id_servicio }}"
+                                                >
+                                                    <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                        <path d="M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25Z" fill="currentColor"/>
+                                                        <path d="M19.71 7.04a1.003 1.003 0 0 0 0-1.42l-1.34-1.34a1.003 1.003 0 0 0-1.42 0l-1.05 1.05 2.75 2.75 1.06-1.04Z" fill="currentColor"/>
+                                                    </svg>
+                                                </button>
 
-                                            @if ($service->activo)
-                                                <form method="POST" action="{{ route('process-dependency.services.deactivate', $service) }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
-                                                    <input type="hidden" name="redirect_dependencia" value="{{ $selectedDependency->id_dependencia }}">
-                                                    <button type="submit" class="ms-btn ms-btn-muted ms-btn-icon" aria-label="Inactivar servicio" title="Inactivar servicio">
-                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
-                                                            <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
-                                                            <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <form method="POST" action="{{ route('process-dependency.services.activate', $service) }}">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
-                                                    <input type="hidden" name="redirect_dependencia" value="{{ $selectedDependency->id_dependencia }}">
-                                                    <button type="submit" class="ms-btn ms-btn-primary ms-btn-icon" aria-label="Activar servicio" title="Activar servicio">
-                                                        <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
-                                                            <path d="M12 2 3 6v6c0 5 3.84 9.74 9 11 5.16-1.26 9-6 9-11V6l-9-4Z" fill="currentColor"/>
-                                                            <path d="m10.5 14.5-2.5-2.5-1.5 1.5 4 4 7-7-1.5-1.5-5.5 5.5Z" fill="#fff"/>
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
+                                                @if ($service->activo)
+                                                    <form method="POST" action="{{ route('process-dependency.services.deactivate', $service) }}">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
+                                                        <input type="hidden" name="redirect_dependencia" value="{{ $selectedDependency->id_dependencia }}">
+                                                        <button type="submit" class="ms-btn ms-btn-muted ms-btn-icon" aria-label="Inactivar servicio" title="Inactivar servicio">
+                                                            <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                                <path d="M7 21c-.55 0-1-.45-1-1V7h12v13c0 .55-.45 1-1 1H7Z" fill="currentColor"/>
+                                                                <path d="M9 4h6l1 1h4v2H4V5h4l1-1Z" fill="currentColor"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form method="POST" action="{{ route('process-dependency.services.activate', $service) }}">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="redirect_proceso" value="{{ $selectedProcess->id_proceso }}">
+                                                        <input type="hidden" name="redirect_dependencia" value="{{ $selectedDependency->id_dependencia }}">
+                                                        <button type="submit" class="ms-btn ms-btn-primary ms-btn-icon" aria-label="Activar servicio" title="Activar servicio">
+                                                            <svg viewBox="0 0 24 24" aria-hidden="true" class="ms-btn-icon-svg">
+                                                                <path d="M12 2 3 6v6c0 5 3.84 9.74 9 11 5.16-1.26 9-6 9-11V6l-9-4Z" fill="currentColor"/>
+                                                                <path d="m10.5 14.5-2.5-2.5-1.5 1.5 4 4 7-7-1.5-1.5-5.5 5.5Z" fill="#fff"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5">No hay servicios registrados para esta dependencia.</td>
+                                    <td colspan="{{ $canManageCatalogs ? '5' : '4' }}">No hay servicios registrados para esta dependencia.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -132,6 +138,7 @@
             </section>
         </div>
 
+        @if ($canManageCatalogs)
         <div
             x-show="createServiceOpen"
             x-on:click.self="createServiceOpen = false"
@@ -256,7 +263,9 @@
                 </form>
             </div>
         </div>
+        @endif
 
+        @if ($canManageCatalogs)
         @foreach ($services as $service)
             @php
                 $isEditingService = (int) $openEditService === (int) $service->id_servicio;
@@ -391,5 +400,6 @@
                 </div>
             </div>
         @endforeach
+        @endif
     </div>
 </x-app-layout>

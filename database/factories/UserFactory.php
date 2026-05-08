@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\Sede;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -29,6 +30,7 @@ class UserFactory extends Factory
             'nombre' => fake()->name(),
             'password_hash' => static::$password ??= Hash::make('password'),
             'rol' => User::ROLE_LIDER_PROCESO,
+            'id_sede' => Sede::ID_MAICAO,
             'id_proceso' => null,
             'id_dependencia' => null,
             'activo' => true,

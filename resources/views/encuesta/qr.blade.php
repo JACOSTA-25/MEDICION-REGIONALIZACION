@@ -2,7 +2,7 @@
     <div class="ms-content-shell">
         <x-generals.top-bar
             title="QR de encuesta"
-            description="Comparte el acceso directo a la encuesta institucional con un codigo QR listo para descargar."
+            description="Comparte el acceso directo a la encuesta institucional filtrado por sede."
         />
 
         <div class="ms-panel-body">
@@ -10,8 +10,24 @@
                 <section class="ms-report-card">
                     <div class="ms-report-card-header">
                         <h2>Codigo QR listo para compartir</h2>
-                        <p>Escanea el codigo con la camara del celular para abrir la encuesta institucional.</p>
+                        <p>Escanea el codigo con la camara del celular para abrir la encuesta institucional de {{ $selectedSede->nombre }}.</p>
                     </div>
+
+                    @if ($canSelectSede)
+                        <form method="GET" action="{{ route('survey.qr') }}" class="ms-form-actions">
+                            <select
+                                name="id_sede"
+                                class="rounded-2xl border border-slate-300 px-4 py-2 text-sm"
+                                onchange="this.form.submit()"
+                            >
+                                @foreach ($sedes as $sede)
+                                    <option value="{{ $sede->id_sede }}" @selected((string) $selectedSedeId === (string) $sede->id_sede)>
+                                        {{ $sede->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
 
                     <div class="mt-6 flex justify-center">
                         <div class="rounded-[2rem] border-2 border-slate-200 bg-white p-4 shadow-sm">

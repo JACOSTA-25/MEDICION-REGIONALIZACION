@@ -36,6 +36,10 @@
                             y sera utilizada para fortalecer los procesos de atencion.
                         </p>
 
+                        <div class="mt-6 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-[#c8f6f7]">
+                            {{ $selectedSede->nombre }}
+                        </div>
+
                         <div class="mt-8 grid gap-4 sm:grid-cols-2">
                             <div class="rounded-2xl border border-white/10 bg-white/10 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-[0.25em] text-[#c8f6f7]">Escala</p>
@@ -76,6 +80,7 @@
 
                         <form method="POST" action="{{ route('survey.store') }}" class="space-y-8" data-survey-form>
                             @csrf
+                            <input type="hidden" name="id_sede" value="{{ $selectedSede->id_sede }}">
 
                             <div class="grid gap-6 md:grid-cols-2">
                                 <div>
@@ -237,7 +242,12 @@
                             </div>
 
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <p class="text-sm text-slate-500">Tu respuesta ayudara a mejorar la calidad del servicio.</p>
+                                <div class="flex flex-col gap-2">
+                                    <p class="text-sm text-slate-500">Tu respuesta ayudara a mejorar la calidad del servicio.</p>
+                                    <a href="{{ route('survey.create') }}" class="text-sm font-semibold text-[#0b5d60] hover:text-[#00a9ad]">
+                                        Cambiar de sede
+                                    </a>
+                                </div>
                                 <button
                                     type="submit"
                                     class="inline-flex items-center justify-center rounded-full bg-[#00a9ad] px-6 py-3 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#008d90] focus:outline-none focus:ring-2 focus:ring-[#8de4e6] focus:ring-offset-2"

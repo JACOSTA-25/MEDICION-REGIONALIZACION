@@ -33,6 +33,18 @@ export default function PanelFiltros({ payload, filters, onChange, onReset, load
 
             <div className="ms-report-form">
                 <div className="ms-report-fields">
+                    {visibility.sede && (
+                        <SelectField
+                            id="statistics_sede"
+                            label="Sede"
+                            value={filters.id_sede ?? selected.id_sede}
+                            onChange={(value) => onChange('id_sede', value)}
+                            options={options.sedes}
+                            disabled={locks.sede}
+                            placeholder="Todas las sedes"
+                        />
+                    )}
+
                     <SelectField
                         id="statistics_year"
                         label="Anio"

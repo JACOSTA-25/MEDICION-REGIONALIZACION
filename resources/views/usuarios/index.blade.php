@@ -1,7 +1,9 @@
 @php
+    $currentUser = auth()->user();
     $createErrors = $errors->getBag('createUser');
     $updateErrors = $errors->getBag('updateUser');
     $openEditUser = session('open_edit_user');
+    $defaultRole = old('rol', array_key_first($roles));
 @endphp
 
 <x-app-layout>
@@ -15,7 +17,7 @@
     >
         <x-generals.top-bar
             title="Gestion de usuarios"
-            description="Vista habilitada solo para ADMIN"
+            description="Administra usuarios globales y por sede sin mezclar alcances."
         />
 
         <div class="ms-panel-body">
@@ -26,6 +28,23 @@
                 </div>
 
                 <div class="ms-form-actions" style="margin-top: 1rem;">
+                    @if ($currentUser?->hasGlobalSedeAccess())
+                        <form method="GET" action="{{ route('users.index') }}" class="ms-inline-actions">
+                            <select
+                                name="id_sede"
+                                class="rounded-2xl border border-slate-300 px-4 py-2 text-sm"
+                                onchange="this.form.submit()"
+                            >
+                                <option value="">Todas las sedes</option>
+                                @foreach ($sedes as $sede)
+                                    <option value="{{ $sede->id_sede }}" @selected((string) $selectedSedeId === (string) $sede->id_sede)>
+                                        {{ $sede->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @endif
+
                     <button type="button" class="ms-btn ms-btn-primary" x-on:click="createOpen = true">
                         Crear usuario
                     </button>
@@ -50,6 +69,7 @@
                                 <th>Nombre</th>
                                 <th>Usuario</th>
                                 <th>Rol</th>
+                                <th>Sede</th>
                                 <th>Proceso</th>
                                 <th>Dependencia</th>
                                 <th>Estado</th>
@@ -62,6 +82,7 @@
                                     <td class="ms-cell-name">{{ $managedUser->nombre }}</td>
                                     <td>{{ $managedUser->username }}</td>
                                     <td>{{ $roles[$managedUser->rol] ?? $managedUser->rol }}</td>
+                                    <td>{{ $managedUser->sede?->nombre ?? 'Global' }}</td>
                                     <td>{{ $managedUser->proceso?->nombre ?? 'No aplica' }}</td>
                                     <td>{{ $managedUser->dependencia?->nombre ?? 'No aplica' }}</td>
                                     <td>{{ $managedUser->activo ? 'Activo' : 'Inactivo' }}</td>
@@ -108,7 +129,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7">No hay usuarios registrados.</td>
+                                    <td colspan="8">No hay usuarios registrados.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -150,7 +171,7 @@
                     action="{{ route('users.store') }}"
                     class="mt-6 space-y-5"
                     data-user-form
-                    x-data="{ role: @js(old('rol', \App\Models\User::ROLE_ADMIN)) }"
+                    x-data="{ role: @js($defaultRole) }"
                 >
                     @csrf
 
@@ -208,6 +229,26 @@
                             </select>
                         </div>
 
+                        @if ($currentUser?->isAdminSede())
+                            <input type="hidden" name="id_sede" value="{{ $currentUser->id_sede }}">
+                        @else
+                            <div x-show="role !== '{{ \App\Models\User::ROLE_ADMIN }}' && role !== '{{ \App\Models\User::ROLE_ADMIN_2_0 }}'">
+                                <label for="create_sede" class="block text-sm font-semibold text-slate-700">Sede</label>
+                                <select
+                                    id="create_sede"
+                                    name="id_sede"
+                                    class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                >
+                                    <option value="">Seleccione una sede</option>
+                                    @foreach ($sedes as $sede)
+                                        <option value="{{ $sede->id_sede }}" @selected((string) old('id_sede', $selectedSedeId) === (string) $sede->id_sede)>
+                                            {{ $sede->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
                         <div x-show="role === '{{ \App\Models\User::ROLE_LIDER_PROCESO }}' || role === '{{ \App\Models\User::ROLE_LIDER_DEPENDENCIA }}'">
                             <label for="create_proceso" class="block text-sm font-semibold text-slate-700">Proceso</label>
                             <select
@@ -219,7 +260,7 @@
                                 <option value="">Seleccione un proceso</option>
                                 @foreach ($processes as $process)
                                     <option value="{{ $process->id_proceso }}" @selected((string) old('id_proceso') === (string) $process->id_proceso)>
-                                        {{ $process->nombre }}
+                                        {{ $process->nombre }}{{ $currentUser?->hasGlobalSedeAccess() ? ' - '.$process->sede?->nombre : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -269,6 +310,7 @@
             @php
                 $isEditingUser = (int) $openEditUser === (int) $managedUser->id;
                 $editRole = $isEditingUser ? old('rol', $managedUser->rol) : $managedUser->rol;
+                $editSedeId = $isEditingUser ? old('id_sede', $managedUser->id_sede) : $managedUser->id_sede;
                 $editProcessId = $isEditingUser ? old('id_proceso', $managedUser->id_proceso) : $managedUser->id_proceso;
                 $editDependencyId = $isEditingUser ? old('id_dependencia', $managedUser->id_dependencia) : $managedUser->id_dependencia;
                 $editName = $isEditingUser ? old('nombre', $managedUser->nombre) : $managedUser->nombre;
@@ -368,6 +410,26 @@
                                 </select>
                             </div>
 
+                            @if ($currentUser?->isAdminSede())
+                                <input type="hidden" name="id_sede" value="{{ $currentUser->id_sede }}">
+                            @else
+                                <div x-show="role !== '{{ \App\Models\User::ROLE_ADMIN }}' && role !== '{{ \App\Models\User::ROLE_ADMIN_2_0 }}'">
+                                    <label for="edit_sede_{{ $managedUser->id }}" class="block text-sm font-semibold text-slate-700">Sede</label>
+                                    <select
+                                        id="edit_sede_{{ $managedUser->id }}"
+                                        name="id_sede"
+                                        class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    >
+                                        <option value="">Seleccione una sede</option>
+                                        @foreach ($sedes as $sede)
+                                            <option value="{{ $sede->id_sede }}" @selected((string) $editSedeId === (string) $sede->id_sede)>
+                                                {{ $sede->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
                             <div x-show="role === '{{ \App\Models\User::ROLE_LIDER_PROCESO }}' || role === '{{ \App\Models\User::ROLE_LIDER_DEPENDENCIA }}'">
                                 <label for="edit_proceso_{{ $managedUser->id }}" class="block text-sm font-semibold text-slate-700">Proceso</label>
                                 <select
@@ -379,7 +441,7 @@
                                     <option value="">Seleccione un proceso</option>
                                     @foreach ($processes as $process)
                                         <option value="{{ $process->id_proceso }}" @selected((string) $editProcessId === (string) $process->id_proceso)>
-                                            {{ $process->nombre }}
+                                            {{ $process->nombre }}{{ $currentUser?->hasGlobalSedeAccess() ? ' - '.$process->sede?->nombre : '' }}
                                         </option>
                                     @endforeach
                                 </select>

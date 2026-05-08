@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Dependencia;
 use App\Models\Proceso;
+use App\Models\Sede;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +44,7 @@ class UsuariosAsignadosDemoSeeder extends Seeder
                     'nombre' => sprintf('Usuario Demo %02d', $index),
                     'password_hash' => Hash::make($defaultPassword),
                     'rol' => User::ROLE_LIDER_DEPENDENCIA,
+                    'id_sede' => Sede::ID_MAICAO,
                     'id_proceso' => (int) $dependency->id_proceso,
                     'id_dependencia' => (int) $dependency->id_dependencia,
                     'activo' => true,
@@ -60,6 +62,7 @@ class UsuariosAsignadosDemoSeeder extends Seeder
                     'nombre' => sprintf('Usuario Proceso %02d', $index),
                     'password_hash' => Hash::make($defaultPassword),
                     'rol' => User::ROLE_LIDER_PROCESO,
+                    'id_sede' => Sede::ID_MAICAO,
                     'id_proceso' => (int) $process->id_proceso,
                     'id_dependencia' => null,
                     'activo' => true,

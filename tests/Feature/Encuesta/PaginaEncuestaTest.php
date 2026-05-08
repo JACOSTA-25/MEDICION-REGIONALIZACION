@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Encuesta;
 
+use App\Models\Sede;
 use Database\Seeders\EstamentoSeeder;
 use Database\Seeders\EstructuraOrganizacionalSeeder;
 use Database\Seeders\ProgramaSeeder;
@@ -28,8 +29,20 @@ class PaginaEncuestaTest extends TestCase
         $response = $this->get(route('survey.create'));
 
         $response->assertOk();
+        $response->assertSee('Selecciona tu sede');
+        $response->assertSee('Sede Maicao');
+        $response->assertSee('Sede Fonseca');
+        $response->assertSee('Sede Villanueva');
+    }
+
+    public function test_guest_can_open_the_public_survey_for_a_specific_sede(): void
+    {
+        $response = $this->get(route('survey.create', ['sede' => 'maicao']));
+
+        $response->assertOk();
         $response->assertSee('Encuesta de satisfaccion del servicio');
         $response->assertSee('Seleccione un estamento');
+        $response->assertSee(Sede::query()->findOrFail(Sede::ID_MAICAO)->nombre);
     }
 
     public function test_dashboard_remains_protected_by_authentication(): void

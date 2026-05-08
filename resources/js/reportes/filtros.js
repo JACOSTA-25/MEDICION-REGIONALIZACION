@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-report-shell]').forEach((shell) => {
         const form = shell.querySelector('[data-report-filter-form]');
+        const sedeSelect = shell.querySelector('[data-sede-select]');
         const processSelect = shell.querySelector('[data-process-select]');
         const dependencySelect = shell.querySelector('[data-dependency-select]');
         const servicesShell = shell.querySelector('[data-services-shell]');
@@ -210,8 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const endpoint = form.dataset.dependenciasEndpoint;
+                const sedeParam = sedeSelect?.value
+                    ? `&id_sede=${encodeURIComponent(sedeSelect.value)}`
+                    : '';
                 const response = await fetch(
-                    `${endpoint}?id_proceso=${encodeURIComponent(processSelect.value)}&include_inactive=1`,
+                    `${endpoint}?id_proceso=${encodeURIComponent(processSelect.value)}${sedeParam}&include_inactive=1`,
                     {
                         headers: {
                             Accept: 'application/json',
@@ -347,6 +351,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (serviceSelectionEnabled() && dependencySelect.value) {
                     await loadServices();
                 }
+            });
+        }
+
+        if (sedeSelect) {
+            sedeSelect.addEventListener('change', () => {
+                form.submit();
             });
         }
 

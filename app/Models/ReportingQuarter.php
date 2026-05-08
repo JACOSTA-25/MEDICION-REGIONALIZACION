@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ReportingQuarter extends Model
 {
     protected $fillable = [
+        'id_sede',
         'year',
         'quarter_number',
         'start_date',
@@ -18,12 +19,18 @@ class ReportingQuarter extends Model
     protected function casts(): array
     {
         return [
+            'id_sede' => 'integer',
             'year' => 'integer',
             'quarter_number' => 'integer',
             'start_date' => 'date',
             'end_date' => 'date',
             'updated_by' => 'integer',
         ];
+    }
+
+    public function sede(): BelongsTo
+    {
+        return $this->belongsTo(Sede::class, 'id_sede', 'id_sede');
     }
 
     public function updatedBy(): BelongsTo
@@ -54,5 +61,10 @@ class ReportingQuarter extends Model
             4 => 'IV Trimestre',
             default => 'Trimestre '.$quarterNumber,
         };
+    }
+
+    public function scopeDescription(): string
+    {
+        return $this->sede?->nombre ?? 'Configuracion global';
     }
 }

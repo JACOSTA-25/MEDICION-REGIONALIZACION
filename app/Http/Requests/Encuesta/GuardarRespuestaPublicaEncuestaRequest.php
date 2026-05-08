@@ -5,6 +5,8 @@ namespace App\Http\Requests\Encuesta;
 use App\Models\Dependencia;
 use App\Models\Estamento;
 use App\Models\Proceso;
+use App\Models\Programa;
+use App\Models\Sede;
 use App\Models\Servicio;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,25 +25,43 @@ class GuardarRespuestaPublicaEncuestaRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'id_sede' => $this->input('id_sede', Sede::ID_MAICAO),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
+            'id_sede' => ['required', 'integer', 'exists:sede,id_sede'],
             'id_dependencia' => [
                 'required',
                 'integer',
-                Rule::exists('dependencia', 'id_dependencia')->where(fn ($query) => $query->where('activo', true)),
+                Rule::exists('dependencia', 'id_dependencia')->where(fn ($query) => $query
+                    ->where('activo', true)
+                    ->where('id_sede', (int) $this->input('id_sede'))),
             ],
             'id_estamento' => ['required', 'integer', 'exists:estamento,id_estamento'],
-            'id_programa' => ['nullable', 'integer', 'exists:programa,id_programa'],
+            'id_programa' => [
+                'nullable',
+                'integer',
+                Rule::exists('programa', 'id_programa')->where(fn ($query) => $query->where('id_sede', (int) $this->input('id_sede'))),
+            ],
             'id_proceso' => [
                 'required',
                 'integer',
-                Rule::exists('proceso', 'id_proceso')->where(fn ($query) => $query->where('activo', true)),
+                Rule::exists('proceso', 'id_proceso')->where(fn ($query) => $query
+                    ->where('activo', true)
+                    ->where('id_sede', (int) $this->input('id_sede'))),
             ],
             'id_servicio' => [
                 'required',
                 'integer',
-                Rule::exists('servicio', 'id_servicio')->where(fn ($query) => $query->where('activo', true)),
+                Rule::exists('servicio', 'id_servicio')->where(fn ($query) => $query
+                    ->where('activo', true)
+                    ->where('id_sede', (int) $this->input('id_sede'))),
             ],
             'observaciones' => ['nullable', 'string', 'max:1000'],
             'pregunta1' => ['required', 'integer', 'between:1,5'],
@@ -57,6 +77,13 @@ class GuardarRespuestaPublicaEncuestaRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $sede = Sede::query()->find($this->input('id_sede'));
+
+                if (! $sede || ! $sede->activo) {
+                    $validator->errors()->add('id_sede', 'La sede seleccionada no existe o se encuentra inactiva.');
                     return;
                 }
 
@@ -89,11 +116,30 @@ class GuardarRespuestaPublicaEncuestaRequest extends FormRequest
                     return;
                 }
 
+                if ((int) $dependencia->id_sede !== (int) $this->input('id_sede')) {
+                    $validator->errors()->add('id_dependencia', 'La dependencia seleccionada no pertenece a la sede indicada.');
+                    return;
+                }
+
                 $servicio = Servicio::query()->find($this->input('id_servicio'));
 
                 if (! $servicio || ! $servicio->activo || $servicio->id_dependencia !== (int) $this->input('id_dependencia')) {
                     $validator->errors()->add('id_servicio', 'El servicio seleccionado no pertenece a la dependencia indicada.');
                     return;
+                }
+
+                if ((int) $servicio->id_sede !== (int) $this->input('id_sede')) {
+                    $validator->errors()->add('id_servicio', 'El servicio seleccionado no pertenece a la sede indicada.');
+                    return;
+                }
+
+                if ($this->filled('id_programa')) {
+                    $programa = Programa::query()->find($this->input('id_programa'));
+
+                    if (! $programa || (int) $programa->id_sede !== (int) $this->input('id_sede')) {
+                        $validator->errors()->add('id_programa', 'El programa seleccionado no pertenece a la sede indicada.');
+                        return;
+                    }
                 }
 
                 $serviceSupportsEstamento = $servicio->estamentos()

@@ -36,6 +36,12 @@
     </x-nav-link>
 @endif
 
+@if ($user->puedeAccederModuloProgramas())
+    <x-nav-link :href="route('programs.index')" :active="request()->routeIs('programs.*')">
+        {{ __('Programas') }}
+    </x-nav-link>
+@endif
+
 @if ($user->puedeAccederModuloEstructuraOrganizacional())
     <x-nav-link :href="route('process-dependency.index')" :active="request()->routeIs('process-dependency.*')">
         {{ __('Procesos y dependencias') }}

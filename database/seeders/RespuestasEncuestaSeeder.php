@@ -6,6 +6,7 @@ use App\Models\Dependencia;
 use App\Models\Estamento;
 use App\Models\Programa;
 use App\Models\Proceso;
+use App\Models\Sede;
 use App\Models\Servicio;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -167,6 +168,7 @@ class RespuestasEncuestaSeeder extends Seeder
         $calificacion = $bloquesCalificacion[array_rand($bloquesCalificacion)];
 
         return [
+            'id_sede' => Sede::ID_MAICAO,
             'id_estamento' => $estamento->id_estamento,
             'id_programa' => $this->estamentoRequierePrograma($estamento->nombre) && $programaIds->isNotEmpty()
                 ? $programaIds->random()

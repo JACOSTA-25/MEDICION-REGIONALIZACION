@@ -12,6 +12,7 @@ use App\Services\Reportes\ServicioConclusionesIa;
 use App\Services\Reportes\ServicioImagenesGraficosPdf;
 use App\Services\Reportes\ServicioReportes;
 use App\Services\Reportes\ServicioTrimestresReporte;
+use App\Services\Sedes\ServicioSedes;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ abstract class ControladorReporteAbstracto extends Controller
         protected readonly ServicioConclusionesIa $aiConclusionService,
         protected readonly ServicioImagenesGraficosPdf $chartImageService,
         protected readonly ServicioTrimestresReporte $reportingQuarterService,
+        protected readonly ServicioSedes $sedeService,
     ) {}
 
     /**
@@ -50,7 +52,8 @@ abstract class ControladorReporteAbstracto extends Controller
         $showProcessSelect = $type !== 'general';
         $showDependencySelect = $type === 'individual';
         $quarterYear = $this->reportingQuarterService->currentYear();
-        $quarters = $this->reportingQuarterService->forYear($quarterYear);
+        $selectedSedeId = $this->selectedSedeId($request, $type);
+        $quarters = $this->reportingQuarterService->forYear($quarterYear, $selectedSedeId);
 
         $selectedQuarterNumber = $this->normalizeQuarter($request->input('trimestre'));
         $selectedQuarter = $selectedQuarterNumber !== null
@@ -81,7 +84,7 @@ abstract class ControladorReporteAbstracto extends Controller
         }
 
         $procesos = $showProcessSelect
-            ? $this->availableProcesos($forcedProcesoId)
+            ? $this->availableProcesos($forcedProcesoId, $selectedSedeId)
             : collect();
 
         if (
@@ -93,7 +96,7 @@ abstract class ControladorReporteAbstracto extends Controller
         }
 
         $dependencias = $showDependencySelect
-            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId)
+            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId, $selectedSedeId)
             : collect();
 
         if (
@@ -112,7 +115,7 @@ abstract class ControladorReporteAbstracto extends Controller
             : null;
         $serviceSelectionEnabled = $this->serviceSelectionEnabled($type, $selectedProceso);
         $servicios = $showDependencySelect && $serviceSelectionEnabled
-            ? $this->servicesForDependencia($selectedDependenciaId)
+            ? $this->servicesForDependencia($selectedDependenciaId, $selectedSedeId)
             : collect();
         $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
         $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
@@ -170,7 +173,8 @@ abstract class ControladorReporteAbstracto extends Controller
             $selectedTo,
             $selectedProcesoId,
             $selectedDependenciaId,
-            $selectedServiceIds
+            $selectedServiceIds,
+            $selectedSedeId
         );
 
         if (($report['observations'] ?? []) === []) {
@@ -185,6 +189,7 @@ abstract class ControladorReporteAbstracto extends Controller
                 'period' => $selectedQuarter?->periodLabel(),
                 'process' => $selectedProceso?->nombre,
                 'quarter' => $selectedQuarter?->label(),
+                'sede' => $this->selectedSedeLabel($selectedSedeId),
                 'services' => $selectedServiceNames !== [] ? implode(', ', $selectedServiceNames) : null,
                 'title' => $definition['title'],
             ]);
@@ -207,7 +212,9 @@ abstract class ControladorReporteAbstracto extends Controller
         $showProcessSelect = $type !== 'general';
         $showDependencySelect = $type === 'individual';
         $quarterYear = $this->reportingQuarterService->currentYear();
-        $quarters = $this->reportingQuarterService->forYear($quarterYear);
+        $selectedSedeId = $this->selectedSedeId($request, $type);
+        $quarters = $this->reportingQuarterService->forYear($quarterYear, $selectedSedeId);
+        $selectedSedeLabel = $this->selectedSedeLabel($selectedSedeId);
 
         $selectedQuarterNumber = $this->normalizeQuarter($request->query('trimestre'));
         $selectedQuarter = $selectedQuarterNumber !== null
@@ -238,7 +245,7 @@ abstract class ControladorReporteAbstracto extends Controller
         }
 
         $procesos = $showProcessSelect
-            ? $this->availableProcesos($forcedProcesoId)
+            ? $this->availableProcesos($forcedProcesoId, $selectedSedeId)
             : collect();
 
         if (
@@ -250,7 +257,7 @@ abstract class ControladorReporteAbstracto extends Controller
         }
 
         $dependencias = $showDependencySelect
-            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId)
+            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId, $selectedSedeId)
             : collect();
 
         if (
@@ -269,7 +276,7 @@ abstract class ControladorReporteAbstracto extends Controller
             : null;
         $serviceSelectionEnabled = $this->serviceSelectionEnabled($type, $selectedProceso);
         $servicios = $showDependencySelect && $serviceSelectionEnabled
-            ? $this->servicesForDependencia($selectedDependenciaId)
+            ? $this->servicesForDependencia($selectedDependenciaId, $selectedSedeId)
             : collect();
         $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
         $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
@@ -326,14 +333,15 @@ abstract class ControladorReporteAbstracto extends Controller
             if ($validator->fails()) {
                 $filterError = $validator->errors()->first();
             } else {
-                $report = $this->reportService->generate(
-                    $type,
-                    $selectedFrom,
-                    $selectedTo,
-                    $selectedProcesoId,
-                    $selectedDependenciaId,
-                    $selectedServiceIds
-                );
+                    $report = $this->reportService->generate(
+                        $type,
+                        $selectedFrom,
+                        $selectedTo,
+                        $selectedProcesoId,
+                        $selectedDependenciaId,
+                        $selectedServiceIds,
+                        $selectedSedeId
+                    );
 
                 $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedServiceIds);
                 $requiresConclusionConfirmation = $this->requiresConclusionConfirmation($report);
@@ -359,6 +367,7 @@ abstract class ControladorReporteAbstracto extends Controller
                             ),
                             $this->buildContextRows(
                                 $selectedQuarter,
+                                $selectedSedeLabel,
                                 $selectedProceso?->nombre,
                                 $selectedDependencia?->nombre,
                                 $selectedServiceNames
@@ -381,6 +390,7 @@ abstract class ControladorReporteAbstracto extends Controller
                 'trimestre' => $selectedQuarterNumber,
                 'id_proceso' => $selectedProcesoId,
                 'id_dependencia' => $selectedDependenciaId,
+                'id_sede' => $selectedSedeId,
                 'id_servicios' => $serviceSelectionEnabled && $selectedServiceIds !== [] ? $selectedServiceIds : null,
                 'export_pdf' => 1,
             ], static fn ($value): bool => $value !== null && $value !== ''));
@@ -398,6 +408,7 @@ abstract class ControladorReporteAbstracto extends Controller
             'procesos' => $procesos,
             'report' => $report,
             'requiresConclusionConfirmation' => $requiresConclusionConfirmation,
+            'selectedSedeId' => $selectedSedeId,
             'selectedDependenciaId' => $selectedDependenciaId,
             'selectedDependencyLocked' => $forcedDependenciaId !== null,
             'selectedProcessLocked' => $forcedProcesoId !== null,
@@ -405,10 +416,13 @@ abstract class ControladorReporteAbstracto extends Controller
             'selectedQuarterNumber' => $selectedQuarterNumber,
             'selectedQuarterPeriod' => $selectedQuarter?->periodLabel() ?? '',
             'selectedServiceIds' => $selectedServiceIds,
+            'sedes' => $this->availableSedesForReport($user, $type),
+            'showSedeSelect' => $this->showSedeSelect($user, $type),
             'serviceFilterProcessId' => $serviceFilterProcessId,
             'serviceSelectionEnabled' => $serviceSelectionEnabled,
             'selectionSummary' => $this->selectionSummary(
                 $selectedQuarter,
+                $selectedSedeLabel,
                 $selectedProceso?->nombre,
                 $selectedDependencia?->nombre,
                 $selectedServiceNames
@@ -524,6 +538,7 @@ abstract class ControladorReporteAbstracto extends Controller
      */
     private function buildContextRows(
         ?ReportingQuarter $quarter,
+        ?string $sedeName,
         ?string $processName,
         ?string $dependencyName,
         array $serviceNames = []
@@ -537,6 +552,10 @@ abstract class ControladorReporteAbstracto extends Controller
             $quarter ? [
                 'label' => 'Periodo',
                 'value' => $quarter->periodLabel(),
+            ] : null,
+            $sedeName ? [
+                'label' => 'Sede',
+                'value' => $sedeName,
             ] : null,
             $processName ? [
                 'label' => 'Proceso',
@@ -564,9 +583,10 @@ abstract class ControladorReporteAbstracto extends Controller
     /**
      * @return Collection<int, Proceso>
      */
-    private function availableProcesos(?int $forcedProcesoId): Collection
+    private function availableProcesos(?int $forcedProcesoId, ?int $sedeId): Collection
     {
         return Proceso::query()
+            ->forSede($sedeId)
             ->when($forcedProcesoId !== null, fn ($query) => $query->where('id_proceso', $forcedProcesoId))
             ->orderBy('nombre')
             ->get(['id_proceso', 'nombre']);
@@ -575,13 +595,14 @@ abstract class ControladorReporteAbstracto extends Controller
     /**
      * @return Collection<int, Dependencia>
      */
-    private function dependenciasForProceso(?int $procesoId, ?int $forcedDependenciaId): Collection
+    private function dependenciasForProceso(?int $procesoId, ?int $forcedDependenciaId, ?int $sedeId): Collection
     {
         if ($procesoId === null) {
             return collect();
         }
 
         return Dependencia::query()
+            ->forSede($sedeId)
             ->where('id_proceso', $procesoId)
             ->when($forcedDependenciaId !== null, fn ($query) => $query->where('id_dependencia', $forcedDependenciaId))
             ->orderBy('nombre')
@@ -591,13 +612,14 @@ abstract class ControladorReporteAbstracto extends Controller
     /**
      * @return Collection<int, Servicio>
      */
-    private function servicesForDependencia(?int $dependenciaId): Collection
+    private function servicesForDependencia(?int $dependenciaId, ?int $sedeId): Collection
     {
         if ($dependenciaId === null) {
             return collect();
         }
 
         return Servicio::query()
+            ->forSede($sedeId)
             ->where('id_dependencia', $dependenciaId)
             ->orderBy('nombre')
             ->get(['id_servicio', 'nombre', 'activo']);
@@ -605,6 +627,7 @@ abstract class ControladorReporteAbstracto extends Controller
 
     private function selectionSummary(
         ?ReportingQuarter $quarter,
+        ?string $sedeName,
         ?string $processName,
         ?string $dependencyName,
         array $serviceNames = []
@@ -615,6 +638,10 @@ abstract class ControladorReporteAbstracto extends Controller
         if ($quarter) {
             $parts[] = 'Trimestre: '.$quarter->label();
             $parts[] = 'Periodo: '.$quarter->periodLabel();
+        }
+
+        if ($sedeName) {
+            $parts[] = 'Sede: '.$sedeName;
         }
 
         if ($processName) {
@@ -756,6 +783,58 @@ abstract class ControladorReporteAbstracto extends Controller
         $normalized = (int) $value;
 
         return $normalized > 0 ? $normalized : null;
+    }
+
+    private function selectedSedeId(Request $request, string $type): ?int
+    {
+        $user = $request->user();
+
+        if ($type === 'general' && $user?->puedeAccederConsolidadoUniversitario() && ! $user->hasGlobalSedeAccess()) {
+            if (! $request->exists('id_sede')) {
+                return $user->id_sede ? (int) $user->id_sede : null;
+            }
+
+            $requestedSedeId = $this->sedeService->normalizeId($request->input('id_sede'));
+
+            if ($requestedSedeId === null) {
+                return null;
+            }
+
+            return (int) $user->id_sede === $requestedSedeId
+                ? $requestedSedeId
+                : ($user->id_sede ? (int) $user->id_sede : null);
+        }
+
+        return $this->sedeService->resolveForRequest(
+            $user,
+            $request,
+            'id_sede',
+            true,
+            true
+        );
+    }
+
+    private function selectedSedeLabel(?int $sedeId): string
+    {
+        return $this->sedeService->selectionLabel($sedeId);
+    }
+
+    private function showSedeSelect(?User $user, string $type): bool
+    {
+        if ($user?->hasGlobalSedeAccess()) {
+            return true;
+        }
+
+        return $type === 'general' && ($user?->puedeAccederConsolidadoUniversitario() ?? false);
+    }
+
+    private function availableSedesForReport(?User $user, string $type): Collection
+    {
+        if ($type === 'general' && ($user?->puedeAccederConsolidadoUniversitario() ?? false) && ! $user->hasGlobalSedeAccess()) {
+            return $this->sedeService->visibleTo($user);
+        }
+
+        return $this->sedeService->visibleTo($user);
     }
 
     /**

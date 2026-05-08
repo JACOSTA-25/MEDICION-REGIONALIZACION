@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\ReportingQuarter;
 use App\Services\Reportes\ServicioTrimestresReporte;
+use App\Services\Sedes\ServicioSedes;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -16,16 +17,18 @@ class PanelController extends Controller
 {
     public function __construct(
         private readonly ServicioTrimestresReporte $reportingQuarterService,
+        private readonly ServicioSedes $sedeService,
     ) {}
 
     public function index(Request $request): View
     {
+        $selectedSedeId = $this->selectedSedeId($request);
         $quarterYear = $this->reportingQuarterService->currentYear();
 
         return view('panel', [
             'puedeGestionarTrimestres' => $request->user()?->puedeGestionarTrimestresReporte() ?? false,
             'quarterYear' => $quarterYear,
-            'quarters' => $this->reportingQuarterService->forCurrentYear(),
+            'quarters' => $this->reportingQuarterService->forCurrentYear($selectedSedeId),
             'quarterLimits' => collect(range(1, 4))
                 ->mapWithKeys(function (int $quarterNumber) use ($quarterYear): array {
                     $range = $this->reportingQuarterService->calendarRange($quarterYear, $quarterNumber);
@@ -38,14 +41,21 @@ class PanelController extends Controller
                     ];
                 })
                 ->all(),
+            'quarterScopeLabel' => $this->sedeService->selectionLabel($selectedSedeId),
+            'selectedSedeId' => $selectedSedeId,
         ]);
     }
 
     public function updateQuarters(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $selectedSedeId = $this->selectedSedeId($request);
 
         abort_unless($user?->puedeGestionarTrimestresReporte(), 403);
+
+        if ($user?->isAdminSede()) {
+            abort_unless((int) $user->id_sede === (int) $selectedSedeId, 403);
+        }
 
         $year = $this->reportingQuarterService->currentYear();
         $validator = $this->validator($request, $year);
@@ -60,12 +70,13 @@ class PanelController extends Controller
         $this->reportingQuarterService->saveForYear(
             $year,
             $this->payload($request),
-            $user?->id
+            $user?->id,
+            $selectedSedeId
         );
 
         return redirect()
             ->route('dashboard')
-            ->with('quarter_status', 'Trimestres actualizados correctamente.');
+            ->with('quarter_status', 'Trimestres actualizados correctamente para '.$this->sedeService->selectionLabel($selectedSedeId).'.');
     }
 
     private function validator(Request $request, int $year): ValidationValidator
@@ -172,5 +183,13 @@ class PanelController extends Controller
         }
 
         return $quarters;
+    }
+
+    private function selectedSedeId(Request $request): ?int
+    {
+        return $this->sedeService->resolveForRequest(
+            $request->user(),
+            $request
+        );
     }
 }

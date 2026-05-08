@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToSede;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Respuesta extends Model
 {
-    use HasFactory;
+    use BelongsToSede, HasFactory;
 
     protected $table = 'respuesta';
 
@@ -21,6 +22,7 @@ class Respuesta extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_sede',
         'id_estamento',
         'id_programa',
         'id_proceso',
@@ -38,6 +40,7 @@ class Respuesta extends Model
     protected function casts(): array
     {
         return [
+            'id_sede' => 'integer',
             'id_estamento' => 'integer',
             'id_programa' => 'integer',
             'id_proceso' => 'integer',

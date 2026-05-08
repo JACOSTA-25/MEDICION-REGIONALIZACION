@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const procesoSelect = document.getElementById('id_proceso');
     const dependenciaSelect = document.getElementById('id_dependencia');
     const servicioSelect = document.getElementById('id_servicio');
+    const sedeInput = form.querySelector('input[name="id_sede"]');
     const selectedEstamentoId = () => estamentoSelect?.value || '';
+    const selectedSedeId = () => sedeInput?.value || '';
 
     const createPlaceholder = (label) => {
         const option = document.createElement('option');
@@ -85,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const params = new URLSearchParams({
+            id_sede: selectedSedeId(),
             id_proceso: procesoSelect.value,
         });
 
@@ -106,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const params = new URLSearchParams({
+            id_sede: selectedSedeId(),
             id_dependencia: dependenciaSelect.value,
         });
 
