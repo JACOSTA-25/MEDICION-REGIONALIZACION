@@ -1,0 +1,36 @@
+{
+  "_statistics-vendor-CO_Eze-g.js": {
+    "file": "assets/statistics-vendor-CO_Eze-g.js",
+    "name": "statistics-vendor"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-fAxREZLa.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BK6-_Jj-.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/encuesta/formulario.js": {
+    "file": "assets/formulario-DVVynp3l.js",
+    "name": "formulario",
+    "src": "resources/js/encuesta/formulario.js",
+    "isEntry": true
+  },
+  "resources/js/estadisticas/index.jsx": {
+    "file": "assets/index-B_SiHRb6.js",
+    "name": "index",
+    "src": "resources/js/estadisticas/index.jsx",
+    "isEntry": true,
+    "imports": [
+      "_statistics-vendor-CO_Eze-g.js"
+    ]
+  }
+}
