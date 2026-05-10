@@ -117,7 +117,7 @@
     </head>
     <body class="min-h-screen bg-[#04141b] antialiased">
         <div class="relative isolate min-h-screen overflow-hidden">
-            <div class="absolute inset-0 -z-30 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/fondo-uniguajira.png') }}')"></div>
+            <div class="absolute inset-0 -z-30 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/fondo-uniguajira.png') }}?v={{ filemtime(public_path('images/fondo-uniguajira.png')) }}')"></div>
             <div class="absolute inset-0 -z-20 bg-[linear-gradient(125deg,rgba(3,11,17,0.94)_6%,rgba(6,31,41,0.76)_40%,rgba(168,74,23,0.48)_100%)]"></div>
             <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(28,198,214,0.30),transparent_26%),radial-gradient(circle_at_86%_20%,rgba(253,186,24,0.24),transparent_22%),radial-gradient(circle_at_70%_78%,rgba(249,115,22,0.20),transparent_20%)]"></div>
             <div class="absolute inset-y-0 left-0 -z-10 hidden w-1/2 bg-[linear-gradient(90deg,rgba(4,20,27,0.88)_0%,rgba(4,20,27,0.62)_55%,rgba(4,20,27,0)_100%)] lg:block"></div>

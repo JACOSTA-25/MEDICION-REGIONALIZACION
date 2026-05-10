@@ -5,7 +5,8 @@
     "scripts": {
         "dev": "concurrently \"php artisan serve\" \"npm run vite\"",
         "vite": "vite",
-        "build": "rimraf public/hot && npx vite build"
+       // "build": "rimraf public/hot && npx vite build"
+       "build": "rm -rf public/hot && npx vite build"
     },
     "dependencies": {
         "@tailwindcss/vite": "^4.1.11",
