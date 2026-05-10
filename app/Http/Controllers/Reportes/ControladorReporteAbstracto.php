@@ -343,7 +343,7 @@ abstract class ControladorReporteAbstracto extends Controller
                         $selectedSedeId
                     );
 
-                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedServiceIds);
+                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedSedeId, $selectedServiceIds);
                 $requiresConclusionConfirmation = $this->requiresConclusionConfirmation($report);
                 $generatedConclusion = $this->sanitizeConclusion($request->query('generated_conclusion'));
 
@@ -673,12 +673,13 @@ abstract class ControladorReporteAbstracto extends Controller
         return 'Selecciona trimestre, proceso y dependencia para calcular el detalle individual.';
     }
 
-    private function pdfUnavailableReason(string $type, array $report, array $selectedServiceIds = []): ?string
+    private function pdfUnavailableReason(
+        string $type,
+        array $report,
+        ?int $selectedSedeId = null,
+        array $selectedServiceIds = []
+    ): ?string
     {
-        if ($type === 'general') {
-            return null;
-        }
-
         $surveyCount = (int) ($report['totals']['survey_count'] ?? 0);
 
         if ($surveyCount > 0) {
@@ -686,6 +687,9 @@ abstract class ControladorReporteAbstracto extends Controller
         }
 
         return match ($type) {
+            'general' => $selectedSedeId !== null
+                ? 'No se puede descargar el PDF porque la sede seleccionada no tiene respuestas en el periodo.'
+                : 'No se puede descargar el PDF porque no hay respuestas en el periodo seleccionado.',
             'process' => 'No se puede descargar el PDF porque el proceso seleccionado no tiene respuestas en el periodo.',
             'individual' => $selectedServiceIds !== []
                 ? 'No se puede descargar el PDF porque los servicios seleccionados no tienen respuestas en el periodo.'

@@ -8,6 +8,7 @@ use App\Models\Proceso;
 use App\Models\Programa;
 use App\Models\ReportingQuarter;
 use App\Models\Respuesta;
+use App\Models\Sede;
 use App\Models\Servicio;
 use App\Models\User;
 use App\Services\Reportes\ServicioImagenesGraficosPdf;
@@ -16,6 +17,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\EstamentoSeeder;
 use Database\Seeders\EstructuraOrganizacionalSeeder;
 use Database\Seeders\ProgramaSeeder;
+use Database\Seeders\SedeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -374,6 +376,76 @@ class ReportesEstadisticosTest extends TestCase
         }
     }
 
+    public function test_general_report_for_selected_sede_requires_confirmed_conclusion_before_enabling_pdf_download(): void
+    {
+        CarbonImmutable::setTestNow('2026-05-14 09:00:00');
+
+        try {
+            $this->seed(SedeSeeder::class);
+
+            $process = Proceso::query()->create([
+                'id_sede' => Sede::ID_FONSECA,
+                'nombre' => 'Proceso de prueba Fonseca',
+                'activo' => true,
+            ]);
+            $dependency = Dependencia::query()->create([
+                'id_sede' => Sede::ID_FONSECA,
+                'id_proceso' => $process->id_proceso,
+                'nombre' => 'Dependencia de prueba Fonseca',
+                'activo' => true,
+            ]);
+            $service = Servicio::query()->create([
+                'id_sede' => Sede::ID_FONSECA,
+                'id_dependencia' => $dependency->id_dependencia,
+                'nombre' => 'Servicio de prueba Fonseca',
+                'activo' => true,
+            ]);
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->create([
+                'id_sede' => Sede::ID_FONSECA,
+                'nombre' => 'Programa de prueba Fonseca',
+            ]);
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'id_sede' => Sede::ID_FONSECA,
+                'year' => 2026,
+                'quarter_number' => 2,
+                'start_date' => '2026-04-01',
+                'end_date' => '2026-06-30',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                (int) $process->id_proceso,
+                (int) $service->id_dependencia,
+                (int) $service->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-04-10 08:00:00',
+                'La atencion fue clara y amable en Fonseca.',
+                Sede::ID_FONSECA
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.general', [
+                    'id_sede' => Sede::ID_FONSECA,
+                    'trimestre' => 2,
+                ]));
+
+            $response->assertOk();
+            $response->assertSee('data-report-conclusion-shell', false);
+            $response->assertSee('data-report-pdf-button', false);
+            $response->assertSee('disabled', false);
+            $response->assertSee('Genera y confirma la conclusion para habilitar la descarga del PDF.', false);
+            $response->assertViewHas('selectedSedeId', Sede::ID_FONSECA);
+            $response->assertViewHas('report', fn (array $report): bool => $report['totals']['survey_count'] === 1);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
     public function test_general_report_conclusion_endpoint_returns_ai_generated_text(): void
     {
         CarbonImmutable::setTestNow('2026-03-14 09:00:00');
@@ -520,6 +592,57 @@ class ReportesEstadisticosTest extends TestCase
 
             $response->assertOk();
             $response->assertHeader('Content-Type', 'application/pdf');
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_general_report_pdf_cannot_be_downloaded_when_selected_sede_has_no_responses(): void
+    {
+        CarbonImmutable::setTestNow('2026-05-14 09:00:00');
+
+        try {
+            $this->seed(SedeSeeder::class);
+
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            ReportingQuarter::query()->create([
+                'id_sede' => Sede::ID_FONSECA,
+                'year' => 2026,
+                'quarter_number' => 2,
+                'start_date' => '2026-04-01',
+                'end_date' => '2026-06-30',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [5, 5, 5, 5, 5],
+                '2026-04-10 08:00:00',
+                'Respuesta registrada solo para Maicao.',
+                Sede::ID_MAICAO
+            );
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.general', [
+                    'id_sede' => Sede::ID_FONSECA,
+                    'trimestre' => 2,
+                    'export_pdf' => 1,
+                ]));
+
+            $response->assertOk();
+            $response->assertHeaderMissing('Content-Disposition');
+            $response->assertSee('No se puede descargar el PDF porque la sede seleccionada no tiene respuestas en el periodo.');
+            $response->assertDontSee('Descargar PDF');
+            $response->assertViewHas('selectedSedeId', Sede::ID_FONSECA);
+            $response->assertViewHas('report', fn (array $report): bool => $report['totals']['survey_count'] === 0);
         } finally {
             CarbonImmutable::setTestNow();
         }
@@ -1049,9 +1172,11 @@ class ReportesEstadisticosTest extends TestCase
         int $servicioId,
         array $answers,
         string $fechaRespuesta,
-        ?string $observaciones = null
+        ?string $observaciones = null,
+        int $sedeId = Sede::ID_MAICAO
     ): void {
         Respuesta::query()->create([
+            'id_sede' => $sedeId,
             'id_estamento' => $estamentoId,
             'id_programa' => $programaId,
             'id_proceso' => $procesoId,
