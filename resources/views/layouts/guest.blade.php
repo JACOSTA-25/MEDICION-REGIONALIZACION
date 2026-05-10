@@ -29,9 +29,13 @@
                 }
 
                 .ms-login-info {
-                    width: 22rem;
+                    position: fixed;
+                    left: clamp(1.5rem, 3vw, 3rem);
+                    bottom: clamp(1.5rem, 4vh, 3rem);
+                    width: min(48rem, calc(100vw - 31rem));
+                    max-width: 48rem;
+                    z-index: 10;
                     flex: 0 0 auto;
-                    transform: translate(-8.5rem, 6.4rem);
                 }
 
                 .ms-login-auth {
@@ -47,7 +51,10 @@
                 }
 
                 .ms-login-info {
-                    transform: translate(-9.25rem, 6.9rem);
+                    left: clamp(2rem, 4vw, 4rem);
+                    bottom: clamp(2rem, 5vh, 3.5rem);
+                    width: min(52rem, calc(100vw - 33rem));
+                    max-width: 52rem;
                 }
             }
 
@@ -86,18 +93,25 @@
                 z-index: 1;
             }
 
-            .ms-login-info-card {
-                border: 1px solid rgba(255, 255, 255, 0.09);
-                background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(11, 34, 48, 0.36) 100%);
+            .ms-login-info-lead {
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(8, 29, 40, 0.24) 100%);
                 box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
             }
 
             .ms-login-info-feature {
-                align-items: flex-start;
+                border: 1px solid rgba(255, 255, 255, 0.09);
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(11, 34, 48, 0.28) 100%);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
             }
 
             .ms-login-info-icon {
                 color: rgba(255, 255, 255, 0.92);
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .ms-login-info-track {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
         </style>
     </head>
@@ -112,65 +126,7 @@
 
             <main class="ms-login-stage relative mx-auto flex min-h-screen w-full items-center px-4 py-8 sm:px-6 lg:px-4">
                 <div class="ms-login-stage-inner flex w-full flex-col gap-8 lg:flex-row lg:items-center xl:gap-8">
-                    <section class="ms-login-info hidden lg:block">
-                        <div
-                            class="ms-login-info-shell w-full rounded-[2.1rem] p-3.5 xl:p-4"
-                        >
-                            <div class="ms-login-info-content mx-auto max-w-[19rem]">
-                                <div class="rounded-[1.5rem] bg-black/18 px-4 py-2.5 text-center">
-                                    <p class="text-[0.82rem] leading-6 text-white">
-                                        Gestiona la medicion institucional y mantén el seguimiento del servicio por sede.
-                                    </p>
-                                </div>
-
-                                <div class="mt-3 space-y-3">
-                                    <article class="ms-login-info-feature flex gap-3 px-1 py-1">
-                                        <div class="ms-login-info-icon flex h-10 w-10 shrink-0 items-center justify-center">
-                                            <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                                                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-                                                <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/>
-                                            </svg>
-                                        </div>
-
-                                        <div class="min-w-0 pt-0.5 text-left">
-                                            <h3 class="text-[1rem] font-semibold leading-5 text-white">Operacion por sede</h3>
-                                            <p class="mt-1 text-[0.74rem] leading-5 text-white">Gestiona procesos, servicios y mediciones de cada sede.</p>
-                                        </div>
-                                    </article>
-
-                                    <article class="ms-login-info-feature flex gap-3 px-1 py-1">
-                                        <div class="ms-login-info-icon flex h-10 w-10 shrink-0 items-center justify-center">
-                                            <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                                                <rect x="6" y="4.5" width="12" height="15" rx="2.2" stroke="currentColor" stroke-width="2"/>
-                                                <path d="M9 9.5h6M9 13h6M9 16.5h3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                            </svg>
-                                        </div>
-
-                                        <div class="min-w-0 pt-0.5 text-left">
-                                            <h3 class="text-[1rem] font-semibold leading-5 text-white">Control trimestral</h3>
-                                            <p class="mt-1 text-[0.74rem] leading-5 text-white">Supervisa periodos de corte y avances por dependencia.</p>
-                                        </div>
-                                    </article>
-
-                                    <article class="ms-login-info-feature flex gap-3 px-1 py-1">
-                                        <div class="ms-login-info-icon flex h-10 w-10 shrink-0 items-center justify-center">
-                                            <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                                                <path d="M6 18V10M12 18V6M18 18V13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-                                                <rect x="4.5" y="10" width="3" height="8" rx="1.2" stroke="currentColor" stroke-width="2"/>
-                                                <rect x="10.5" y="6" width="3" height="12" rx="1.2" stroke="currentColor" stroke-width="2"/>
-                                                <rect x="16.5" y="13" width="3" height="5" rx="1.2" stroke="currentColor" stroke-width="2"/>
-                                            </svg>
-                                        </div>
-
-                                        <div class="min-w-0 pt-0.5 text-left">
-                                            <h3 class="text-[1rem] font-semibold leading-5 text-white">Reporteria consolidada</h3>
-                                            <p class="mt-1 text-[0.74rem] leading-5 text-white">Consulta indicadores y reportes generales de la universidad.</p>
-                                        </div>
-                                    </article>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                   
 
                     <section class="ms-login-auth relative w-full">
                         <div class="absolute inset-6 rounded-[2rem] bg-[#16b8c6]/16 blur-3xl"></div>
