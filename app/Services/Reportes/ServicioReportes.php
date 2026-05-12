@@ -5,9 +5,11 @@ namespace App\Services\Reportes;
 use App\Models\Dependencia;
 use App\Models\Proceso;
 use App\Models\Respuesta;
+use App\Models\Sede;
 use App\Models\Servicio;
 use App\Support\Legacy\DatosReferenciaLegado;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class ServicioReportes
 {
@@ -540,6 +542,10 @@ class ServicioReportes
         array $serviceIds = [],
         ?int $sedeId = null,
     ): array {
+        if ($type === 'general' && $sedeId === null) {
+            return $this->getUniversityWideScopePopulationTable($from, $to);
+        }
+
         $baseQuery = $this->filteredQuery($from, $to, $processId, $dependencyId, $serviceIds, $sedeId);
 
         $definition = match ($type) {
@@ -634,6 +640,87 @@ class ServicioReportes
             'rows' => $rows,
             'total_general' => $totalGeneral,
         ];
+    }
+
+    /**
+     * @return array{
+     *      first_column_title: string,
+     *      second_column_title: string,
+     *      rows: array<int, array{label: string, total: int}>,
+     *      total_general: int
+     * }
+     */
+    private function getUniversityWideScopePopulationTable(string $from, string $to): array
+    {
+        $baseQuery = $this->filteredQuery($from, $to, null, null, [], null);
+
+        $countsBySede = (clone $baseQuery)
+            ->selectRaw('respuesta.id_sede as group_id, COUNT(*) as total')
+            ->where('respuesta.id_sede', '!=', Sede::ID_REGIONALIZACION)
+            ->groupBy('group_id')
+            ->get()
+            ->mapWithKeys(fn ($row): array => [(string) $row->group_id => (int) $row->total]);
+
+        $countsByRegionalizationProcess = (clone $baseQuery)
+            ->selectRaw('respuesta.id_proceso as group_id, COUNT(*) as total')
+            ->where('respuesta.id_sede', Sede::ID_REGIONALIZACION)
+            ->groupBy('group_id')
+            ->get()
+            ->mapWithKeys(fn ($row): array => [(string) $row->group_id => (int) $row->total]);
+
+        $rows = [];
+
+        foreach ($this->generalAggregatedSedes() as $sedeRow) {
+            $rows[] = [
+                'label' => (string) $sedeRow['nombre'],
+                'total' => (int) ($countsBySede[(string) $sedeRow['id']] ?? 0),
+            ];
+        }
+
+        $regionalizationProcesses = Proceso::query()
+            ->where('id_sede', Sede::ID_REGIONALIZACION)
+            ->active()
+            ->orderBy('nombre')
+            ->get(['id_proceso as id', 'nombre']);
+
+        foreach ($regionalizationProcesses as $process) {
+            $rows[] = [
+                'label' => (string) $process->nombre,
+                'total' => (int) ($countsByRegionalizationProcess[(string) $process->id] ?? 0),
+            ];
+        }
+
+        return [
+            'first_column_title' => 'Sede / Proceso',
+            'second_column_title' => 'Total encuestados',
+            'rows' => $rows,
+            'total_general' => (int) array_sum(array_column($rows, 'total')),
+        ];
+    }
+
+    /**
+     * @return Collection<int, array{id:int, nombre:string}>
+     */
+    private function generalAggregatedSedes(): Collection
+    {
+        $sedes = Sede::query()
+            ->where('id_sede', '!=', Sede::ID_REGIONALIZACION)
+            ->orderBy('id_sede')
+            ->get(['id_sede', 'nombre'])
+            ->map(fn (Sede $sede): array => [
+                'id' => (int) $sede->id_sede,
+                'nombre' => (string) $sede->nombre,
+            ]);
+
+        if ($sedes->isNotEmpty()) {
+            return $sedes->values();
+        }
+
+        return collect([
+            ['id' => Sede::ID_MAICAO, 'nombre' => 'Sede Maicao'],
+            ['id' => Sede::ID_FONSECA, 'nombre' => 'Sede Fonseca'],
+            ['id' => Sede::ID_VILLANUEVA, 'nombre' => 'Sede Villanueva'],
+        ]);
     }
 
     /**

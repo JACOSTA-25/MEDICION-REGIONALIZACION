@@ -10,6 +10,7 @@ use App\Models\Respuesta;
 use App\Models\Sede;
 use App\Models\Servicio;
 use App\Models\User;
+use Database\Seeders\SedeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,6 +20,8 @@ class RegionalizacionGeneralReportTest extends TestCase
 
     public function test_regionalizacion_admin_sede_can_view_university_wide_general_report(): void
     {
+        $this->seed(SedeSeeder::class);
+
         $this->createSurveyRecordForSede(Sede::ID_REGIONALIZACION, 'Regionalizacion');
         $this->createSurveyRecordForSede(Sede::ID_MAICAO, 'Maicao');
 
@@ -38,8 +41,50 @@ class RegionalizacionGeneralReportTest extends TestCase
             ->assertViewHas('report', fn (array $report): bool => (int) ($report['totals']['survey_count'] ?? 0) === 2);
     }
 
+    public function test_university_wide_general_report_groups_regular_sedes_and_keeps_regionalizacion_processes(): void
+    {
+        $this->seed(SedeSeeder::class);
+
+        $this->createSurveyRecordForSede(Sede::ID_MAICAO, 'Maicao');
+        $this->createSurveyRecordForSede(Sede::ID_FONSECA, 'Fonseca');
+        $this->createSurveyRecordForSede(Sede::ID_VILLANUEVA, 'Villanueva');
+        $this->createSurveyRecordForSede(Sede::ID_REGIONALIZACION, 'Regionalizacion A', 'Proceso Regionalizacion A');
+        $this->createSurveyRecordForSede(Sede::ID_REGIONALIZACION, 'Regionalizacion B', 'Proceso Regionalizacion B');
+
+        $user = User::factory()->create([
+            'rol' => User::ROLE_ADMIN_SEDE,
+            'id_sede' => Sede::ID_REGIONALIZACION,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('reports.general', [
+                'trimestre' => 1,
+                'id_sede' => '',
+            ]))
+            ->assertOk()
+            ->assertViewHas('selectedSedeId', null)
+            ->assertViewHas('report', function (array $report): bool {
+                $rows = collect($report['tables']['scope_population']['rows'] ?? []);
+
+                return ($report['tables']['scope_population']['first_column_title'] ?? null) === 'Sede / Proceso'
+                    && ($report['tables']['scope_population']['second_column_title'] ?? null) === 'Total encuestados'
+                    && (int) ($report['totals']['survey_count'] ?? 0) === 5
+                    && (int) ($report['tables']['scope_population']['total_general'] ?? 0) === 5
+                    && $rows->pluck('label')->all() === [
+                        'Sede Maicao',
+                        'Sede Fonseca',
+                        'Sede Villanueva',
+                        'Proceso Regionalizacion A',
+                        'Proceso Regionalizacion B',
+                    ]
+                    && $rows->pluck('total')->all() === [1, 1, 1, 1, 1];
+            });
+    }
+
     public function test_regular_admin_sede_remains_limited_to_its_own_sede_in_general_report(): void
     {
+        $this->seed(SedeSeeder::class);
+
         $this->createSurveyRecordForSede(Sede::ID_MAICAO, 'Maicao');
         $this->createSurveyRecordForSede(Sede::ID_FONSECA, 'Fonseca');
 
@@ -59,7 +104,7 @@ class RegionalizacionGeneralReportTest extends TestCase
             ->assertViewHas('report', fn (array $report): bool => (int) ($report['totals']['survey_count'] ?? 0) === 1);
     }
 
-    private function createSurveyRecordForSede(int $sedeId, string $label): void
+    private function createSurveyRecordForSede(int $sedeId, string $label, ?string $processName = null): void
     {
         $estamento = Estamento::query()->firstOrCreate([
             'nombre' => 'Estudiante',
@@ -72,7 +117,7 @@ class RegionalizacionGeneralReportTest extends TestCase
 
         $proceso = Proceso::query()->create([
             'id_sede' => $sedeId,
-            'nombre' => 'Proceso '.$label,
+            'nombre' => $processName ?? ('Proceso '.$label),
             'activo' => true,
         ]);
 
