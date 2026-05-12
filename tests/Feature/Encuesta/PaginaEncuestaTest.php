@@ -43,6 +43,7 @@ class PaginaEncuestaTest extends TestCase
         $response->assertSee('Encuesta de satisfaccion del servicio');
         $response->assertSee('Seleccione un estamento');
         $response->assertSee(Sede::query()->findOrFail(Sede::ID_MAICAO)->nombre);
+        $response->assertSee('name="contact_name"', false);
     }
 
     public function test_dashboard_remains_protected_by_authentication(): void

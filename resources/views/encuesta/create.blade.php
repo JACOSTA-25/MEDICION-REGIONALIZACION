@@ -81,6 +81,10 @@
                         <form method="POST" action="{{ route('survey.store') }}" class="space-y-8" data-survey-form>
                             @csrf
                             <input type="hidden" name="id_sede" value="{{ $selectedSede->id_sede }}">
+                            <div class="hidden" aria-hidden="true">
+                                <label for="contact_name">No diligenciar este campo</label>
+                                <input id="contact_name" type="text" name="contact_name" tabindex="-1" autocomplete="off">
+                            </div>
 
                             <div class="grid gap-6 md:grid-cols-2">
                                 <div>

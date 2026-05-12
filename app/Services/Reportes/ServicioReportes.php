@@ -656,14 +656,6 @@ class ServicioReportes
 
         $countsBySede = (clone $baseQuery)
             ->selectRaw('respuesta.id_sede as group_id, COUNT(*) as total')
-            ->where('respuesta.id_sede', '!=', Sede::ID_REGIONALIZACION)
-            ->groupBy('group_id')
-            ->get()
-            ->mapWithKeys(fn ($row): array => [(string) $row->group_id => (int) $row->total]);
-
-        $countsByRegionalizationProcess = (clone $baseQuery)
-            ->selectRaw('respuesta.id_proceso as group_id, COUNT(*) as total')
-            ->where('respuesta.id_sede', Sede::ID_REGIONALIZACION)
             ->groupBy('group_id')
             ->get()
             ->mapWithKeys(fn ($row): array => [(string) $row->group_id => (int) $row->total]);
@@ -674,19 +666,6 @@ class ServicioReportes
             $rows[] = [
                 'label' => (string) $sedeRow['nombre'],
                 'total' => (int) ($countsBySede[(string) $sedeRow['id']] ?? 0),
-            ];
-        }
-
-        $regionalizationProcesses = Proceso::query()
-            ->where('id_sede', Sede::ID_REGIONALIZACION)
-            ->active()
-            ->orderBy('nombre')
-            ->get(['id_proceso as id', 'nombre']);
-
-        foreach ($regionalizationProcesses as $process) {
-            $rows[] = [
-                'label' => (string) $process->nombre,
-                'total' => (int) ($countsByRegionalizationProcess[(string) $process->id] ?? 0),
             ];
         }
 
@@ -704,12 +683,13 @@ class ServicioReportes
     private function generalAggregatedSedes(): Collection
     {
         $sedes = Sede::query()
-            ->where('id_sede', '!=', Sede::ID_REGIONALIZACION)
             ->orderBy('id_sede')
             ->get(['id_sede', 'nombre'])
             ->map(fn (Sede $sede): array => [
                 'id' => (int) $sede->id_sede,
-                'nombre' => (string) $sede->nombre,
+                'nombre' => (int) $sede->id_sede === Sede::ID_REGIONALIZACION
+                    ? 'Oficina de Regionalización'
+                    : (string) $sede->nombre,
             ]);
 
         if ($sedes->isNotEmpty()) {
@@ -720,6 +700,7 @@ class ServicioReportes
             ['id' => Sede::ID_MAICAO, 'nombre' => 'Sede Maicao'],
             ['id' => Sede::ID_FONSECA, 'nombre' => 'Sede Fonseca'],
             ['id' => Sede::ID_VILLANUEVA, 'nombre' => 'Sede Villanueva'],
+            ['id' => Sede::ID_REGIONALIZACION, 'nombre' => 'Oficina de Regionalización'],
         ]);
     }
 

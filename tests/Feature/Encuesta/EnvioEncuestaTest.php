@@ -157,6 +157,48 @@ class EnvioEncuestaTest extends TestCase
         ]);
     }
 
+    public function test_honeypot_field_must_remain_empty(): void
+    {
+        $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
+        $payload['contact_name'] = 'Bot automatizado';
+
+        $response = $this->from($surveyRoute)->post(route('survey.store'), $payload);
+
+        $response->assertRedirect($surveyRoute);
+        $response->assertSessionHasErrors('contact_name');
+        $this->assertDatabaseCount('respuesta', 0);
+    }
+
+    public function test_public_survey_submission_is_rate_limited_after_many_attempts(): void
+    {
+        config([
+            'security.rate_limits.public_survey.per_minute' => 2,
+            'security.rate_limits.public_survey.per_hour' => 3,
+        ]);
+
+        $payload = $this->validPayloadForEstamento('Estudiante');
+        $surveyRoute = $this->surveyRouteForPayload($payload);
+
+        $this->withHeaders(['User-Agent' => 'RateLimitTest/1.0'])
+            ->from($surveyRoute)
+            ->post(route('survey.store'), $payload)
+            ->assertRedirect($surveyRoute);
+
+        $this->withHeaders(['User-Agent' => 'RateLimitTest/1.0'])
+            ->from($surveyRoute)
+            ->post(route('survey.store'), $payload)
+            ->assertRedirect($surveyRoute);
+
+        $response = $this->withHeaders(['User-Agent' => 'RateLimitTest/1.0'])
+            ->from($surveyRoute)
+            ->post(route('survey.store'), $payload);
+
+        $response->assertRedirect($surveyRoute);
+        $response->assertSessionHasErrors('rate_limit');
+        $this->assertDatabaseCount('respuesta', 2);
+    }
+
     private function validPayloadForEstamento(string $nombreEstamento): array
     {
         $estamento = Estamento::query()->where('nombre', $nombreEstamento)->firstOrFail();

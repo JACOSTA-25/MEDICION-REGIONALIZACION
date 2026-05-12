@@ -22,6 +22,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public Registration
+    |--------------------------------------------------------------------------
+    |
+    | This flag controls whether guest users may create accounts directly
+    | from the public registration screen. It should remain disabled for
+    | institutional deployments that manage users from the admin module.
+    |
+    */
+
+    'allow_public_registration' => env('AUTH_ENABLE_PUBLIC_REGISTRATION', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Guards
     |--------------------------------------------------------------------------
     |

@@ -18,12 +18,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
-Route::get('/encuesta/catalogos/dependencias', [EncuestaController::class, 'dependencias'])->name('survey.catalogs.dependencias');
-Route::get('/encuesta/catalogos/servicios', [EncuestaController::class, 'servicios'])->name('survey.catalogs.servicios');
+Route::get('/encuesta/catalogos/dependencias', [EncuestaController::class, 'dependencias'])
+    ->middleware('throttle:survey-catalogs')
+    ->name('survey.catalogs.dependencias');
+Route::get('/encuesta/catalogos/servicios', [EncuestaController::class, 'servicios'])
+    ->middleware('throttle:survey-catalogs')
+    ->name('survey.catalogs.servicios');
 Route::get('/encuesta/acceso', [EncuestaController::class, 'access'])
     ->middleware('signed')
     ->name('survey.access');
-Route::post('/encuesta', [EncuestaController::class, 'store'])->name('survey.store');
+Route::post('/encuesta', [EncuestaController::class, 'store'])
+    ->middleware('throttle:public-survey')
+    ->name('survey.store');
 Route::get('/encuesta/{sede?}', [EncuestaController::class, 'create'])
     ->where('sede', 'maicao|fonseca|villanueva|regionalizacion')
     ->name('survey.create');

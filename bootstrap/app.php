@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SecureHeaders;
 use App\Http\Middleware\EnsureModuleAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -12,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(SecureHeaders::class);
         $middleware->alias([
             'module.access' => EnsureModuleAccess::class,
         ]);

@@ -35,6 +35,7 @@ class GuardarRespuestaPublicaEncuestaRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'contact_name' => ['nullable', 'max:0'],
             'id_sede' => ['required', 'integer', 'exists:sede,id_sede'],
             'id_dependencia' => [
                 'required',

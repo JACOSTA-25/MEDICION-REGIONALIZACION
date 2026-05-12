@@ -74,10 +74,9 @@ class RegionalizacionGeneralReportTest extends TestCase
                         'Sede Maicao',
                         'Sede Fonseca',
                         'Sede Villanueva',
-                        'Proceso Regionalizacion A',
-                        'Proceso Regionalizacion B',
+                        'Oficina de Regionalización',
                     ]
-                    && $rows->pluck('total')->all() === [1, 1, 1, 1, 1];
+                    && $rows->pluck('total')->all() === [1, 1, 1, 2];
             });
     }
 
