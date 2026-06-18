@@ -26,11 +26,15 @@
         @include('layouts.navbar')
         @include('layouts.sidebar')
 
-        <main id="ms-main" class="ms-main">
+        <main id="ms-main" class="ms-main menu-toggle">
             <div class="p-4 sm:p-6 lg:p-8">
                 {{ $slot }}
             </div>
         </main>
+
+        <form id="ms-auto-logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
+            @csrf
+        </form>
 
         <script>
             window.MSLayout = {
@@ -48,6 +52,34 @@
                     menu.classList.toggle('menu-toggle');
                 },
             };
+
+            // Cierre de sesion automatico tras 5 minutos de inactividad.
+            (function () {
+                const INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
+                let inactivityTimer = null;
+
+                function logoutByInactivity() {
+                    const form = document.getElementById('ms-auto-logout-form');
+
+                    if (form) {
+                        form.submit();
+                    }
+                }
+
+                function resetInactivityTimer() {
+                    if (inactivityTimer) {
+                        clearTimeout(inactivityTimer);
+                    }
+
+                    inactivityTimer = setTimeout(logoutByInactivity, INACTIVITY_LIMIT_MS);
+                }
+
+                ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(function (eventName) {
+                    document.addEventListener(eventName, resetInactivityTimer, { passive: true });
+                });
+
+                resetInactivityTimer();
+            })();
         </script>
     </body>
 </html>

@@ -2,7 +2,7 @@
     $user = auth()->user();
 @endphp
 
-<aside class="ms-sidebar" id="ms-sidebar">
+<aside class="ms-sidebar menu-toggle" id="ms-sidebar">
     <nav>
         <ul class="list-unstyled">
             <li>
@@ -67,7 +67,7 @@
             @if ($user->puedeAccederModuloProgramas())
                 <li>
                     <a href="{{ route('programs.index') }}" class="{{ request()->routeIs('programs.*') ? 'selected' : '' }}">
-                        <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Programas"></span>
+                        <span class="icon"><img src="{{ asset('assets/icons/programas.svg') }}" alt="Programas"></span>
                         <span>Programas</span>
                     </a>
                 </li>
@@ -76,7 +76,7 @@
             @if ($user->puedeAccederModuloEstructuraOrganizacional())
                 <li>
                     <a href="{{ route('process-dependency.index') }}" class="{{ request()->routeIs('process-dependency.*') ? 'selected' : '' }}">
-                        <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Procesos y dependencias"></span>
+                        <span class="icon"><img src="{{ asset('assets/icons/estructura.svg') }}" alt="Procesos y dependencias"></span>
                         <span>Procesos y dependencias</span>
                     </a>
                 </li>

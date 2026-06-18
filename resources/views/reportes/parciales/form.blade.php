@@ -390,7 +390,7 @@
                             <table class="ms-data-table">
                                 <thead>
                                     <tr>
-                                        <th>Dimension</th>
+                                        <th>Pregunta</th>
                                         <th>Satisfechos</th>
                                         <th>Neutros</th>
                                         <th>Insatisfechos</th>
@@ -400,10 +400,22 @@
                                 <tbody>
                                     @foreach ($report['tables']['satisfaction_consolidated'] as $row)
                                         <tr>
-                                            <td>{{ $row['dimension'] }}</td>
-                                            <td>{{ $row['satisfechos'] }}</td>
-                                            <td>{{ $row['neutros'] }}</td>
-                                            <td>{{ $row['insatisfechos'] }}</td>
+                                            <td>
+                                                <strong>{{ $row['number'] }}.</strong>
+                                                {{ $row['dimension'] }}
+                                            </td>
+                                            <td>
+                                                {{ $row['satisfechos'] }}
+                                                <span>{{ $row['porcentaje_satisfechos'] }}%</span>
+                                            </td>
+                                            <td>
+                                                {{ $row['neutros'] }}
+                                                <span>{{ $row['porcentaje_neutros'] }}%</span>
+                                            </td>
+                                            <td>
+                                                {{ $row['insatisfechos'] }}
+                                                <span>{{ $row['porcentaje_insatisfechos'] }}%</span>
+                                            </td>
                                             <td>{{ $row['porcentaje_satisfechos'] }}%</td>
                                         </tr>
                                     @endforeach

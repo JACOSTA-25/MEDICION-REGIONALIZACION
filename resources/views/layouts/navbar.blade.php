@@ -12,7 +12,7 @@
 <header class="ms-header">
     <div class="left">
         <div class="ms-menu-container" onclick="window.MSLayout.toggleSidebar()">
-            <div class="ms-menu" id="ms-menu">
+            <div class="ms-menu menu-toggle" id="ms-menu">
                 <div></div>
                 <div></div>
                 <div></div>
