@@ -1,4 +1,8 @@
 <section id="cambiar-contrasena">
+    @php
+        $passwordUpdated = session('status') === 'password-updated';
+    @endphp
+
     <header>
         <h2 class="text-lg font-medium text-gray-900">
             {{ __('Cambiar contrasena') }}
@@ -22,6 +26,9 @@
         <div>
             <x-input-label for="update_password_password" :value="__('Nueva contrasena')" />
             <x-text-input id="update_password_password" name="password" type="password" class="mt-1 block w-full" autocomplete="new-password" />
+            <p class="mt-2 text-sm text-slate-500">
+                La nueva contrasena debe tener minimo 8 caracteres.
+            </p>
             <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
         </div>
 
@@ -33,16 +40,27 @@
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Guardar contrasena') }}</x-primary-button>
-
-            @if (session('status') === 'password-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Guardado.') }}</p>
-            @endif
         </div>
     </form>
+
+    <x-modal name="password-updated-dialog" :show="$passwordUpdated" focusable>
+        <div class="space-y-5 p-6">
+            <div>
+                <h3 class="text-lg font-semibold text-slate-900">Contrasena actualizada</h3>
+                <p class="mt-2 text-sm text-slate-600">
+                    La contrasena ha sido cambiada correctamente.
+                </p>
+            </div>
+
+            <div class="flex justify-end">
+                <button
+                    type="button"
+                    x-on:click="$dispatch('close-modal', 'password-updated-dialog')"
+                    class="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                >
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </x-modal>
 </section>

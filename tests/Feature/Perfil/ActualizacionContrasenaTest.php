@@ -54,4 +54,38 @@ class ActualizacionContrasenaTest extends TestCase
             ->assertRedirect(route('profile.edit'))
             ->assertSessionHasErrorsIn('updatePassword', ['current_password']);
     }
+
+    public function test_new_password_must_have_at_least_eight_characters(): void
+    {
+        $user = User::factory()->create([
+            'password_hash' => Hash::make('password'),
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this
+            ->from(route('profile.edit'))
+            ->put(route('password.update'), [
+                'current_password' => 'password',
+                'password' => 'corta7',
+                'password_confirmation' => 'corta7',
+            ]);
+
+        $response
+            ->assertRedirect(route('profile.edit'))
+            ->assertSessionHasErrorsIn('updatePassword', ['password']);
+    }
+
+    public function test_profile_page_displays_success_dialog_after_password_update(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withSession(['status' => 'password-updated'])
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Contrasena actualizada')
+            ->assertSee('La contrasena ha sido cambiada correctamente.')
+            ->assertSee('password-updated-dialog');
+    }
 }
