@@ -29,9 +29,11 @@ class ActualizacionContrasenaTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('password_update_notice');
 
         $this->assertTrue(Hash::check('new-password', $user->refresh()->password_hash));
+        $this->assertGuest();
     }
 
     public function test_correct_password_must_be_provided_to_update_password(): void
@@ -76,16 +78,48 @@ class ActualizacionContrasenaTest extends TestCase
             ->assertSessionHasErrorsIn('updatePassword', ['password']);
     }
 
-    public function test_profile_page_displays_success_dialog_after_password_update(): void
+    public function test_password_confirmation_error_is_shown_in_spanish(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'password_hash' => Hash::make('password'),
+        ]);
 
-        $this->actingAs($user)
-            ->withSession(['status' => 'password-updated'])
+        $this->actingAs($user);
+
+        $response = $this
+            ->from(route('profile.edit'))
+            ->put(route('password.update'), [
+                'current_password' => 'password',
+                'password' => 'nueva-clave-segura',
+                'password_confirmation' => 'otra-clave-distinta',
+            ]);
+
+        $response->assertRedirect(route('profile.edit'));
+
+        $errors = session('errors');
+
+        $this->assertNotNull($errors);
+        $this->assertSame(
+            'La confirmacion de la nueva contrasena no coincide.',
+            $errors->getBag('updatePassword')->first('password')
+        );
+    }
+
+    public function test_login_page_displays_success_dialog_after_password_update(): void
+    {
+        $this->withSession([
+            'password_update_notice' => [
+                'title' => 'Contrasena actualizada correctamente',
+                'message' => 'Por seguridad, cerramos tu sesion. Ingresa nuevamente con tu nueva contrasena para continuar.',
+            ],
+        ])
             ->get(route('profile.edit'))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Contrasena actualizada')
-            ->assertSee('La contrasena ha sido cambiada correctamente.')
-            ->assertSee('password-updated-dialog');
+            ->assertSee('Contrasena actualizada correctamente')
+            ->assertSee('Por seguridad, cerramos tu sesion. Ingresa nuevamente con tu nueva contrasena para continuar.')
+            ->assertSee('Continuar al acceso');
     }
 }

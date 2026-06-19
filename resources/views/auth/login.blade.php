@@ -1,4 +1,8 @@
 <x-guest-layout>
+    @php
+        $passwordUpdateNotice = session('password_update_notice');
+    @endphp
+
     @if ($errors->has('login'))
         <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-6" x-cloak>
             <div class="w-full max-w-sm rounded-[1.75rem] border border-white/55 bg-white/94 p-6 text-center shadow-[0_30px_90px_-35px_rgba(2,12,18,0.95)] backdrop-blur-xl">
@@ -15,6 +19,33 @@
                     @click="open = false"
                 >
                     Entendido
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @if (is_array($passwordUpdateNotice))
+        <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-6" x-cloak>
+            <div class="w-full max-w-md rounded-[1.9rem] border border-white/60 bg-white/96 p-7 text-center shadow-[0_35px_110px_-40px_rgba(2,12,18,0.95)] backdrop-blur-xl">
+                <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-100/80">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-10 w-10 text-emerald-600" aria-hidden="true">
+                        <path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <h2 class="mt-6 text-2xl font-black tracking-tight text-slate-950">
+                    {{ $passwordUpdateNotice['title'] ?? 'Contrasena actualizada correctamente' }}
+                </h2>
+                <p class="mt-3 text-sm leading-7 text-slate-600">
+                    {{ $passwordUpdateNotice['message'] ?? 'Por seguridad, cerramos tu sesion. Ingresa nuevamente con tu nueva contrasena para continuar.' }}
+                </p>
+
+                <button
+                    type="button"
+                    class="mt-7 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-white"
+                    @click="open = false"
+                >
+                    Continuar al acceso
                 </button>
             </div>
         </div>
