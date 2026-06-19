@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class PasswordController extends Controller
@@ -27,16 +26,7 @@ class PasswordController extends Controller
             'password_hash' => Hash::make($validated['password']),
         ]);
 
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()
-            ->route('login')
-            ->with('password_update_notice', [
-                'title' => 'Contrasena actualizada correctamente',
-                'message' => 'Por seguridad, cerramos tu sesion. Ingresa nuevamente con tu nueva contrasena para continuar.',
-            ]);
+        return redirect(route('profile.edit').'#cambiar-contrasena')
+            ->with('status', 'password-updated');
     }
 }

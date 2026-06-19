@@ -29,11 +29,11 @@ class ActualizacionContrasenaTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('login'))
-            ->assertSessionHas('password_update_notice');
+            ->assertRedirect(route('profile.edit').'#cambiar-contrasena')
+            ->assertSessionHas('status', 'password-updated');
 
         $this->assertTrue(Hash::check('new-password', $user->refresh()->password_hash));
-        $this->assertGuest();
+        $this->assertAuthenticatedAs($user->refresh());
     }
 
     public function test_correct_password_must_be_provided_to_update_password(): void
@@ -105,21 +105,29 @@ class ActualizacionContrasenaTest extends TestCase
         );
     }
 
-    public function test_login_page_displays_success_dialog_after_password_update(): void
+    public function test_profile_page_displays_success_dialog_before_logout_after_password_update(): void
     {
-        $this->withSession([
-            'password_update_notice' => [
-                'title' => 'Contrasena actualizada correctamente',
-                'message' => 'Por seguridad, cerramos tu sesion. Ingresa nuevamente con tu nueva contrasena para continuar.',
-            ],
-        ])
-            ->get(route('profile.edit'))
-            ->assertRedirect(route('login'));
+        $user = User::factory()->create();
 
-        $this->get(route('login'))
+        $this->actingAs($user)
+            ->withSession(['status' => 'password-updated'])
+            ->get(route('profile.edit'))
             ->assertOk()
             ->assertSee('Contrasena actualizada correctamente')
-            ->assertSee('Por seguridad, cerramos tu sesion. Ingresa nuevamente con tu nueva contrasena para continuar.')
-            ->assertSee('Continuar al acceso');
+            ->assertSee('Tu nueva contrasena fue registrada con exito. Para proteger tu cuenta, al cerrar este mensaje se cerrara tu sesion y deberas ingresar nuevamente.')
+            ->assertSee('Aceptar')
+            ->assertSee('password_updated_logout');
+    }
+
+    public function test_password_updated_logout_closes_session_and_redirects_to_login(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('logout'), [
+            'password_updated_logout' => '1',
+        ]);
+
+        $this->assertGuest();
+        $response->assertRedirect(route('login'));
     }
 }
