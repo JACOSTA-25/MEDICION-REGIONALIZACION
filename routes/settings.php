@@ -3,7 +3,7 @@
 use App\Http\Controllers\Perfil\PerfilController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'session.security'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
     Route::get('settings/profile', [PerfilController::class, 'edit'])
