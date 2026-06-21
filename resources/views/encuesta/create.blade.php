@@ -16,6 +16,9 @@
 
         <title>Encuesta de satisfaccion</title>
 
+        <link rel="icon" type="image/webp" href="{{ asset('images/logo-uniguajira-seo-150x150.webp') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/logo-uniguajira-seo-150x150.webp') }}">
+
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/encuesta/formulario.js'])
     </head>
