@@ -36,11 +36,17 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $passwordUpdatedLogout = $request->boolean('password_updated_logout');
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
+
+        if ($passwordUpdatedLogout) {
+            return redirect()->route('login');
+        }
 
         return redirect('/');
     }

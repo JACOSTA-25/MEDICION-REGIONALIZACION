@@ -86,6 +86,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Display name enriched with the assigned organizational scope for leader roles.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $scopeName = null;
+
+        if ($this->isLiderProceso()) {
+            $scopeName = $this->proceso?->nombre;
+        } elseif ($this->isLiderDependencia()) {
+            $scopeName = $this->dependencia?->nombre;
+        }
+
+        return $scopeName
+            ? sprintf('%s - %s', (string) $this->nombre, $scopeName)
+            : (string) $this->nombre;
+    }
+
+    /**
      * Get the user's initials.
      */
     public function initials(): string

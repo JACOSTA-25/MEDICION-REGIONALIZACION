@@ -4,6 +4,8 @@ namespace Tests\Feature\Panel;
 
 use App\Models\ReportingQuarter;
 use App\Models\Sede;
+use App\Models\Proceso;
+use App\Models\Dependencia;
 use App\Models\User;
 use App\Services\Reportes\ServicioTrimestresReporte;
 use App\Services\Sedes\ServicioSedes;
@@ -62,6 +64,56 @@ class PanelTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('Todas las sedes');
+    }
+
+    public function test_process_leader_sees_the_assigned_process_name_next_to_their_name(): void
+    {
+        $proceso = Proceso::query()->create([
+            'id_sede' => Sede::ID_MAICAO,
+            'nombre' => 'Gestion Academica',
+            'activo' => true,
+        ]);
+
+        $leader = User::factory()->create([
+            'nombre' => 'Juan Perez',
+            'rol' => User::ROLE_LIDER_PROCESO,
+            'id_sede' => Sede::ID_MAICAO,
+            'id_proceso' => $proceso->id_proceso,
+        ]);
+
+        $this->actingAs($leader)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Juan Perez - Gestion Academica');
+    }
+
+    public function test_dependency_leader_sees_the_assigned_dependency_name_next_to_their_name(): void
+    {
+        $proceso = Proceso::query()->create([
+            'id_sede' => Sede::ID_MAICAO,
+            'nombre' => 'Bienestar Institucional',
+            'activo' => true,
+        ]);
+
+        $dependencia = Dependencia::query()->create([
+            'id_sede' => Sede::ID_MAICAO,
+            'id_proceso' => $proceso->id_proceso,
+            'nombre' => 'Atencion al Estudiante',
+            'activo' => true,
+        ]);
+
+        $leader = User::factory()->create([
+            'nombre' => 'Maria Gomez',
+            'rol' => User::ROLE_LIDER_DEPENDENCIA,
+            'id_sede' => Sede::ID_MAICAO,
+            'id_proceso' => $proceso->id_proceso,
+            'id_dependencia' => $dependencia->id_dependencia,
+        ]);
+
+        $this->actingAs($leader)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Maria Gomez - Atencion al Estudiante');
     }
 
     public function test_global_users_can_update_the_active_sede_scope_from_the_navbar(): void

@@ -43,7 +43,7 @@
         @endif
 
         <button class="ms-user-btn" @click="open = !open" type="button">
-            <span class="ms-user-name">{{ $user->nombre }}</span>
+            <span class="ms-user-name">{{ $user->display_name }}</span>
             <span class="ms-user-avatar">{{ $initial }}</span>
         </button>
 

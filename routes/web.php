@@ -34,7 +34,7 @@ Route::get('/encuesta/{sede?}', [EncuestaController::class, 'create'])
     ->where('sede', 'maicao|fonseca|villanueva|regionalizacion')
     ->name('survey.create');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'session.security'])->group(function () {
     Route::get('/dashboard', [PanelController::class, 'index'])->name('dashboard');
     Route::put('/dashboard/trimestres', [PanelController::class, 'updateQuarters'])->name('dashboard.quarters.update');
     Route::post('/contexto/sede', [ContextoSedeController::class, 'update'])->name('sedes.scope.update');
