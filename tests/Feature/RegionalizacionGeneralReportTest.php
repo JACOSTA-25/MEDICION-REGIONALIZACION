@@ -31,7 +31,8 @@ class RegionalizacionGeneralReportTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('reports.general', [
+            ->get(route('reports.index', [
+                'tipo' => 'general',
                 'trimestre' => 1,
                 'id_sede' => '',
             ]))
@@ -57,7 +58,8 @@ class RegionalizacionGeneralReportTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('reports.general', [
+            ->get(route('reports.index', [
+                'tipo' => 'general',
                 'trimestre' => 1,
                 'id_sede' => '',
             ]))
@@ -93,7 +95,8 @@ class RegionalizacionGeneralReportTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('reports.general', [
+            ->get(route('reports.index', [
+                'tipo' => 'general',
                 'trimestre' => 1,
                 'id_sede' => '',
             ]))

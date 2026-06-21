@@ -12,29 +12,11 @@
                 </a>
             </li>
 
-            @if ($user->puedeAccederReportesGenerales())
+            @if ($user->puedeAccederModuloReportes())
                 <li>
-                    <a href="{{ route('reports.general') }}" class="{{ request()->routeIs('reports.general') ? 'selected' : '' }}">
-                        <span class="icon"><img src="{{ asset('assets/icons/reportes.svg') }}" alt="Reporte general"></span>
-                        <span>Reporte general</span>
-                    </a>
-                </li>
-            @endif
-
-            @if ($user->puedeAccederReportesProceso())
-                <li>
-                    <a href="{{ route('reports.process') }}" class="{{ request()->routeIs('reports.process') ? 'selected' : '' }}">
-                        <span class="icon"><img src="{{ asset('assets/icons/inventario.svg') }}" alt="Reporte por proceso"></span>
-                        <span>Reporte por proceso</span>
-                    </a>
-                </li>
-            @endif
-
-            @if ($user->puedeAccederReportesIndividuales())
-                <li>
-                    <a href="{{ route('reports.individual') }}" class="{{ request()->routeIs('reports.individual') ? 'selected' : '' }}">
-                        <span class="icon"><img src="{{ asset('assets/icons/file.svg') }}" alt="Reporte individual"></span>
-                        <span>Reporte individual</span>
+                    <a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'selected' : '' }}">
+                        <span class="icon"><img src="{{ asset('assets/icons/reportes.svg') }}" alt="Reportes"></span>
+                        <span>Reportes</span>
                     </a>
                 </li>
             @endif
@@ -47,13 +29,6 @@
                     </a>
                 </li>
             @endif
-
-            <li>
-                <a href="{{ route('survey.qr') }}" class="{{ request()->routeIs('survey.qr') ? 'selected' : '' }}">
-                    <span class="icon"><img src="{{ asset('assets/icons/qr.svg') }}" alt="QR de encuesta"></span>
-                    <span>QR de encuesta</span>
-                </a>
-            </li>
 
             @if ($user->puedeAccederModuloUsuarios())
                 <li>

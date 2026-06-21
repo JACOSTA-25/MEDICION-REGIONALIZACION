@@ -12,30 +12,18 @@
             : route('survey.create'));
     $quarterErrors = $errors->getBag('updateQuarters');
 
+    $qrSubject = 'Encuesta institucional de medicion de servicios';
+    $qrBody = 'Comparto el acceso directo a la encuesta institucional:'."\n\n".$surveyLink;
+    $qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=16&data='.urlencode($surveyLink);
+    $gmailShareUrl = 'https://mail.google.com/mail/?view=cm&fs=1&su='.urlencode($qrSubject).'&body='.urlencode($qrBody);
+    $whatsAppShareUrl = 'https://wa.me/?text='.urlencode('Comparto el acceso directo a la encuesta institucional: '.$surveyLink);
+
     $modules = [
         [
-            'visible' => $user->puedeAccederReportesGenerales(),
-            'title' => 'Reporte general',
-            'description' => 'Modulo de reporteria general consolidada.',
-            'route' => route('reports.general'),
-        ],
-        [
-            'visible' => $user->puedeAccederReportesProceso(),
-            'title' => 'Reporte por proceso',
-            'description' => 'Modulo para informes por proceso.',
-            'route' => route('reports.process'),
-        ],
-        [
-            'visible' => $user->puedeAccederReportesIndividuales(),
-            'title' => 'Reporte individual',
-            'description' => 'Modulo para informe individual por dependencia.',
-            'route' => route('reports.individual'),
-        ],
-        [
-            'visible' => true,
-            'title' => 'QR de encuesta',
-            'description' => 'Modulo para compartir y descargar el codigo QR del formulario.',
-            'route' => route('survey.qr'),
+            'visible' => $user->puedeAccederModuloReportes(),
+            'title' => 'Reportes',
+            'description' => 'Modulo de reporteria: general, por proceso e individual segun tu rol.',
+            'route' => route('reports.index'),
         ],
         [
             'visible' => $user->puedeAccederModuloUsuarios(),
@@ -69,28 +57,53 @@
             <div class="ms-dashboard-stack">
                 <section class="ms-report-card">
                     <div class="ms-report-card-header">
-                        <h2>Enlace fijo de la encuesta</h2>
-                        <p>El formulario publico siempre es el mismo. Copia el enlace o abre la encuesta directamente.</p>
+                        <h2>Codigo QR de la encuesta</h2>
+                        <p>El formulario publico siempre es el mismo. Escanea el codigo QR, comparte la encuesta o descarga el codigo en formato PNG.</p>
                     </div>
 
-                    <div class="ms-link-panel">
-                        <label for="dashboard-survey-link">URL publica</label>
-                        <input
-                            id="dashboard-survey-link"
-                            type="text"
-                            readonly
-                            value="{{ $surveyLink }}"
-                        >
+                    <input type="hidden" id="dashboard-survey-link" value="{{ $surveyLink }}">
 
-                        <div class="ms-inline-actions">
-                            <button type="button" class="ms-btn ms-btn-secondary" data-copy-trigger data-copy-target="#dashboard-survey-link">
-                                Copiar enlace
-                            </button>
+                    <div class="ms-qr-share">
+                        <div class="ms-qr-share-image">
+                            <img
+                                src="{{ $qrImageUrl }}"
+                                alt="Codigo QR de la encuesta institucional"
+                                class="block w-full max-w-[320px] rounded-2xl"
+                                loading="eager"
+                            >
+                        </div>
+
+                        <div class="ms-form-actions">
                             <a href="{{ $surveyLink }}" target="_blank" rel="noopener noreferrer" class="ms-btn ms-btn-primary">
                                 Abrir encuesta
                             </a>
+                            <button
+                                type="button"
+                                class="ms-btn ms-btn-primary"
+                                data-qr-download-button
+                                data-qr-image-url="{{ $qrImageUrl }}"
+                                data-qr-filename="qr-encuesta-medicion.png"
+                            >
+                                Descargar QR
+                            </button>
+                            <a href="{{ $gmailShareUrl }}" target="_blank" rel="noopener noreferrer" class="ms-btn ms-btn-secondary">
+                                Compartir por Correo
+                            </a>
+                            <a href="{{ $whatsAppShareUrl }}" target="_blank" rel="noopener noreferrer" class="ms-btn ms-btn-secondary">
+                                Compartir por WhatsApp
+                            </a>
+                            <button type="button" class="ms-btn ms-btn-secondary" data-copy-trigger data-copy-target="#dashboard-survey-link">
+                                Copiar link
+                            </button>
+                            <a href="{{ $qrImageUrl }}" target="_blank" rel="noopener noreferrer" class="ms-btn ms-btn-secondary">
+                                Ver imagen
+                            </a>
                         </div>
                     </div>
+
+                    <p class="ms-form-note" data-qr-download-status>
+                        Puedes abrir el enlace, copiarlo, descargar el QR o compartirlo directamente por Gmail y WhatsApp.
+                    </p>
                 </section>
 
                 <section class="ms-report-card ms-report-card-accent">

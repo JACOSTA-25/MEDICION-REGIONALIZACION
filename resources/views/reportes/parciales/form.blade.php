@@ -19,16 +19,37 @@
 
                 <form
                     method="GET"
-                    action="{{ route(request()->route()->getName()) }}"
+                    action="{{ route('reports.index') }}"
                     class="ms-report-form"
                     data-report-filter-form
-                    @if ($showDependencySelect)
+                    @if ($canSelectDependency)
                         data-dependencias-endpoint="{{ route('survey.catalogs.dependencias') }}"
-                        data-servicios-endpoint="{{ route('reports.individual.services') }}"
+                        data-servicios-endpoint="{{ route('reports.services') }}"
                         data-service-filter-process-id="{{ $serviceFilterProcessId ?? '' }}"
                     @endif
                 >
                     <div class="ms-report-fields">
+                        @php $allowedTypes = $allowedTypes ?? [$reportType]; @endphp
+                        <div class="ms-field">
+                            <label for="tipo">Tipo de reporte</label>
+                            @if (count($allowedTypes) > 1)
+                                <select id="tipo" name="tipo" data-report-type-select>
+                                    @foreach ($allowedTypes as $allowedType)
+                                        <option value="{{ $allowedType }}" @selected($reportType === $allowedType)>
+                                            {{ $reportTypeLabels[$allowedType] ?? $allowedType }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="ms-field-help">Selecciona el tipo de reporte que deseas generar.</small>
+                            @else
+                                <select id="tipo" data-report-type-select disabled>
+                                    <option value="{{ $reportType }}" selected>{{ $reportTypeLabels[$reportType] ?? $reportType }}</option>
+                                </select>
+                                <input type="hidden" name="tipo" value="{{ $reportType }}">
+                                <small class="ms-field-help">Tu rol solo habilita este tipo de reporte.</small>
+                            @endif
+                        </div>
+
                         @if ($showSedeSelect)
                             <div class="ms-field">
                                 <label for="id_sede">Sede</label>
@@ -63,14 +84,19 @@
                             @endif
                         </div>
 
-                        @if ($showProcessSelect)
-                            <div class="ms-field">
+                        @if ($canSelectProcess)
+                            @php
+                                $procesoSelectAttrs = $selectedProcessLocked
+                                    ? 'disabled'
+                                    : 'data-toggle-disabled'.($showProcessSelect ? '' : ' disabled');
+                            @endphp
+                            <div class="ms-field" data-show-for="process individual" @unless ($showProcessSelect) hidden @endunless>
                                 <label for="id_proceso">Proceso</label>
                                 <select
                                     id="id_proceso"
                                     name="id_proceso"
                                     data-process-select
-                                    {{ $selectedProcessLocked ? 'disabled' : '' }}
+                                    {!! $procesoSelectAttrs !!}
                                 >
                                     <option value="">Seleccione un proceso</option>
                                     @foreach ($procesos as $proceso)
@@ -80,20 +106,25 @@
                                     @endforeach
                                 </select>
                                 @if ($selectedProcessLocked)
-                                    <input type="hidden" name="id_proceso" value="{{ $selectedProcesoId }}">
+                                    <input type="hidden" name="id_proceso" value="{{ $selectedProcesoId }}" data-toggle-disabled @unless ($showProcessSelect) disabled @endunless>
                                 @endif
                             </div>
                         @endif
 
-                        @if ($showDependencySelect)
-                            <div class="ms-field">
+                        @if ($canSelectDependency)
+                            @php
+                                $dependencySelectAttrs = $selectedDependencyLocked
+                                    ? 'disabled'
+                                    : 'data-toggle-disabled'.(($dependencias->isEmpty() || ! $showDependencySelect) ? ' disabled' : '');
+                            @endphp
+                            <div class="ms-field" data-show-for="individual" @unless ($showDependencySelect) hidden @endunless>
                                 <label for="id_dependencia">Dependencia</label>
                                 <select
                                     id="id_dependencia"
                                     name="id_dependencia"
                                     data-dependency-select
                                     data-selected="{{ $selectedDependenciaId }}"
-                                    {{ $dependencias->isEmpty() || $selectedDependencyLocked ? 'disabled' : '' }}
+                                    {!! $dependencySelectAttrs !!}
                                 >
                                     <option value="">Seleccione una dependencia</option>
                                     @foreach ($dependencias as $dependencia)
@@ -103,7 +134,7 @@
                                     @endforeach
                                 </select>
                                 @if ($selectedDependencyLocked)
-                                    <input type="hidden" name="id_dependencia" value="{{ $selectedDependenciaId }}">
+                                    <input type="hidden" name="id_dependencia" value="{{ $selectedDependenciaId }}" data-toggle-disabled @unless ($showDependencySelect) disabled @endunless>
                                 @endif
                             </div>
 
@@ -111,7 +142,7 @@
                                 class="ms-field ms-field-services"
                                 data-services-shell
                                 data-selected-services='@json($selectedServiceIds ?? [])'
-                                @if (! ($serviceSelectionEnabled ?? false))
+                                @if (! (($serviceSelectionEnabled ?? false) && $showDependencySelect))
                                     hidden
                                 @endif
                             >
@@ -193,9 +224,10 @@
             <aside class="ms-report-card ms-report-card-accent">
                 <div class="ms-report-card-header">
                     <h2>Resumen del filtro</h2>
-                    <p>{{ $selectionSummary }}</p>
+                    <p data-report-summary-text>{{ $selectionSummary }}</p>
                 </div>
 
+                <div data-report-summary-body>
                 @if ($report)
                     <div class="ms-stat-grid">
                         <div class="ms-stat-card ms-stat-card-compact">
@@ -227,11 +259,12 @@
                         Genera el reporte para ver estadisticas consolidadas y exportar el PDF.
                     </div>
                 @endif
+                </div>
             </aside>
         </div>
 
         @if ($report)
-            <div class="ms-report-results ms-report-accordion">
+            <div class="ms-report-results ms-report-accordion" data-report-results>
                 <details class="ms-report-card ms-report-card-collapsible">
                     <summary class="ms-report-card-summary">
                         <span class="ms-report-card-summary-copy">

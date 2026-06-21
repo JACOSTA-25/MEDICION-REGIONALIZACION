@@ -32,14 +32,16 @@ class PanelTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_authenticated_users_can_see_the_survey_qr_module_on_dashboard(): void
+    public function test_authenticated_users_can_see_the_survey_qr_on_dashboard(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('QR de encuesta');
+            ->assertSee('Codigo QR de la encuesta')
+            ->assertSee('Descargar QR')
+            ->assertSee('Copiar link');
     }
 
     public function test_global_users_see_the_global_sede_switcher_in_the_navbar(): void
@@ -122,10 +124,10 @@ class PanelTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('sedes.scope.update'), [
             'id_sede' => Sede::ID_FONSECA,
-            'redirect_to' => route('reports.general', ['id_sede' => Sede::ID_MAICAO, 'trimestre' => 2]),
+            'redirect_to' => route('reports.index', ['tipo' => 'general', 'id_sede' => Sede::ID_MAICAO, 'trimestre' => 2]),
         ]);
 
-        $response->assertRedirect(route('reports.general', ['trimestre' => 2]));
+        $response->assertRedirect(route('reports.index', ['tipo' => 'general', 'trimestre' => 2]));
         $this->assertSame(Sede::ID_FONSECA, session(ServicioSedes::SESSION_SCOPE_KEY));
     }
 
@@ -256,9 +258,7 @@ class PanelTest extends TestCase
             ->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Reporte general');
-        $response->assertSee('Reporte por proceso');
-        $response->assertSee('Reporte individual');
+        $response->assertSee('Reportes');
     }
 
     public function test_dashboard_uses_sede_specific_quarter_configuration_when_scope_is_a_sede(): void
@@ -301,7 +301,6 @@ class PanelTest extends TestCase
             ->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Reporte por proceso');
-        $response->assertSee('Reporte individual');
+        $response->assertSee('Reportes');
     }
 }

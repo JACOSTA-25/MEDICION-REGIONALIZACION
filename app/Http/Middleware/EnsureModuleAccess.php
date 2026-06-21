@@ -24,6 +24,7 @@ class EnsureModuleAccess
             'statistics_processes' => $user->puedeAccederEstadisticasProcesos(),
             'statistics_dependencies' => $user->puedeAccederEstadisticasDependencias(),
             'statistics_services' => $user->puedeAccederEstadisticasServicios(),
+            'reports' => $user->puedeAccederModuloReportes(),
             'general_reports' => $user->puedeAccederReportesGenerales(),
             'process_reports' => $user->puedeAccederReportesProceso(),
             'individual_reports' => $user->puedeAccederReportesIndividuales(),

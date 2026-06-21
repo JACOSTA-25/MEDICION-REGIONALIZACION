@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-report-shell]').forEach((shell) => {
         const form = shell.querySelector('[data-report-filter-form]');
+        const typeSelect = shell.querySelector('[data-report-type-select]');
         const sedeSelect = shell.querySelector('[data-sede-select]');
         const processSelect = shell.querySelector('[data-process-select]');
         const dependencySelect = shell.querySelector('[data-dependency-select]');
@@ -73,8 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const currentReportType = () => typeSelect?.value ?? 'individual';
+
         const serviceSelectionEnabled = () => {
             if (!servicesShell || serviceFilterProcessId === '') {
+                return false;
+            }
+
+            if (typeSelect && currentReportType() !== 'individual') {
                 return false;
             }
 
@@ -83,6 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             return String(processSelect.value) === serviceFilterProcessId;
+        };
+
+        const toggleFieldsForType = (type) => {
+            shell.querySelectorAll('[data-show-for]').forEach((field) => {
+                const applies = field.dataset.showFor.split(/\s+/).includes(type);
+                field.hidden = !applies;
+
+                field.querySelectorAll('[data-toggle-disabled]').forEach((control) => {
+                    control.disabled = !applies;
+                });
+            });
         };
 
         const resetServicesList = (message) => {
@@ -106,6 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const enabled = serviceSelectionEnabled();
             servicesShell.hidden = !enabled;
             servicesShell.setAttribute('aria-hidden', enabled ? 'false' : 'true');
+
+            servicesShell.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+                checkbox.disabled = !enabled;
+            });
 
             if (!enabled) {
                 servicesShell.dataset.selectedServices = '[]';
@@ -351,6 +373,64 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (serviceSelectionEnabled() && dependencySelect.value) {
                     await loadServices();
                 }
+            });
+        }
+
+        const applyReportType = ({ cascade = false } = {}) => {
+            const type = currentReportType();
+            toggleFieldsForType(type);
+            syncServicesVisibility();
+
+            if (cascade && type === 'individual' && processSelect?.value) {
+                loadDependencies()
+                    .then(() => {
+                        if (serviceSelectionEnabled() && dependencySelect?.value) {
+                            return loadServices();
+                        }
+
+                        return undefined;
+                    })
+                    .catch((error) => console.error(error));
+            }
+        };
+
+        const resetGeneratedReportState = () => {
+            confirmedConclusion = '';
+            lastGeneratedConclusion = '';
+            setPdfButtonEnabled(false);
+
+            if (conclusionTextarea) {
+                conclusionTextarea.value = '';
+            }
+
+            setConclusionStatus(
+                canGenerateConclusion
+                    ? 'Genera la conclusion y confirmala para habilitar el PDF.'
+                    : 'Escribe y confirma la conclusion para habilitar el PDF.',
+            );
+
+            const summaryText = document.querySelector('[data-report-summary-text]');
+            if (summaryText) {
+                summaryText.textContent = 'Selecciona un trimestre y genera el consolidado de satisfaccion.';
+            }
+
+            const summaryBody = document.querySelector('[data-report-summary-body]');
+            if (summaryBody) {
+                summaryBody.innerHTML = '<div class="ms-inline-alert ms-inline-alert-soft">Genera el reporte para ver estadisticas consolidadas y exportar el PDF.</div>';
+            }
+
+            const reportResults = document.querySelector('[data-report-results]');
+            if (reportResults) {
+                reportResults.remove();
+            }
+        };
+
+        if (typeSelect) {
+            applyReportType();
+
+            typeSelect.addEventListener('change', () => {
+                resetGeneratedReportState();
+                applyReportType({ cascade: true });
             });
         }
 

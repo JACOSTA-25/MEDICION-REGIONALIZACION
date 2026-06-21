@@ -21,9 +21,18 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-abstract class ControladorReporteAbstracto extends Controller
+class ReporteController extends Controller
 {
     protected const INDIVIDUAL_SERVICE_FILTER_PROCESS = 'Gestion Bienestar Social Universitario';
+
+    /**
+     * @var array<string, string>
+     */
+    protected const TYPE_LABELS = [
+        'general' => 'Reporte general',
+        'process' => 'Reporte por proceso',
+        'individual' => 'Reporte individual',
+    ];
 
     public function __construct(
         protected readonly ServicioReportes $reportService,
@@ -33,22 +42,261 @@ abstract class ControladorReporteAbstracto extends Controller
         protected readonly ServicioSedes $sedeService,
     ) {}
 
-    /**
-     * @return array{
-     *     type: string,
-     *     view: string,
-     *     title: string,
-     *     description: string,
-     *     summary: string
-     * }
-     */
-    abstract protected function definition(): array;
+    public function index(Request $request): View|Response
+    {
+        $user = $request->user();
+        $allowedTypes = $this->allowedTypes($user);
+        $type = $this->resolveType($request, $allowedTypes);
+        $definition = $this->definitionFor($type);
+
+        $showProcessSelect = $type !== 'general';
+        $showDependencySelect = $type === 'individual';
+        $canSelectProcess = in_array('process', $allowedTypes, true) || in_array('individual', $allowedTypes, true);
+        $canSelectDependency = in_array('individual', $allowedTypes, true);
+
+        $quarterYear = $this->reportingQuarterService->currentYear();
+        $selectedSedeId = $this->selectedSedeId($request, $type);
+        $quarters = $this->reportingQuarterService->forYear($quarterYear, $selectedSedeId);
+        $selectedSedeLabel = $this->selectedSedeLabel($selectedSedeId);
+
+        $selectedQuarterNumber = $this->normalizeQuarter($request->query('trimestre'));
+        $selectedQuarter = $selectedQuarterNumber !== null
+            ? $quarters->firstWhere('quarter_number', $selectedQuarterNumber)
+            : null;
+        $selectedFrom = $selectedQuarter?->start_date?->toDateString() ?? '';
+        $selectedTo = $selectedQuarter?->end_date?->toDateString() ?? '';
+        $selectedProcesoId = $this->normalizeId($request->query('id_proceso'));
+        $selectedDependenciaId = $this->normalizeId($request->query('id_dependencia'));
+        $requestedServiceIds = $this->normalizeIds($request->query('id_servicios'));
+
+        $forcedProcesoId = match (true) {
+            $canSelectProcess && $user?->isLiderProceso() && $user->id_proceso => (int) $user->id_proceso,
+            $canSelectProcess && $user?->isLiderDependencia() && $user->id_proceso => (int) $user->id_proceso,
+            default => null,
+        };
+
+        $forcedDependenciaId = $canSelectDependency && $user?->isLiderDependencia() && $user->id_dependencia
+            ? (int) $user->id_dependencia
+            : null;
+
+        if ($forcedProcesoId !== null) {
+            $selectedProcesoId = $forcedProcesoId;
+        }
+
+        if ($forcedDependenciaId !== null) {
+            $selectedDependenciaId = $forcedDependenciaId;
+        }
+
+        $procesos = $canSelectProcess
+            ? $this->availableProcesos($forcedProcesoId, $selectedSedeId)
+            : collect();
+
+        if (
+            $canSelectProcess &&
+            $selectedProcesoId !== null &&
+            ! $procesos->contains(fn (Proceso $proceso) => (int) $proceso->id_proceso === $selectedProcesoId)
+        ) {
+            $selectedProcesoId = $forcedProcesoId;
+        }
+
+        $dependencias = $canSelectDependency
+            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId, $selectedSedeId)
+            : collect();
+
+        if (
+            $canSelectDependency &&
+            $selectedDependenciaId !== null &&
+            ! $dependencias->contains(fn (Dependencia $dependencia) => (int) $dependencia->id_dependencia === $selectedDependenciaId)
+        ) {
+            $selectedDependenciaId = $forcedDependenciaId;
+        }
+
+        $selectedProceso = $canSelectProcess
+            ? $procesos->firstWhere('id_proceso', $selectedProcesoId)
+            : null;
+        $selectedDependencia = $canSelectDependency
+            ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
+            : null;
+        $serviceSelectionEnabled = $canSelectDependency
+            && $selectedProceso instanceof Proceso
+            && $this->isIndividualServiceFilterProcess($selectedProceso->nombre);
+        $servicios = $canSelectDependency && $serviceSelectionEnabled
+            ? $this->servicesForDependencia($selectedDependenciaId, $selectedSedeId)
+            : collect();
+        $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
+        $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
+        $selectedServiceNames = $this->selectedServiceNames($servicios, $selectedServiceIds);
+        $serviceFilterProcessId = $this->serviceFilterProcessId($procesos);
+
+        $attempted = $this->filtersWereSubmitted($request, $showProcessSelect, $showDependencySelect);
+        $filterError = null;
+        $pdfUnavailableReason = null;
+        $report = null;
+        $requiresConclusionConfirmation = false;
+
+        if ($attempted) {
+            $validator = Validator::make($request->query(), [
+                'trimestre' => ['required', 'integer', 'between:1,4'],
+                'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
+                'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
+                'id_servicios' => $showDependencySelect && $serviceSelectionEnabled ? ['nullable', 'array'] : ['nullable'],
+                'id_servicios.*' => $showDependencySelect && $serviceSelectionEnabled ? ['integer'] : ['nullable'],
+            ]);
+
+            $validator->after(function ($validator) use (
+                $selectedQuarter,
+                $showProcessSelect,
+                $showDependencySelect,
+                $selectedProceso,
+                $selectedDependencia,
+                $type,
+                $servicios,
+                $selectedServiceIds,
+                $invalidSelectedServiceIds
+            ): void {
+                if (! $selectedQuarter) {
+                    $validator->errors()->add('trimestre', 'Selecciona un trimestre valido para generar el reporte.');
+                }
+
+                if ($showProcessSelect && ! $selectedProceso) {
+                    $validator->errors()->add('id_proceso', 'Selecciona un proceso valido para generar el reporte.');
+                }
+
+                if ($showDependencySelect && ! $selectedDependencia) {
+                    $validator->errors()->add('id_dependencia', 'Selecciona una dependencia valida para generar el reporte.');
+                }
+
+                if ($showDependencySelect && $invalidSelectedServiceIds !== []) {
+                    $validator->errors()->add('id_servicios', 'Selecciona servicios validos para generar el reporte.');
+                }
+
+                if ($this->requiresServiceSelection($type, $servicios) && $selectedServiceIds === []) {
+                    $validator->errors()->add('id_servicios', 'Selecciona uno o varios servicios para generar el reporte individual.');
+                }
+            });
+
+            if ($validator->fails()) {
+                $filterError = $validator->errors()->first();
+            } else {
+                [$generateProcesoId, $generateDependenciaId, $generateServiceIds] = $this->scopedSelectionForType(
+                    $type,
+                    $selectedProcesoId,
+                    $selectedDependenciaId,
+                    $selectedServiceIds
+                );
+
+                $report = $this->reportService->generate(
+                    $type,
+                    $selectedFrom,
+                    $selectedTo,
+                    $generateProcesoId,
+                    $generateDependenciaId,
+                    $generateServiceIds,
+                    $selectedSedeId
+                );
+
+                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedSedeId, $generateServiceIds);
+                $requiresConclusionConfirmation = $this->requiresConclusionConfirmation($report);
+                $generatedConclusion = $this->sanitizeConclusion($request->query('generated_conclusion'));
+
+                if ($request->boolean('export_pdf')) {
+                    if ($pdfUnavailableReason !== null) {
+                        $filterError = $pdfUnavailableReason;
+                    } elseif ($requiresConclusionConfirmation && $generatedConclusion === null) {
+                        $filterError = 'Debes generar o confirmar la conclusion antes de descargar el PDF.';
+                    } else {
+                        return $this->exportReport(
+                            $type,
+                            $definition['title'],
+                            $definition['description'],
+                            $report,
+                            $this->resolveSignature(
+                                $type,
+                                $generateProcesoId,
+                                $generateDependenciaId,
+                                $selectedProceso?->nombre,
+                                $selectedDependencia?->nombre
+                            ),
+                            $this->buildContextRows(
+                                $selectedQuarter,
+                                $selectedSedeLabel,
+                                $type !== 'general' ? $selectedProceso?->nombre : null,
+                                $type === 'individual' ? $selectedDependencia?->nombre : null,
+                                $type === 'individual' ? $selectedServiceNames : []
+                            ),
+                            $generatedConclusion
+                        );
+                    }
+                }
+            }
+        }
+
+        $conclusionUrl = route('reports.conclusion');
+        $pdfUrl = null;
+
+        if ($report && $pdfUnavailableReason === null) {
+            $pdfUrl = route('reports.index', array_filter([
+                'tipo' => $type,
+                'trimestre' => $selectedQuarterNumber,
+                'id_proceso' => $type !== 'general' ? $selectedProcesoId : null,
+                'id_dependencia' => $type === 'individual' ? $selectedDependenciaId : null,
+                'id_sede' => $selectedSedeId,
+                'id_servicios' => $type === 'individual' && $serviceSelectionEnabled && $selectedServiceIds !== [] ? $selectedServiceIds : null,
+                'export_pdf' => 1,
+            ], static fn ($value): bool => $value !== null && $value !== ''));
+        }
+
+        return view('reportes.index', [
+            'allowedTypes' => $allowedTypes,
+            'reportType' => $type,
+            'reportTypeLabels' => self::TYPE_LABELS,
+            'canSelectProcess' => $canSelectProcess,
+            'canSelectDependency' => $canSelectDependency,
+            'dependencias' => $dependencias,
+            'description' => $definition['description'],
+            'filterError' => $filterError,
+            'conclusionUrl' => $conclusionUrl,
+            'pdfUrl' => $pdfUrl,
+            'pdfUnavailableReason' => $pdfUnavailableReason,
+            'quarterYear' => $quarterYear,
+            'quarters' => $quarters,
+            'procesos' => $procesos,
+            'report' => $report,
+            'requiresConclusionConfirmation' => $requiresConclusionConfirmation,
+            'selectedSedeId' => $selectedSedeId,
+            'selectedDependenciaId' => $selectedDependenciaId,
+            'selectedDependencyLocked' => $forcedDependenciaId !== null,
+            'selectedProcessLocked' => $forcedProcesoId !== null,
+            'selectedProcesoId' => $selectedProcesoId,
+            'selectedQuarterNumber' => $selectedQuarterNumber,
+            'selectedQuarterPeriod' => $selectedQuarter?->periodLabel() ?? '',
+            'selectedServiceIds' => $selectedServiceIds,
+            'sedes' => $this->availableSedesForReport($user, $type),
+            'showSedeSelect' => $this->showSedeSelect($user, $type),
+            'serviceFilterProcessId' => $serviceFilterProcessId,
+            'serviceSelectionEnabled' => $serviceSelectionEnabled,
+            'selectionSummary' => $this->selectionSummary(
+                $selectedQuarter,
+                $selectedSedeLabel,
+                $type !== 'general' ? $selectedProceso?->nombre : null,
+                $type === 'individual' ? $selectedDependencia?->nombre : null,
+                $type === 'individual' ? $selectedServiceNames : []
+            ),
+            'servicios' => $servicios,
+            'showDependencySelect' => $showDependencySelect,
+            'showProcessSelect' => $showProcessSelect,
+            'summary' => $this->summaryForView($definition, $serviceSelectionEnabled),
+            'title' => $definition['title'],
+        ]);
+    }
 
     public function generateConclusion(Request $request): JsonResponse
     {
-        $definition = $this->definition();
-        $type = $definition['type'];
         $user = $request->user();
+        $allowedTypes = $this->allowedTypes($user);
+        $type = $this->resolveType($request, $allowedTypes);
+        $definition = $this->definitionFor($type);
+
         $showProcessSelect = $type !== 'general';
         $showDependencySelect = $type === 'individual';
         $quarterYear = $this->reportingQuarterService->currentYear();
@@ -167,13 +415,20 @@ abstract class ControladorReporteAbstracto extends Controller
             ], 422);
         }
 
+        [$generateProcesoId, $generateDependenciaId, $generateServiceIds] = $this->scopedSelectionForType(
+            $type,
+            $selectedProcesoId,
+            $selectedDependenciaId,
+            $selectedServiceIds
+        );
+
         $report = $this->reportService->generate(
             $type,
             $selectedFrom,
             $selectedTo,
-            $selectedProcesoId,
-            $selectedDependenciaId,
-            $selectedServiceIds,
+            $generateProcesoId,
+            $generateDependenciaId,
+            $generateServiceIds,
             $selectedSedeId
         );
 
@@ -185,12 +440,12 @@ abstract class ControladorReporteAbstracto extends Controller
 
         try {
             $conclusion = $this->aiConclusionService->generate($type, $report, [
-                'dependency' => $selectedDependencia?->nombre,
+                'dependency' => $type === 'individual' ? $selectedDependencia?->nombre : null,
                 'period' => $selectedQuarter?->periodLabel(),
-                'process' => $selectedProceso?->nombre,
+                'process' => $type !== 'general' ? $selectedProceso?->nombre : null,
                 'quarter' => $selectedQuarter?->label(),
                 'sede' => $this->selectedSedeLabel($selectedSedeId),
-                'services' => $selectedServiceNames !== [] ? implode(', ', $selectedServiceNames) : null,
+                'services' => $type === 'individual' && $selectedServiceNames !== [] ? implode(', ', $selectedServiceNames) : null,
                 'title' => $definition['title'],
             ]);
         } catch (\RuntimeException $exception) {
@@ -204,235 +459,130 @@ abstract class ControladorReporteAbstracto extends Controller
         ]);
     }
 
-    final protected function renderReportModule(Request $request): View|Response
+    public function services(Request $request): JsonResponse
     {
-        $definition = $this->definition();
-        $type = $definition['type'];
-        $user = $request->user();
-        $showProcessSelect = $type !== 'general';
-        $showDependencySelect = $type === 'individual';
-        $quarterYear = $this->reportingQuarterService->currentYear();
-        $selectedSedeId = $this->selectedSedeId($request, $type);
-        $quarters = $this->reportingQuarterService->forYear($quarterYear, $selectedSedeId);
-        $selectedSedeLabel = $this->selectedSedeLabel($selectedSedeId);
-
-        $selectedQuarterNumber = $this->normalizeQuarter($request->query('trimestre'));
-        $selectedQuarter = $selectedQuarterNumber !== null
-            ? $quarters->firstWhere('quarter_number', $selectedQuarterNumber)
-            : null;
-        $selectedFrom = $selectedQuarter?->start_date?->toDateString() ?? '';
-        $selectedTo = $selectedQuarter?->end_date?->toDateString() ?? '';
-        $selectedProcesoId = $this->normalizeId($request->query('id_proceso'));
-        $selectedDependenciaId = $this->normalizeId($request->query('id_dependencia'));
-        $requestedServiceIds = $this->normalizeIds($request->query('id_servicios'));
-
-        $forcedProcesoId = match (true) {
-            $showProcessSelect && $user?->isLiderProceso() && $user->id_proceso => (int) $user->id_proceso,
-            $showProcessSelect && $user?->isLiderDependencia() && $user->id_proceso => (int) $user->id_proceso,
-            default => null,
-        };
-
-        $forcedDependenciaId = $showDependencySelect && $user?->isLiderDependencia() && $user->id_dependencia
-            ? (int) $user->id_dependencia
-            : null;
-
-        if ($forcedProcesoId !== null) {
-            $selectedProcesoId = $forcedProcesoId;
-        }
-
-        if ($forcedDependenciaId !== null) {
-            $selectedDependenciaId = $forcedDependenciaId;
-        }
-
-        $procesos = $showProcessSelect
-            ? $this->availableProcesos($forcedProcesoId, $selectedSedeId)
-            : collect();
-
-        if (
-            $showProcessSelect &&
-            $selectedProcesoId !== null &&
-            ! $procesos->contains(fn (Proceso $proceso) => (int) $proceso->id_proceso === $selectedProcesoId)
-        ) {
-            $selectedProcesoId = $forcedProcesoId;
-        }
-
-        $dependencias = $showDependencySelect
-            ? $this->dependenciasForProceso($selectedProcesoId, $forcedDependenciaId, $selectedSedeId)
-            : collect();
-
-        if (
-            $showDependencySelect &&
-            $selectedDependenciaId !== null &&
-            ! $dependencias->contains(fn (Dependencia $dependencia) => (int) $dependencia->id_dependencia === $selectedDependenciaId)
-        ) {
-            $selectedDependenciaId = $forcedDependenciaId;
-        }
-
-        $selectedProceso = $showProcessSelect
-            ? $procesos->firstWhere('id_proceso', $selectedProcesoId)
-            : null;
-        $selectedDependencia = $showDependencySelect
-            ? $dependencias->firstWhere('id_dependencia', $selectedDependenciaId)
-            : null;
-        $serviceSelectionEnabled = $this->serviceSelectionEnabled($type, $selectedProceso);
-        $servicios = $showDependencySelect && $serviceSelectionEnabled
-            ? $this->servicesForDependencia($selectedDependenciaId, $selectedSedeId)
-            : collect();
-        $invalidSelectedServiceIds = $this->invalidSelectedServiceIds($requestedServiceIds, $servicios);
-        $selectedServiceIds = $this->resolveSelectedServiceIds($requestedServiceIds, $servicios);
-        $selectedServiceNames = $this->selectedServiceNames($servicios, $selectedServiceIds);
-        $serviceFilterProcessId = $this->serviceFilterProcessId($procesos);
-
-        $attempted = $this->filtersWereSubmitted($request, $showProcessSelect, $showDependencySelect);
-        $filterError = null;
-        $pdfUnavailableReason = null;
-        $report = null;
-        $requiresConclusionConfirmation = false;
-
-        if ($attempted) {
-            $validator = Validator::make($request->query(), [
-                'trimestre' => ['required', 'integer', 'between:1,4'],
-                'id_proceso' => $showProcessSelect ? ['required', 'integer'] : ['nullable', 'integer'],
-                'id_dependencia' => $showDependencySelect ? ['required', 'integer'] : ['nullable', 'integer'],
-                'id_servicios' => $showDependencySelect && $serviceSelectionEnabled ? ['nullable', 'array'] : ['nullable'],
-                'id_servicios.*' => $showDependencySelect && $serviceSelectionEnabled ? ['integer'] : ['nullable'],
-            ]);
-
-            $validator->after(function ($validator) use (
-                $selectedQuarter,
-                $showProcessSelect,
-                $showDependencySelect,
-                $selectedProceso,
-                $selectedDependencia,
-                $type,
-                $servicios,
-                $selectedServiceIds,
-                $invalidSelectedServiceIds
-            ): void {
-                if (! $selectedQuarter) {
-                    $validator->errors()->add('trimestre', 'Selecciona un trimestre valido para generar el reporte.');
-                }
-
-                if ($showProcessSelect && ! $selectedProceso) {
-                    $validator->errors()->add('id_proceso', 'Selecciona un proceso valido para generar el reporte.');
-                }
-
-                if ($showDependencySelect && ! $selectedDependencia) {
-                    $validator->errors()->add('id_dependencia', 'Selecciona una dependencia valida para generar el reporte.');
-                }
-
-                if ($showDependencySelect && $invalidSelectedServiceIds !== []) {
-                    $validator->errors()->add('id_servicios', 'Selecciona servicios validos para generar el reporte.');
-                }
-
-                if ($this->requiresServiceSelection($type, $servicios) && $selectedServiceIds === []) {
-                    $validator->errors()->add('id_servicios', 'Selecciona uno o varios servicios para generar el reporte individual.');
-                }
-            });
-
-            if ($validator->fails()) {
-                $filterError = $validator->errors()->first();
-            } else {
-                    $report = $this->reportService->generate(
-                        $type,
-                        $selectedFrom,
-                        $selectedTo,
-                        $selectedProcesoId,
-                        $selectedDependenciaId,
-                        $selectedServiceIds,
-                        $selectedSedeId
-                    );
-
-                $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedSedeId, $selectedServiceIds);
-                $requiresConclusionConfirmation = $this->requiresConclusionConfirmation($report);
-                $generatedConclusion = $this->sanitizeConclusion($request->query('generated_conclusion'));
-
-                if ($request->boolean('export_pdf')) {
-                    if ($pdfUnavailableReason !== null) {
-                        $filterError = $pdfUnavailableReason;
-                    } elseif ($requiresConclusionConfirmation && $generatedConclusion === null) {
-                        $filterError = 'Debes generar o confirmar la conclusion antes de descargar el PDF.';
-                    } else {
-                        return $this->exportReport(
-                            $type,
-                            $definition['title'],
-                            $definition['description'],
-                            $report,
-                            $this->resolveSignature(
-                                $type,
-                                $selectedProcesoId,
-                                $selectedDependenciaId,
-                                $selectedProceso?->nombre,
-                                $selectedDependencia?->nombre
-                            ),
-                            $this->buildContextRows(
-                                $selectedQuarter,
-                                $selectedSedeLabel,
-                                $selectedProceso?->nombre,
-                                $selectedDependencia?->nombre,
-                                $selectedServiceNames
-                            ),
-                            $generatedConclusion
-                        );
-                    }
-                }
-            }
-        }
-
-        $routeName = $request->route()?->getName();
-        $conclusionUrl = $routeName !== null
-            ? route($routeName.'.conclusion')
-            : null;
-        $pdfUrl = null;
-
-        if ($report && $routeName !== null && $pdfUnavailableReason === null) {
-            $pdfUrl = route($routeName, array_filter([
-                'trimestre' => $selectedQuarterNumber,
-                'id_proceso' => $selectedProcesoId,
-                'id_dependencia' => $selectedDependenciaId,
-                'id_sede' => $selectedSedeId,
-                'id_servicios' => $serviceSelectionEnabled && $selectedServiceIds !== [] ? $selectedServiceIds : null,
-                'export_pdf' => 1,
-            ], static fn ($value): bool => $value !== null && $value !== ''));
-        }
-
-        return view($definition['view'], [
-            'dependencias' => $dependencias,
-            'description' => $definition['description'],
-            'filterError' => $filterError,
-            'conclusionUrl' => $conclusionUrl,
-            'pdfUrl' => $pdfUrl,
-            'pdfUnavailableReason' => $pdfUnavailableReason,
-            'quarterYear' => $quarterYear,
-            'quarters' => $quarters,
-            'procesos' => $procesos,
-            'report' => $report,
-            'requiresConclusionConfirmation' => $requiresConclusionConfirmation,
-            'selectedSedeId' => $selectedSedeId,
-            'selectedDependenciaId' => $selectedDependenciaId,
-            'selectedDependencyLocked' => $forcedDependenciaId !== null,
-            'selectedProcessLocked' => $forcedProcesoId !== null,
-            'selectedProcesoId' => $selectedProcesoId,
-            'selectedQuarterNumber' => $selectedQuarterNumber,
-            'selectedQuarterPeriod' => $selectedQuarter?->periodLabel() ?? '',
-            'selectedServiceIds' => $selectedServiceIds,
-            'sedes' => $this->availableSedesForReport($user, $type),
-            'showSedeSelect' => $this->showSedeSelect($user, $type),
-            'serviceFilterProcessId' => $serviceFilterProcessId,
-            'serviceSelectionEnabled' => $serviceSelectionEnabled,
-            'selectionSummary' => $this->selectionSummary(
-                $selectedQuarter,
-                $selectedSedeLabel,
-                $selectedProceso?->nombre,
-                $selectedDependencia?->nombre,
-                $selectedServiceNames
-            ),
-            'servicios' => $servicios,
-            'showDependencySelect' => $showDependencySelect,
-            'showProcessSelect' => $showProcessSelect,
-            'summary' => $this->summaryForView($definition, $serviceSelectionEnabled),
-            'title' => $definition['title'],
+        $validator = Validator::make($request->query(), [
+            'id_dependencia' => ['required', 'integer', 'exists:dependencia,id_dependencia'],
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $dependency = Dependencia::query()
+            ->with('proceso:id_proceso,nombre')
+            ->findOrFail((int) $validator->validated()['id_dependencia']);
+        $user = $request->user();
+
+        if ($user && ! $user->hasGlobalSedeAccess() && $user->id_sede && (int) $user->id_sede !== (int) $dependency->id_sede) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        if ($user?->isLiderDependencia() && (int) $user->id_dependencia !== (int) $dependency->id_dependencia) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        if (
+            ($user?->isLiderProceso() || $user?->isLiderDependencia())
+            && $user->id_proceso
+            && (int) $user->id_proceso !== (int) $dependency->id_proceso
+        ) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        if (! $this->isIndividualServiceFilterProcess($dependency->proceso?->nombre)) {
+            return response()->json([]);
+        }
+
+        $services = Servicio::query()
+            ->where('id_dependencia', $dependency->id_dependencia)
+            ->orderBy('nombre')
+            ->get(['id_servicio', 'nombre', 'activo'])
+            ->map(fn (Servicio $service): array => [
+                'activo' => (bool) $service->activo,
+                'id' => (int) $service->id_servicio,
+                'nombre' => (string) $service->nombre,
+            ])
+            ->values();
+
+        return response()->json($services);
+    }
+
+    /**
+     * Tipos de reporte habilitados para el usuario, en orden de prioridad.
+     *
+     * @return array<int, string>
+     */
+    private function allowedTypes(?User $user): array
+    {
+        $types = $user?->tiposReporteDisponibles() ?? [];
+
+        return $types !== [] ? $types : ['general'];
+    }
+
+    /**
+     * @param  array<int, string>  $allowedTypes
+     */
+    private function resolveType(Request $request, array $allowedTypes): string
+    {
+        $requested = (string) ($request->input('tipo') ?? '');
+
+        if (in_array($requested, $allowedTypes, true)) {
+            return $requested;
+        }
+
+        return $allowedTypes[0];
+    }
+
+    /**
+     * @return array{type: string, view: string, title: string, description: string, summary: string}
+     */
+    private function definitionFor(string $type): array
+    {
+        return match ($type) {
+            'process' => [
+                'type' => 'process',
+                'view' => 'reportes.index',
+                'title' => 'Reporte por proceso',
+                'description' => 'Consolidado de todas las dependencias que pertenecen al proceso seleccionado en el trimestre indicado.',
+                'summary' => 'Selecciona un trimestre y un proceso para agrupar todas sus dependencias.',
+            ],
+            'individual' => [
+                'type' => 'individual',
+                'view' => 'reportes.index',
+                'title' => 'Reporte individual',
+                'description' => 'Analisis puntual de la dependencia seleccionada dentro de su proceso.',
+                'summary' => 'Selecciona trimestre, proceso, dependencia y uno o varios servicios para calcular el detalle individual.',
+            ],
+            default => [
+                'type' => 'general',
+                'view' => 'reportes.index',
+                'title' => 'Reporte general',
+                'description' => 'Consolidado de todos los procesos dentro del trimestre seleccionado.',
+                'summary' => 'Selecciona un trimestre y calcula el comportamiento global de satisfaccion de todas las encuestas.',
+            ],
+        };
+    }
+
+    /**
+     * Limpia las selecciones que no aplican al tipo de reporte indicado.
+     *
+     * @param  array<int, int>  $selectedServiceIds
+     * @return array{0: ?int, 1: ?int, 2: array<int, int>}
+     */
+    private function scopedSelectionForType(
+        string $type,
+        ?int $selectedProcesoId,
+        ?int $selectedDependenciaId,
+        array $selectedServiceIds
+    ): array {
+        return match ($type) {
+            'general' => [null, null, []],
+            'process' => [$selectedProcesoId, null, []],
+            default => [$selectedProcesoId, $selectedDependenciaId, $selectedServiceIds],
+        };
     }
 
     /**

@@ -261,4 +261,25 @@ class User extends Authenticatable
             || $this->isLiderProceso()
             || $this->isLiderDependencia();
     }
+
+    public function puedeAccederModuloReportes(): bool
+    {
+        return $this->puedeAccederReportesGenerales()
+            || $this->puedeAccederReportesProceso()
+            || $this->puedeAccederReportesIndividuales();
+    }
+
+    /**
+     * Tipos de reporte habilitados para el usuario, en orden de prioridad.
+     *
+     * @return array<int, string>
+     */
+    public function tiposReporteDisponibles(): array
+    {
+        return array_values(array_filter([
+            $this->puedeAccederReportesGenerales() ? 'general' : null,
+            $this->puedeAccederReportesProceso() ? 'process' : null,
+            $this->puedeAccederReportesIndividuales() ? 'individual' : null,
+        ]));
+    }
 }

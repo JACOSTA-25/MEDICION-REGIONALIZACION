@@ -189,7 +189,7 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.general', ['trimestre' => 1]));
+                ->get(route('reports.index', ['tipo' => 'general', 'trimestre' => 1]));
 
             $response->assertOk();
             $response->assertViewHas('selectedQuarterNumber', 1);
@@ -364,7 +364,7 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.general', ['trimestre' => 1]));
+                ->get(route('reports.index', ['tipo' => 'general', 'trimestre' => 1]));
 
             $response->assertOk();
             $response->assertSee('data-report-conclusion-shell', false);
@@ -429,7 +429,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.general', [
+                ->get(route('reports.index', [
+                    'tipo' => 'general',
                     'id_sede' => Sede::ID_FONSECA,
                     'trimestre' => 2,
                 ]));
@@ -489,7 +490,8 @@ class ReportesEstadisticosTest extends TestCase
                 ]),
             ]);
 
-            $response = $this->actingAs($admin)->postJson(route('reports.general.conclusion'), [
+            $response = $this->actingAs($admin)->postJson(route('reports.conclusion'), [
+                'tipo' => 'general',
                 'trimestre' => 1,
             ]);
 
@@ -584,7 +586,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.general', [
+                ->get(route('reports.index', [
+                    'tipo' => 'general',
                     'trimestre' => 1,
                     'export_pdf' => 1,
                     'generated_conclusion' => 'Conclusion final validada para el reporte general.',
@@ -631,7 +634,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.general', [
+                ->get(route('reports.index', [
+                    'tipo' => 'general',
                     'id_sede' => Sede::ID_FONSECA,
                     'trimestre' => 2,
                     'export_pdf' => 1,
@@ -692,7 +696,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $processResponse = $this->actingAs($admin)
-                ->get(route('reports.process', [
+                ->get(route('reports.index', [
+                    'tipo' => 'process',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'export_pdf' => 1,
@@ -711,7 +716,7 @@ class ReportesEstadisticosTest extends TestCase
         $admin20 = User::factory()->create(['rol' => User::ROLE_ADMIN_2_0]);
 
         $this->actingAs($admin20)
-            ->get(route('reports.process'))
+            ->get(route('reports.index', ['tipo' => 'process']))
             ->assertOk();
     }
 
@@ -723,7 +728,7 @@ class ReportesEstadisticosTest extends TestCase
         ]);
 
         $this->actingAs($leaderProcess)
-            ->get(route('reports.individual'))
+            ->get(route('reports.index', ['tipo' => 'individual']))
             ->assertOk();
     }
 
@@ -744,7 +749,8 @@ class ReportesEstadisticosTest extends TestCase
             ]);
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.process', [
+                ->get(route('reports.index', [
+                    'tipo' => 'process',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'export_pdf' => 1,
@@ -776,7 +782,8 @@ class ReportesEstadisticosTest extends TestCase
             ]);
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.individual', [
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'id_dependencia' => $serviceA->id_dependencia,
@@ -839,7 +846,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.individual', [
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'id_dependencia' => $serviceA->id_dependencia,
@@ -907,7 +915,8 @@ class ReportesEstadisticosTest extends TestCase
             $dependencyName = Dependencia::query()->findOrFail($serviceB->id_dependencia)->nombre;
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.individual', [
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
                     'trimestre' => 1,
                     'id_proceso' => $serviceB->id_proceso,
                     'id_dependencia' => $serviceB->id_dependencia,
@@ -939,7 +948,7 @@ class ReportesEstadisticosTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->getJson(route('reports.individual.services', [
+            ->getJson(route('reports.services', [
                 'id_dependencia' => $serviceA->id_dependencia,
             ]));
 
@@ -967,7 +976,7 @@ class ReportesEstadisticosTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->getJson(route('reports.individual.services', [
+            ->getJson(route('reports.services', [
                 'id_dependencia' => $serviceB->id_dependencia,
             ]));
 
@@ -1005,7 +1014,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.individual', [
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'id_dependencia' => $serviceA->id_dependencia,
@@ -1056,7 +1066,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.individual', [
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'id_dependencia' => $serviceA->id_dependencia,
@@ -1110,7 +1121,8 @@ class ReportesEstadisticosTest extends TestCase
             );
 
             $response = $this->actingAs($admin)
-                ->get(route('reports.individual', [
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
                     'trimestre' => 1,
                     'id_proceso' => $serviceA->id_proceso,
                     'id_dependencia' => $serviceA->id_dependencia,

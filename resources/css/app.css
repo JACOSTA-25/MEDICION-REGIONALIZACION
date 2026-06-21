@@ -299,6 +299,34 @@ body {
     color: #0d6c70;
 }
 
+.ms-qr-share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.ms-qr-share-image {
+    flex: 0 0 auto;
+    border: 2px solid #e5e7eb;
+    border-radius: 2rem;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 0 3px 6px rgb(0 0 0 / 12%);
+}
+
+.ms-qr-share .ms-form-actions {
+    flex: 1 1 240px;
+    margin-top: 0;
+}
+
+@media (max-width: 640px) {
+    .ms-qr-share {
+        justify-content: center;
+    }
+}
+
 .ms-link-panel {
     margin-top: 1rem;
 }

@@ -67,21 +67,9 @@
 
             @php $user = auth()->user(); @endphp
 
-            @if ($user->puedeAccederReportesGenerales())
-                <x-responsive-nav-link :href="route('reports.general')" :active="request()->routeIs('reports.general')">
-                    {{ __('Reporte general') }}
-                </x-responsive-nav-link>
-            @endif
-
-            @if ($user->puedeAccederReportesProceso())
-                <x-responsive-nav-link :href="route('reports.process')" :active="request()->routeIs('reports.process')">
-                    {{ __('Reporte por proceso') }}
-                </x-responsive-nav-link>
-            @endif
-
-            @if ($user->puedeAccederReportesIndividuales())
-                <x-responsive-nav-link :href="route('reports.individual')" :active="request()->routeIs('reports.individual')">
-                    {{ __('Reporte individual') }}
+            @if ($user->puedeAccederModuloReportes())
+                <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                    {{ __('Reportes') }}
                 </x-responsive-nav-link>
             @endif
 
@@ -90,10 +78,6 @@
                     {{ __('Estadisticas') }}
                 </x-responsive-nav-link>
             @endif
-
-            <x-responsive-nav-link :href="route('survey.qr')" :active="request()->routeIs('survey.qr')">
-                {{ __('QR de encuesta') }}
-            </x-responsive-nav-link>
 
             @if ($user->puedeAccederModuloUsuarios())
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">

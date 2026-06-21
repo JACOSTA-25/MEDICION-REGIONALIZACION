@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Encuesta\CodigoQrEncuestaController;
 use App\Http\Controllers\Encuesta\EncuestaController;
 use App\Http\Controllers\Estadisticas\DatosEstadisticasController;
 use App\Http\Controllers\Estadisticas\PaginaEstadisticasController;
@@ -9,9 +8,7 @@ use App\Http\Controllers\Organizacion\ProcesoController;
 use App\Http\Controllers\Organizacion\ServicioController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Programas\ProgramaController;
-use App\Http\Controllers\Reportes\ReporteGeneralController;
-use App\Http\Controllers\Reportes\ReporteIndividualController;
-use App\Http\Controllers\Reportes\ReporteProcesoController;
+use App\Http\Controllers\Reportes\ReporteController;
 use App\Http\Controllers\Sedes\ContextoSedeController;
 use App\Http\Controllers\Usuarios\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -38,32 +35,17 @@ Route::middleware(['auth', 'session.security'])->group(function () {
     Route::get('/dashboard', [PanelController::class, 'index'])->name('dashboard');
     Route::put('/dashboard/trimestres', [PanelController::class, 'updateQuarters'])->name('dashboard.quarters.update');
     Route::post('/contexto/sede', [ContextoSedeController::class, 'update'])->name('sedes.scope.update');
-    Route::get('/encuesta/qr', [CodigoQrEncuestaController::class, 'show'])->name('survey.qr');
 
     Route::prefix('reportes')->name('reports.')->group(function () {
-        Route::get('general', [ReporteGeneralController::class, 'index'])
-            ->middleware('module.access:general_reports')
-            ->name('general');
-        Route::post('general/conclusion', [ReporteGeneralController::class, 'generateConclusion'])
-            ->middleware('module.access:general_reports')
-            ->name('general.conclusion');
-
-        Route::get('proceso', [ReporteProcesoController::class, 'index'])
-            ->middleware('module.access:process_reports')
-            ->name('process');
-        Route::post('proceso/conclusion', [ReporteProcesoController::class, 'generateConclusion'])
-            ->middleware('module.access:process_reports')
-            ->name('process.conclusion');
-
-        Route::get('individual', [ReporteIndividualController::class, 'index'])
+        Route::get('/', [ReporteController::class, 'index'])
+            ->middleware('module.access:reports')
+            ->name('index');
+        Route::post('conclusion', [ReporteController::class, 'generateConclusion'])
+            ->middleware('module.access:reports')
+            ->name('conclusion');
+        Route::get('servicios', [ReporteController::class, 'services'])
             ->middleware('module.access:individual_reports')
-            ->name('individual');
-        Route::get('individual/servicios', [ReporteIndividualController::class, 'services'])
-            ->middleware('module.access:individual_reports')
-            ->name('individual.services');
-        Route::post('individual/conclusion', [ReporteIndividualController::class, 'generateConclusion'])
-            ->middleware('module.access:individual_reports')
-            ->name('individual.conclusion');
+            ->name('services');
     });
 
     Route::prefix('estadisticas')->name('statistics.')->middleware('module.access:statistics')->group(function () {
