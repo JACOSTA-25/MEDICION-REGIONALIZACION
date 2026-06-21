@@ -507,9 +507,7 @@
                                         class="ms-report-conclusion-textarea"
                                         rows="6"
                                         maxlength="1200"
-                                        placeholder="{{ $hasObservations
-                                            ? 'La conclusion generada por IA aparecera aqui. Si la editas, vuelve a oprimir Concluir para habilitar el PDF con la version final.'
-                                            : 'Escribe aqui la conclusion final. Cuando la tengas lista, oprime Concluir para habilitar el PDF.' }}"
+                                        placeholder="Escribe aqui la conclusion final. Cuando la tengas lista, oprime Concluir para habilitar el PDF."
                                         data-report-conclusion-textarea
                                     ></textarea>
 

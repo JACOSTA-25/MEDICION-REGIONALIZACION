@@ -523,5 +523,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.assign(target.toString());
             });
         }
+
+        if (conclusionShell) {
+            const conclusionDetails = conclusionShell.closest('details');
+
+            if (conclusionDetails) {
+                conclusionDetails.open = true;
+            }
+
+            window.requestAnimationFrame(() => {
+                conclusionShell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        }
     });
 });
