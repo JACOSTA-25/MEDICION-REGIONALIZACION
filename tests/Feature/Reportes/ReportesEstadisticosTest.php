@@ -116,6 +116,12 @@ class ReportesEstadisticosTest extends TestCase
         $this->assertSame(1, $programRows['Sin programa']['encuestas']);
 
         $this->assertEquals(60.0, $report['indicators']['global']['satisfaction_percentage']);
+        $this->assertSame('Promedio general', $report['tables']['measurement_consolidated']['summary']['label']);
+        $this->assertEquals(1.8, $report['tables']['measurement_consolidated']['summary']['usuarios_satisfechos']);
+        $this->assertEquals(0.4, $report['tables']['measurement_consolidated']['summary']['usuarios_neutros']);
+        $this->assertEquals(0.8, $report['tables']['measurement_consolidated']['summary']['usuarios_insatisfechos']);
+        $this->assertEquals(3.0, $report['tables']['measurement_consolidated']['summary']['total']);
+        $this->assertEquals(60.0, $report['tables']['measurement_consolidated']['summary']['indicador_porcentaje']);
 
         $processFiltered = $service->generate('process', '2026-01-01', '2026-01-31', $serviceA->id_proceso);
         $this->assertSame(2, $processFiltered['totals']['survey_count']);

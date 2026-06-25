@@ -723,10 +723,11 @@ class ServicioReportes
      *          indicador_porcentaje: float
      *      }>,
      *      summary: array{
-     *          usuarios_satisfechos: int,
-     *          usuarios_insatisfechos: int,
-     *          usuarios_neutros: int,
-     *          total: int,
+     *          label: string,
+     *          usuarios_satisfechos: float,
+     *          usuarios_insatisfechos: float,
+     *          usuarios_neutros: float,
+     *          total: float,
      *          mejora: float,
      *          indicador: float,
      *          mejora_porcentaje: float,
@@ -761,16 +762,18 @@ class ServicioReportes
             ];
         }
 
-        $summarySatisfied = (int) array_sum(array_column($rows, 'usuarios_satisfechos'));
-        $summaryDissatisfied = (int) array_sum(array_column($rows, 'usuarios_insatisfechos'));
-        $summaryNeutral = (int) array_sum(array_column($rows, 'usuarios_neutros'));
-        $summaryTotal = (int) array_sum(array_column($rows, 'total'));
+        $rowCount = count($rows);
+        $summarySatisfied = $rowCount > 0 ? round(array_sum(array_column($rows, 'usuarios_satisfechos')) / $rowCount, 2) : 0.0;
+        $summaryDissatisfied = $rowCount > 0 ? round(array_sum(array_column($rows, 'usuarios_insatisfechos')) / $rowCount, 2) : 0.0;
+        $summaryNeutral = $rowCount > 0 ? round(array_sum(array_column($rows, 'usuarios_neutros')) / $rowCount, 2) : 0.0;
+        $summaryTotal = $rowCount > 0 ? round(array_sum(array_column($rows, 'total')) / $rowCount, 2) : 0.0;
         $summaryMejora = $summaryTotal > 0 ? round($summaryNeutral / $summaryTotal, 5) : 0.0;
         $summaryIndicador = $summaryTotal > 0 ? round($summarySatisfied / $summaryTotal, 5) : 0.0;
 
         return [
             'rows' => $rows,
             'summary' => [
+                'label' => 'Promedio general',
                 'usuarios_satisfechos' => $summarySatisfied,
                 'usuarios_insatisfechos' => $summaryDissatisfied,
                 'usuarios_neutros' => $summaryNeutral,

@@ -427,31 +427,29 @@
                                         <th>Satisfechos</th>
                                         <th>Neutros</th>
                                         <th>Insatisfechos</th>
+                                        <th>Total encuestados</th>
                                         <th>% Satisfechos</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($report['tables']['satisfaction_consolidated'] as $row)
+                                    @foreach (($report['tables']['measurement_consolidated']['rows'] ?? []) as $row)
                                         <tr>
-                                            <td>
-                                                <strong>{{ $row['number'] }}.</strong>
-                                                {{ $row['dimension'] }}
-                                            </td>
-                                            <td>
-                                                {{ $row['satisfechos'] }}
-                                                <span>{{ $row['porcentaje_satisfechos'] }}%</span>
-                                            </td>
-                                            <td>
-                                                {{ $row['neutros'] }}
-                                                <span>{{ $row['porcentaje_neutros'] }}%</span>
-                                            </td>
-                                            <td>
-                                                {{ $row['insatisfechos'] }}
-                                                <span>{{ $row['porcentaje_insatisfechos'] }}%</span>
-                                            </td>
-                                            <td>{{ $row['porcentaje_satisfechos'] }}%</td>
+                                            <td>{{ $row['categoria'] }}</td>
+                                            <td>{{ $row['usuarios_satisfechos'] }}</td>
+                                            <td>{{ $row['usuarios_neutros'] }}</td>
+                                            <td>{{ $row['usuarios_insatisfechos'] }}</td>
+                                            <td>{{ $row['total'] }}</td>
+                                            <td>{{ $row['indicador_porcentaje'] }}%</td>
                                         </tr>
                                     @endforeach
+                                    <tr>
+                                        <td><strong>{{ $report['tables']['measurement_consolidated']['summary']['label'] ?? 'Promedio general' }}</strong></td>
+                                        <td><strong>{{ $report['tables']['measurement_consolidated']['summary']['usuarios_satisfechos'] ?? 0 }}</strong></td>
+                                        <td><strong>{{ $report['tables']['measurement_consolidated']['summary']['usuarios_neutros'] ?? 0 }}</strong></td>
+                                        <td><strong>{{ $report['tables']['measurement_consolidated']['summary']['usuarios_insatisfechos'] ?? 0 }}</strong></td>
+                                        <td><strong>{{ $report['tables']['measurement_consolidated']['summary']['total'] ?? 0 }}</strong></td>
+                                        <td><strong>{{ $report['tables']['measurement_consolidated']['summary']['indicador_porcentaje'] ?? 0 }}%</strong></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
