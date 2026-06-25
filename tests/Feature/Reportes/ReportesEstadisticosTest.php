@@ -738,6 +738,125 @@ class ReportesEstadisticosTest extends TestCase
             ->assertOk();
     }
 
+    public function test_individual_report_uses_the_assigned_dependency_leader_signature_even_for_process_leader_viewer(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $viewer = User::factory()->create([
+                'rol' => User::ROLE_LIDER_PROCESO,
+                'id_sede' => Sede::ID_MAICAO,
+                'id_proceso' => $serviceA->id_proceso,
+            ]);
+
+            User::factory()->create([
+                'nombre' => 'LIDER DEPENDENCIA TITULAR',
+                'rol' => User::ROLE_LIDER_DEPENDENCIA,
+                'id_sede' => Sede::ID_MAICAO,
+                'id_proceso' => $serviceA->id_proceso,
+                'id_dependencia' => $serviceA->id_dependencia,
+            ]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $viewer->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $response = $this->actingAs($viewer)
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$serviceA->id_servicio],
+                ]));
+
+            $response->assertOk();
+            $response->assertViewHas('resolvedSignature', fn (?array $signature): bool => $signature === [
+                'name' => 'LIDER DEPENDENCIA TITULAR',
+                'title' => 'Lider de dependencia de',
+                'scope' => mb_strtoupper(Dependencia::query()->findOrFail($serviceA->id_dependencia)->nombre, 'UTF-8'),
+            ]);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_individual_report_falls_back_to_process_leader_signature_when_dependency_has_no_leader(): void
+    {
+        CarbonImmutable::setTestNow('2026-03-14 09:00:00');
+
+        try {
+            [$serviceA] = $this->sampleServicesInDifferentProcesses();
+
+            $estudiante = Estamento::query()->where('nombre', 'Estudiante')->firstOrFail();
+            $programa = Programa::query()->firstOrFail();
+            $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
+
+            User::factory()->create([
+                'nombre' => 'LIDER PROCESO RESPALDO',
+                'rol' => User::ROLE_LIDER_PROCESO,
+                'id_sede' => Sede::ID_MAICAO,
+                'id_proceso' => $serviceA->id_proceso,
+            ]);
+
+            ReportingQuarter::query()->create([
+                'year' => 2026,
+                'quarter_number' => 1,
+                'start_date' => '2026-01-10',
+                'end_date' => '2026-03-31',
+                'updated_by' => $admin->id,
+            ]);
+
+            $this->storeResponse(
+                $estudiante->id_estamento,
+                $programa->id_programa,
+                $serviceA->id_proceso,
+                $serviceA->id_dependencia,
+                $serviceA->id_servicio,
+                [4, 4, 4, 4, 4],
+                '2026-01-10 08:00:00'
+            );
+
+            $processName = (string) Proceso::query()->findOrFail($serviceA->id_proceso)->nombre;
+
+            $response = $this->actingAs($admin)
+                ->get(route('reports.index', [
+                    'tipo' => 'individual',
+                    'trimestre' => 1,
+                    'id_proceso' => $serviceA->id_proceso,
+                    'id_dependencia' => $serviceA->id_dependencia,
+                    'id_servicios' => [$serviceA->id_servicio],
+                ]));
+
+            $response->assertOk();
+            $response->assertViewHas('resolvedSignature', fn (?array $signature): bool => $signature === [
+                'name' => 'LIDER PROCESO RESPALDO',
+                'title' => 'Lider del proceso de',
+                'scope' => mb_strtoupper($processName, 'UTF-8'),
+            ]);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
     public function test_process_report_pdf_cannot_be_downloaded_when_selected_process_has_no_responses(): void
     {
         CarbonImmutable::setTestNow('2026-03-14 09:00:00');

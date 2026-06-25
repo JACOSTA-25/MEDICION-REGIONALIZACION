@@ -192,12 +192,17 @@ class User extends Authenticatable
 
     public function puedeAccederModuloEstructuraOrganizacional(): bool
     {
-        return $this->isAdmin() || $this->isAdmin20() || $this->isAdminSede();
+        return $this->isAdmin() || $this->isAdmin20() || $this->isAdminSede() || $this->isLiderProceso();
     }
 
     public function puedeModificarModuloEstructuraOrganizacional(): bool
     {
         return $this->isAdmin() || $this->isAdminSede();
+    }
+
+    public function puedeCrearDependencias(): bool
+    {
+        return $this->isAdmin() || $this->isAdminSede() || $this->isLiderProceso();
     }
 
     public function puedeAccederModuloEstadisticas(): bool

@@ -28,6 +28,7 @@ class DependenciaController extends Controller
 
     public function index(Request $request, Proceso $proceso): View
     {
+        abort_unless($this->canAccessProcessDependencies($request, $proceso), 403);
         abort_unless($this->sedeService->canAccess($request->user(), (int) $proceso->id_sede), 403);
 
         $dependencies = Dependencia::query()
@@ -48,19 +49,30 @@ class DependenciaController extends Controller
         return view('organizacion.dependencias.index', [
             'activeProcesses' => $processes->where('activo', true)->values(),
             'canManageCatalogs' => $request->user()?->puedeModificarModuloEstructuraOrganizacional() ?? false,
+            'canCreateDependencies' => $this->canCreateDependenciesForProcess($request, $proceso),
             'dependencies' => $dependencies,
             'processes' => $processes,
+            'selectedProcessLocked' => $request->user()?->isLiderProceso() ?? false,
             'selectedProcess' => $proceso,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()?->puedeModificarModuloEstructuraOrganizacional(), 403);
+        abort_unless($request->user()?->puedeCrearDependencias(), 403);
 
         $validator = $this->validator($request);
 
         if ($validator->fails()) {
+            if ($request->user()?->isLiderProceso() && $request->user()->id_proceso) {
+                return redirect()->route('process-dependency.processes.dependencies', [
+                    'proceso' => (int) $request->user()->id_proceso,
+                ])
+                    ->withErrors($validator, 'createDependency')
+                    ->withInput()
+                    ->with('open_create_dependency', true);
+            }
+
             return $this->dependencyRedirect(
                 $request,
                 $this->normalizeId($request->input('id_proceso'))
@@ -235,7 +247,7 @@ class DependenciaController extends Controller
             'activo' => ['nullable', 'boolean'],
         ]);
 
-        $validator->after(function (ValidationValidator $validator) use ($dependency, $targetProcessId): void {
+        $validator->after(function (ValidationValidator $validator) use ($request, $dependency, $targetProcessId): void {
             $process = Proceso::query()->find($targetProcessId);
 
             if (! $process) {
@@ -249,9 +261,43 @@ class DependenciaController extends Controller
             if (! $process->activo && (! $dependency || (int) $dependency->id_proceso !== $targetProcessId)) {
                 $validator->errors()->add('id_proceso', 'Solo puedes asociar dependencias a procesos activos.');
             }
+
+            if (! $dependency && ! $this->canCreateDependenciesForProcess($request, $process)) {
+                $validator->errors()->add('id_proceso', 'Solo puedes crear dependencias para tu proceso asignado.');
+            }
         });
 
         return $validator;
+    }
+
+    private function canAccessProcessDependencies(Request $request, Proceso $proceso): bool
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isLiderProceso()) {
+            return (int) $user->id_proceso === (int) $proceso->id_proceso;
+        }
+
+        return $user->puedeAccederModuloEstructuraOrganizacional();
+    }
+
+    private function canCreateDependenciesForProcess(Request $request, Proceso $proceso): bool
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->puedeModificarModuloEstructuraOrganizacional()) {
+            return true;
+        }
+
+        return $user->isLiderProceso() && (int) $user->id_proceso === (int) $proceso->id_proceso;
     }
 
     /**

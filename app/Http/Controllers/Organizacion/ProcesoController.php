@@ -26,8 +26,19 @@ class ProcesoController extends Controller
         private readonly ServicioSedes $sedeService,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user?->isLiderProceso()) {
+            $assignedProcess = Proceso::query()->find($user->id_proceso);
+
+            abort_unless($assignedProcess !== null, 403);
+            abort_unless($this->sedeService->canAccess($user, (int) $assignedProcess->id_sede), 403);
+
+            return redirect()->route('process-dependency.processes.dependencies', $assignedProcess);
+        }
+
         $selectedSedeId = $this->selectedSedeId($request);
         $processes = Proceso::query()
             ->forSede($selectedSedeId)
@@ -41,10 +52,10 @@ class ProcesoController extends Controller
             ->get(['id_proceso', 'id_sede', 'nombre', 'activo']);
 
         return view('organizacion.procesos.index', [
-            'canManageCatalogs' => $request->user()?->puedeModificarModuloEstructuraOrganizacional() ?? false,
+            'canManageCatalogs' => $user?->puedeModificarModuloEstructuraOrganizacional() ?? false,
             'processes' => $processes,
             'selectedSedeId' => $selectedSedeId,
-            'sedes' => $this->sedeService->visibleTo($request->user()),
+            'sedes' => $this->sedeService->visibleTo($user),
         ]);
     }
 

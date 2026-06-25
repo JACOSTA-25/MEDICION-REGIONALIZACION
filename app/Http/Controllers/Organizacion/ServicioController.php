@@ -29,6 +29,7 @@ class ServicioController extends Controller
 
     public function index(Request $request, Dependencia $dependencia): View
     {
+        abort_unless($this->canAccessDependencyServices($request, $dependencia), 403);
         abort_unless($this->sedeService->canAccess($request->user(), (int) $dependencia->id_sede), 403);
 
         $dependencia->load([
@@ -71,6 +72,21 @@ class ServicioController extends Controller
             'selectedProcess' => $dependencia->proceso,
             'services' => $services,
         ]);
+    }
+
+    private function canAccessDependencyServices(Request $request, Dependencia $dependencia): bool
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isLiderProceso()) {
+            return (int) $user->id_proceso === (int) $dependencia->id_proceso;
+        }
+
+        return $user->puedeAccederModuloEstructuraOrganizacional();
     }
 
     public function store(Request $request): RedirectResponse

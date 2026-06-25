@@ -26,10 +26,20 @@ class GestionEstructuraOrganizacionalTest extends TestCase
 
     public function test_admin_admin_2_0_and_admin_sede_can_access_the_module(): void
     {
+        $leaderProcessProcess = Proceso::query()->create([
+            'id_sede' => Sede::ID_MAICAO,
+            'nombre' => 'Proceso Lider Asignado',
+            'activo' => true,
+        ]);
+
         $admin = User::factory()->create(['rol' => User::ROLE_ADMIN]);
         $admin20 = User::factory()->create(['rol' => User::ROLE_ADMIN_2_0]);
         $adminSede = User::factory()->create(['rol' => User::ROLE_ADMIN_SEDE, 'id_sede' => Sede::ID_MAICAO]);
-        $leaderProcess = User::factory()->create(['rol' => User::ROLE_LIDER_PROCESO]);
+        $leaderProcess = User::factory()->create([
+            'rol' => User::ROLE_LIDER_PROCESO,
+            'id_sede' => Sede::ID_MAICAO,
+            'id_proceso' => $leaderProcessProcess->id_proceso,
+        ]);
         $leaderDependency = User::factory()->create(['rol' => User::ROLE_LIDER_DEPENDENCIA]);
 
         $this->actingAs($admin)
@@ -64,12 +74,65 @@ class GestionEstructuraOrganizacionalTest extends TestCase
             ->assertOk();
 
         $this->actingAs($leaderProcess)
-            ->getJson(route('process-dependency.index'))
-            ->assertForbidden();
+            ->get(route('process-dependency.index'))
+            ->assertRedirect(route('process-dependency.processes.dependencies', $leaderProcessProcess));
 
         $this->actingAs($leaderDependency)
             ->getJson(route('process-dependency.index'))
             ->assertForbidden();
+    }
+
+    public function test_process_leader_can_create_dependency_only_for_assigned_process(): void
+    {
+        $assignedProcess = Proceso::query()->create([
+            'id_sede' => Sede::ID_MAICAO,
+            'nombre' => 'Proceso Asignado Lider',
+            'activo' => true,
+        ]);
+
+        $otherProcess = Proceso::query()->create([
+            'id_sede' => Sede::ID_MAICAO,
+            'nombre' => 'Proceso Ajeno Lider',
+            'activo' => true,
+        ]);
+
+        $leaderProcess = User::factory()->create([
+            'rol' => User::ROLE_LIDER_PROCESO,
+            'id_sede' => Sede::ID_MAICAO,
+            'id_proceso' => $assignedProcess->id_proceso,
+        ]);
+
+        $this->actingAs($leaderProcess)
+            ->post(route('process-dependency.dependencies.store'), [
+                'id_proceso' => $assignedProcess->id_proceso,
+                'nombre' => 'Dependencia creada por lider',
+                'activo' => '1',
+                'redirect_proceso' => $assignedProcess->id_proceso,
+            ])
+            ->assertRedirect(route('process-dependency.processes.dependencies', $assignedProcess))
+            ->assertSessionHas('catalog_status', 'Dependencia creada correctamente.');
+
+        $this->assertDatabaseHas('dependencia', [
+            'id_proceso' => $assignedProcess->id_proceso,
+            'nombre' => 'Dependencia creada por lider',
+            'activo' => true,
+        ]);
+
+        $this->actingAs($leaderProcess)
+            ->from(route('process-dependency.processes.dependencies', $assignedProcess))
+            ->post(route('process-dependency.dependencies.store'), [
+                'id_proceso' => $otherProcess->id_proceso,
+                'nombre' => 'Dependencia fuera de alcance',
+                'activo' => '1',
+                'redirect_proceso' => $assignedProcess->id_proceso,
+            ])
+            ->assertRedirect(route('process-dependency.processes.dependencies', $assignedProcess))
+            ->assertSessionHasErrorsIn('createDependency', ['id_proceso']);
+
+        $this->assertDatabaseMissing('dependencia', [
+            'id_proceso' => $otherProcess->id_proceso,
+            'nombre' => 'Dependencia fuera de alcance',
+        ]);
     }
 
     public function test_admin_can_create_process_and_register_audit(): void

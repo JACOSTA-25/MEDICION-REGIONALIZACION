@@ -43,7 +43,7 @@
                     <p>Mantiene las mismas operaciones de creacion, edicion y control de estado.</p>
                 </div>
 
-                @if ($canManageCatalogs)
+                @if (($canCreateDependencies ?? false) || $canManageCatalogs)
                     <div class="ms-form-actions" style="margin-top: 1rem;">
                         <button type="button" class="ms-btn ms-btn-primary" x-on:click="createDependencyOpen = true">
                             Crear dependencia
@@ -133,7 +133,7 @@
             </section>
         </div>
 
-        @if ($canManageCatalogs)
+        @if (($canCreateDependencies ?? false) || $canManageCatalogs)
         <div
             x-show="createDependencyOpen"
             x-on:click.self="createDependencyOpen = false"
@@ -181,22 +181,29 @@
 
                         <div class="md:col-span-2">
                             <label for="create_dependency_process" class="block text-sm font-semibold text-slate-700">Proceso</label>
-                            <select
-                                id="create_dependency_process"
-                                name="id_proceso"
-                                class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
-                                required
-                            >
-                                <option value="">Seleccione un proceso</option>
-                                @foreach ($activeProcesses as $process)
-                                    <option
-                                        value="{{ $process->id_proceso }}"
-                                        @selected((string) old('id_proceso', $selectedProcess->id_proceso) === (string) $process->id_proceso)
-                                    >
-                                        {{ $process->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            @if ($selectedProcessLocked ?? false)
+                                <input type="hidden" name="id_proceso" value="{{ old('id_proceso', $selectedProcess->id_proceso) }}">
+                                <div class="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                                    {{ $selectedProcess->nombre }}
+                                </div>
+                            @else
+                                <select
+                                    id="create_dependency_process"
+                                    name="id_proceso"
+                                    class="mt-2 block w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm"
+                                    required
+                                >
+                                    <option value="">Seleccione un proceso</option>
+                                    @foreach ($activeProcesses as $process)
+                                        <option
+                                            value="{{ $process->id_proceso }}"
+                                            @selected((string) old('id_proceso', $selectedProcess->id_proceso) === (string) $process->id_proceso)
+                                        >
+                                            {{ $process->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
 
                         <div class="flex items-center gap-3">

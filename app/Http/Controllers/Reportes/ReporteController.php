@@ -132,6 +132,7 @@ class ReporteController extends Controller
         $filterError = null;
         $pdfUnavailableReason = null;
         $report = null;
+        $resolvedSignature = null;
         $requiresConclusionConfirmation = false;
 
         if ($attempted) {
@@ -198,6 +199,13 @@ class ReporteController extends Controller
                 $pdfUnavailableReason = $this->pdfUnavailableReason($type, $report, $selectedSedeId, $generateServiceIds);
                 $requiresConclusionConfirmation = $this->requiresConclusionConfirmation($report);
                 $generatedConclusion = $this->sanitizeConclusion($request->query('generated_conclusion'));
+                $resolvedSignature = $this->resolveSignature(
+                    $type,
+                    $generateProcesoId,
+                    $generateDependenciaId,
+                    $selectedProceso?->nombre,
+                    $selectedDependencia?->nombre
+                );
 
                 if ($request->boolean('export_pdf')) {
                     if ($pdfUnavailableReason !== null) {
@@ -210,13 +218,7 @@ class ReporteController extends Controller
                             $definition['title'],
                             $definition['description'],
                             $report,
-                            $this->resolveSignature(
-                                $type,
-                                $generateProcesoId,
-                                $generateDependenciaId,
-                                $selectedProceso?->nombre,
-                                $selectedDependencia?->nombre
-                            ),
+                            $resolvedSignature,
                             $this->buildContextRows(
                                 $selectedQuarter,
                                 $selectedSedeLabel,
@@ -262,6 +264,7 @@ class ReporteController extends Controller
             'quarters' => $quarters,
             'procesos' => $procesos,
             'report' => $report,
+            'resolvedSignature' => $resolvedSignature,
             'requiresConclusionConfirmation' => $requiresConclusionConfirmation,
             'selectedSedeId' => $selectedSedeId,
             'selectedDependenciaId' => $selectedDependenciaId,
@@ -869,7 +872,7 @@ class ReporteController extends Controller
     ): ?array {
         return match ($type) {
             'process' => $this->signatureForProcess($processId, $processName),
-            'individual' => $this->signatureForDependency($dependencyId, $dependencyName),
+            'individual' => $this->signatureForDependency($dependencyId, $dependencyName, $processId, $processName),
             default => null,
         };
     }
@@ -904,7 +907,12 @@ class ReporteController extends Controller
     /**
      * @return array{name: string, title: string, scope: string}|null
      */
-    private function signatureForDependency(?int $dependencyId, ?string $dependencyName): ?array
+    private function signatureForDependency(
+        ?int $dependencyId,
+        ?string $dependencyName,
+        ?int $processId = null,
+        ?string $processName = null
+    ): ?array
     {
         if ($dependencyId === null || blank($dependencyName)) {
             return null;
@@ -918,7 +926,7 @@ class ReporteController extends Controller
             ->first();
 
         if (! $leader) {
-            return null;
+            return $this->signatureForProcess($processId, $processName);
         }
 
         return [
